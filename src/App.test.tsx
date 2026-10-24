@@ -41,9 +41,9 @@ describe('<App />', () => {
     useOSStore.setState({ locked: false });
     render(<App />);
 
-    await userEvent.click(await screen.findByLabelText('메시지'));
+    await userEvent.click(await screen.findByLabelText('메시지/통화'));
 
-    expect(useOSStore.getState().openAppId).toBe('messages');
+    expect(useOSStore.getState().openAppId).toBe('messagesCall');
     expect(await screen.findByText('대화')).toBeInTheDocument();
 
     await act(async () => {

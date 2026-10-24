@@ -1,22 +1,36 @@
 import {
-  Globe,
-  Mail,
-  MessageCircle,
-  MessagesSquare,
-  Settings,
-  StickyNote,
-  TrendingUp,
-  Users,
-  Wallet,
-} from 'lucide-react';
+  ChromaIcon,
+  ContactsIcon,
+  ExIcon,
+  ForumIcon,
+  GmallIcon,
+  MailIcon,
+  MessagesCallIcon,
+  MessagesIcon,
+  NotesIcon,
+  ProteanIcon,
+  SailorIcon,
+  SettingsIcon,
+  ShadeIcon,
+  TelegraphIcon,
+  TradeIcon,
+  WalletIcon,
+} from './icons';
 import type { AppMeta } from '@/types';
 import { BrowserApp } from './browser/BrowserApp';
+import { ChromaApp } from './browser/ChromaApp';
 import { ContactsApp } from './contacts/ContactsApp';
+import { ExApp } from './messenger/ExApp';
 import { ForumApp } from './forum/ForumApp';
-import { MailApp } from './mail/MailApp';
+import { GmailApp } from './mail/GmailApp';
 import { MessagesApp } from './messages/MessagesApp';
+import { MessagesCallApp } from './messenger/MessagesCallApp';
 import { NotesApp } from './notes/NotesApp';
+import { ProteanApp } from './mail/ProteanApp';
+import { SailorApp } from './browser/SailorApp';
 import { SettingsApp } from './settings/SettingsApp';
+import { ShadeApp } from './browser/ShadeApp';
+import { TelegraphApp } from './messenger/TelegraphApp';
 import { TradeApp } from './trade/TradeApp';
 import { WalletApp } from './wallet/WalletApp';
 
@@ -31,63 +45,105 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   trade: {
     id: 'trade',
     name: '거래',
-    icon: TrendingUp,
+    icon: TradeIcon,
     gradient: ['#22d3ee', '#2563eb'],
     Component: TradeApp,
   },
   messages: {
     id: 'messages',
     name: '메시지',
-    icon: MessageCircle,
+    icon: MessagesIcon,
     gradient: ['#5bf675', '#12b53c'],
     Component: MessagesApp,
   },
-  browser: {
-    id: 'browser',
-    name: '브라우저',
-    icon: Globe,
-    gradient: ['#38bdf8', '#1d4ed8'],
-    Component: BrowserApp,
+  messagesCall: {
+    id: 'messagesCall',
+    name: '메시지/통화',
+    icon: MessagesCallIcon,
+    gradient: ['#34d399', '#059669'],
+    Component: MessagesCallApp,
+  },
+  chroma: {
+    id: 'chroma',
+    name: 'Chroma',
+    icon: ChromaIcon,
+    gradient: ['#f472b6', '#a855f7'],
+    Component: ChromaApp,
+  },
+  sailor: {
+    id: 'sailor',
+    name: 'Sailor',
+    icon: SailorIcon,
+    gradient: ['#0ea5e9', '#0369a1'],
+    Component: SailorApp,
+  },
+  shade: {
+    id: 'shade',
+    name: 'Shade',
+    icon: ShadeIcon,
+    gradient: ['#64748b', '#1e293b'],
+    Component: ShadeApp,
   },
   wallet: {
     id: 'wallet',
     name: '지갑',
-    icon: Wallet,
+    icon: WalletIcon,
     gradient: ['#3a3a3c', '#1c1c1e'],
     Component: WalletApp,
   },
   notes: {
     id: 'notes',
     name: '메모',
-    icon: StickyNote,
+    icon: NotesIcon,
     gradient: ['#fde047', '#f59e0b'],
     Component: NotesApp,
   },
   settings: {
     id: 'settings',
     name: '설정',
-    icon: Settings,
+    icon: SettingsIcon,
     gradient: ['#b6bcc6', '#4b5563'],
     Component: SettingsApp,
   },
-  mail: {
-    id: 'mail',
-    name: '메일',
-    icon: Mail,
+  gmall: {
+    id: 'gmall',
+    name: 'Gmall',
+    icon: GmallIcon,
     gradient: ['#60a5fa', '#2563eb'],
-    Component: MailApp,
+    Component: GmailApp,
+  },
+  protean: {
+    id: 'protean',
+    name: 'Protean',
+    icon: ProteanIcon,
+    gradient: ['#a78bfa', '#7c3aed'],
+    Component: ProteanApp,
+  },
+  telegraph: {
+    id: 'telegraph',
+    name: 'Telegraph',
+    icon: TelegraphIcon,
+    gradient: ['#22d3ee', '#06b6d4'],
+    Component: TelegraphApp,
+  },
+  ex: {
+    id: 'ex',
+    name: 'Ex',
+    icon: ExIcon,
+    gradient: ['#f472b6', '#ec4899'],
+    Component: ExApp,
   },
   forum: {
     id: 'forum',
     name: '포럼',
-    icon: MessagesSquare,
+    icon: ForumIcon,
     gradient: ['#a78bfa', '#7c3aed'],
     Component: ForumApp,
   },
   contacts: {
     id: 'contacts',
     name: '연락처',
-    icon: Users,
+    icon: ContactsIcon,
     gradient: ['#f472b6', '#db2777'],
     Component: ContactsApp,
   },

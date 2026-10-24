@@ -19,8 +19,8 @@ export interface AppIconProps {
 }
 
 /**
- * One home-screen icon: gradient squircle tile + label. The glyph is drawn from
- * a lucide icon, never an Apple asset.
+ * One home-screen icon: a self-contained parody icon tile + label. The artwork
+ * is drawn in SVG inside the app; no Apple or third-party brand assets ship.
  */
 export const AppIcon = memo(function AppIcon({
   app,
@@ -61,17 +61,11 @@ export const AppIcon = memo(function AppIcon({
           width: size,
           height: size,
           borderRadius: size * ICON_RADIUS_RATIO,
-          background: `linear-gradient(160deg, ${app.gradient[0]}, ${app.gradient[1]})`,
         }}
-        className="relative flex items-center justify-center shadow-[0_6px_14px_-4px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/15"
+        className="relative flex items-center justify-center overflow-hidden shadow-[0_6px_14px_-4px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/15"
         {...handlers}
       >
-        <Icon
-          className="text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]"
-          style={{ width: size * 0.52, height: size * 0.52 }}
-          strokeWidth={1.9}
-          aria-hidden
-        />
+        <Icon size={size} className="block" aria-hidden />
       </motion.button>
       <span className="label-shadow max-w-full truncate text-[11px] font-medium leading-tight text-white">
         {app.name}

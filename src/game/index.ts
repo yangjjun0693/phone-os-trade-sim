@@ -9,3 +9,4 @@ export * from './heat';
 export * from './customers';
 export * from './events';
 export * from './markets';
+export * from './exposure';

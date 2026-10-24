@@ -1,5 +1,4 @@
 import type { ComponentType } from 'react';
-import type { LucideIcon } from 'lucide-react';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 export type ResolvedTheme = 'light' | 'dark';
@@ -14,6 +13,22 @@ export type CustomerKind = 'regular' | 'difficult' | 'undercover';
 
 export type RiskTier = 'calm' | 'watched' | 'hot' | 'burned';
 
+/** Identity kinds for the fictional game identity system. */
+export type IdentityKind = 'realname' | 'alias';
+
+export interface IdentityState {
+  /** Currently active identity for this app. */
+  active: IdentityKind;
+  /** Whether the user has explicitly logged in with this identity. */
+  loggedIn: boolean;
+  /** Timestamp of last identity switch (game time). */
+  lastSwitchedAt: string | null;
+}
+
+export interface AppIdentityMap {
+  [appId: string]: IdentityState;
+}
+
 export interface PhoneStatus {
   battery: number;
   charging: boolean;
@@ -24,9 +39,9 @@ export interface PhoneStatus {
 export interface AppMeta {
   id: string;
   name: string;
-  /** Glyph drawn on top of the generated gradient tile (must not be a brand mark). */
-  icon: LucideIcon;
-  /** [from, to] CSS colours for the icon tile gradient. */
+  /** Self-contained icon tile (parody artwork, drawn in SVG). */
+  icon: ComponentType<{ size?: number; className?: string }>;
+  /** [from, to] CSS colours used for the app-switcher / window chrome. */
   gradient: [string, string];
   Component: ComponentType;
 }
@@ -79,4 +94,13 @@ export interface Clue {
   text: string;
   /** true when the clue is real signal, false when it is deliberate noise. */
   reliable: boolean;
+}
+
+/** Browser history entry stored in gameStore. */
+export interface BrowserHistoryEntry {
+  id: string;
+  appId: string; // which browser: chroma, sailor, shade
+  url: string;
+  title: string;
+  visitedAt: string; // game time ISO
 }

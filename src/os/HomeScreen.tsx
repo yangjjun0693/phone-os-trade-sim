@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDrag } from '@use-gesture/react';
 import {
   DndContext,
@@ -74,6 +74,18 @@ export function HomeScreen() {
   const [page, setPage] = useState(0);
   const pageRef = useRef(0);
   pageRef.current = page;
+
+  // Dev: Cmd+Shift+R to force reset layout (clears old localStorage layout)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.shiftKey && e.key === 'R') {
+        e.preventDefault();
+        useOSStore.getState().resetLayout();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const pageCount = Math.max(1, layout.pages.length);
 

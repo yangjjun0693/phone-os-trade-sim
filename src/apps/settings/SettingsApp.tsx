@@ -1,13 +1,17 @@
-import { useRef, useState } from 'react';
-import { Cloud, Download, Info, Moon, RotateCcw, Sun, Upload } from 'lucide-react';
+import { useRef, useState, useMemo } from 'react';
+import { Cloud, Download, Info, Moon, RotateCcw, Sun, Upload, User, UserCheck, Shield, AlertTriangle, LogOut, Key, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { SAVE_VERSION, SaveDataSchema, localSaveService, type SaveData } from '@/lib/saveService';
 import { useGameStore } from '@/store/gameStore';
 import { useOSStore } from '@/store/osStore';
-import type { InventoryItem, ThemeMode } from '@/types';
+import { computeTotalExposure, getExposureTier, getExposureTierColor, getIdentityLabel, getIdentityDescription, getSupportedIdentities, switchIdentity, logoutIdentity, getAppIdentity, type IdentityKind } from '@/game';
+import type { InventoryItem, ThemeMode, IdentityState, AppIdentityMap } from '@/types';
 import { cn } from '@/utils/cn';
 import { AppShell } from '../AppShell';
 import { Row, Section } from '../SectionList';
+import { getApp } from '../registry';
+import { SPRING_SNAPPY, prefersReducedMotion } from '@/utils/motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'light', label: '라이트' },
@@ -68,13 +72,131 @@ function snapshot(): SaveData {
   };
 }
 
+interface IdentityRowProps {
+  appId: string;
+  appName: string;
+  icon: React.ReactNode;
+  gradient: [string, string];
+  identity: IdentityState;
+  onSwitch: (kind: IdentityKind) => void;
+  onLogout: () => void;
+}
+
+function IdentityRow({ appId, appName, Icon, gradient, identity, onSwitch, onLogout }: Omit<IdentityRowProps, 'icon'> & { Icon: React.ComponentType<{ size?: number; className?: string }> }) {
+  const supported = getSupportedIdentities(appId);
+  const canSwitch = supported.length > 1;
+  const reduced = prefersReducedMotion();
+
+  return (
+    <motion.div
+      layout
+      initial={reduced ? undefined : { opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="relative"
+    >
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-ios-surface ring-1 ring-black/5 dark:ring-white/5">
+        <div className="relative size-10 shrink-0 overflow-hidden rounded-xl flex items-center justify-center">
+          <Icon size={40} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate">{appName}</p>
+          <p className="text-[12px] text-ios-muted">
+            현재: <span className="font-medium capitalize">{getIdentityLabel(identity.active)}</span>
+            {identity.loggedIn && identity.lastSwitchedAt && (
+              <span className="ml-2">· 전환: {new Date(identity.lastSwitchedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {canSwitch && (
+            <>
+              <button
+                onClick={() => onSwitch('realname')}
+                disabled={identity.active === 'realname' || !identity.loggedIn}
+                className={cn(
+                  'px-3 py-1.5 rounded-xl text-[12px] font-medium transition-colors',
+                  identity.active === 'realname'
+                    ? 'bg-ios-blue text-white'
+                    : 'bg-ios-separator/20 text-ios-muted hover:bg-ios-separator/30'
+                )}
+              >
+                실명
+              </button>
+              <button
+                onClick={() => onSwitch('alias')}
+                disabled={identity.active === 'alias' || !identity.loggedIn}
+                className={cn(
+                  'px-3 py-1.5 rounded-xl text-[12px] font-medium transition-colors',
+                  identity.active === 'alias'
+                    ? 'bg-ios-purple text-white'
+                    : 'bg-ios-separator/20 text-ios-muted hover:bg-ios-separator/30'
+                )}
+              >
+                별명
+              </button>
+            </>
+          )}
+          {identity.loggedIn && (
+            <button
+              onClick={onLogout}
+              className="p-2 rounded-xl text-ios-muted hover:text-ios-red hover:bg-ios-red/10"
+              aria-label="로그아웃"
+            >
+              <LogOut className="size-4" />
+            </button>
+          )}
+        </div>
+      </div>
+      {!canSwitch && identity.loggedIn && (
+        <p className="ml-14 mt-1 text-[11px] text-ios-muted">
+          이 앱은 {getIdentityLabel(supported[0])} 신원만 지원합니다.
+        </p>
+      )}
+    </motion.div>
+  );
+}
+
 export function SettingsApp() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [showIdentities, setShowIdentities] = useState(false);
 
   const theme = useOSStore((s) => s.theme);
   const setTheme = useOSStore((s) => s.setTheme);
   const resetLayout = useOSStore((s) => s.resetLayout);
+
+  const identities = useGameStore(s => s.identities);
+  const gameDateTime = useGameStore(s => s.gameDateTime);
+  const switchIdentityStore = useGameStore(s => s.switchIdentity);
+  const logoutIdentityStore = useGameStore(s => s.logoutIdentity);
+
+  const totalExposure = computeTotalExposure(identities);
+  const exposureTier = getExposureTier(totalExposure);
+  const exposureColor = getExposureTierColor(exposureTier);
+
+  // Map text color classes to background color classes
+  const exposureBgColor = exposureColor
+    .replace('text-ios-green', 'bg-ios-green')
+    .replace('text-ios-yellow', 'bg-ios-yellow')
+    .replace('text-ios-orange', 'bg-ios-orange')
+    .replace('text-ios-red', 'bg-ios-red');
+  const exposureTextColor = exposureColor.replace('text-ios-', '');
+
+  // Get all registered apps that support identity
+  const identityApps = useMemo(() => {
+    const apps = [
+      'chroma', 'sailor', 'shade',
+      'gmall', 'protean',
+      'telegraph', 'ex', 'messagesCall',
+      'trade', 'wallet', 'notes',
+      'forum', 'contacts',
+    ];
+    return apps.map(appId => {
+      const app = getApp(appId);
+      const identity = getAppIdentity(identities, appId);
+      return { appId, app, identity };
+    }).filter(item => item.app);
+  }, [identities]);
 
   const handleExport = async () => {
     const data = snapshot();
@@ -123,6 +245,90 @@ export function SettingsApp() {
 
   return (
     <AppShell title="설정" largeTitle>
+      <Section header="신원 관리" footer="각 앱별로 사용할 신원(실명/별명)을 선택하세요. 노출도는 게임 내 가상 수치입니다.">
+        {/* Exposure Summary */}
+        <motion.div
+          initial={prefersReducedMotion() ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={SPRING_SNAPPY}
+          className="mx-4 mb-4 p-4 rounded-2xl ring-1 ring-black/5 dark:ring-white/5"
+          style={{ background: `linear-gradient(135deg, ${exposureBgColor}/20, ${exposureBgColor}/5)` }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[13px] font-medium text-ios-muted">총 노출도</p>
+              <p className="mt-1 text-[28px] font-bold tabular-nums" style={{ color: `var(--ios-${exposureTextColor})` }}>
+                {totalExposure}
+              </p>
+              <p className="mt-1 text-[12px] font-medium" style={{ color: `var(--ios-${exposureTextColor})` }}>
+                {exposureTier === 'low' ? '낮음' : exposureTier === 'medium' ? '보통' : exposureTier === 'high' ? '높음' : '위험'}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[12px] text-ios-muted">로그인된 앱</p>
+              <p className="text-[22px] font-bold tabular-nums text-ios-text">
+                {Object.keys(identities).filter(k => identities[k].loggedIn).length}
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 h-2 bg-ios-separator/20 rounded-full overflow-hidden">
+            <motion.div
+              initial={prefersReducedMotion() ? false : { width: 0 }}
+              animate={{ width: `${Math.min(100, totalExposure)}%` }}
+              transition={SPRING_SNAPPY}
+              className="h-full rounded-full"
+              style={{ background: `var(--ios-${exposureTextColor})` }}
+            />
+          </div>
+        </motion.div>
+
+        <button
+          onClick={() => setShowIdentities(!showIdentities)}
+          className="mx-4 mb-4 flex items-center justify-between px-4 py-3 rounded-xl bg-ios-surface ring-1 ring-black/5 dark:ring-white/5"
+        >
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-ios-purple/20 flex items-center justify-center">
+              <Shield className="size-5 text-ios-purple" />
+            </div>
+            <div>
+              <p className="font-medium">앱별 신원 설정</p>
+              <p className="text-[12px] text-ios-muted">{identityApps.filter(i => i.identity.loggedIn).length}개 앱 로그인됨</p>
+            </div>
+          </div>
+          <motion.span
+            animate={{ rotate: showIdentities ? 180 : 0 }}
+            transition={SPRING_SNAPPY}
+            className="text-ios-muted"
+          >
+            <ChevronRight className="size-5" />
+          </motion.span>
+        </button>
+
+        <AnimatePresence>
+          {showIdentities && (
+            <motion.div
+              initial={prefersReducedMotion() ? undefined : { opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={prefersReducedMotion() ? undefined : { opacity: 0, height: 0 }}
+              className="mx-4 mb-4 space-y-3"
+            >
+              {identityApps.map(({ appId, app, identity }) => (
+                <IdentityRow
+                  key={appId}
+                  appId={appId}
+                  appName={app!.name}
+                  Icon={app!.icon}
+                  gradient={app!.gradient}
+                  identity={identity}
+                  onSwitch={(kind) => switchIdentityStore(appId, kind)}
+                  onLogout={() => logoutIdentityStore(appId)}
+                />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Section>
+
       <Section header="화면">
         <div className="px-4 py-3">
           <p className="mb-2 text-[13px] text-ios-muted">테마</p>
@@ -186,6 +392,14 @@ export function SettingsApp() {
           icon={<RotateCcw className="size-4 text-ios-red" aria-hidden />}
           title="홈 화면 배치 초기화"
           onClick={resetLayout}
+        />
+        <Row
+          icon={<RotateCcw className="size-4 text-ios-red" aria-hidden />}
+          title="강제 레이아웃 리셋 (localStorage 전체 삭제)"
+          onClick={() => {
+            localStorage.clear();
+            location.reload();
+          }}
         />
       </Section>
 

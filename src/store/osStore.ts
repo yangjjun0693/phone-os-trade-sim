@@ -234,6 +234,7 @@ export const useOSStore = create<OSState>()(
       migrate: (persisted, version) => {
         const previous = (persisted ?? {}) as Partial<PersistedOS>;
         if (version < 1) return { ...previous, layout: DEFAULT_LAYOUT } as PersistedOS;
+        if (version < 4) return { ...previous, layout: DEFAULT_LAYOUT } as PersistedOS;
         return previous as PersistedOS;
       },
     },
