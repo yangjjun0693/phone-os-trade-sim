@@ -1,0 +1,20 @@
+[
+  {
+    "id": "npc-dal",
+    "name": "달이",
+    "kind": "regular",
+    "bio": "매주 금요일 같은 시간에 나타나는 단골."
+  },
+  {
+    "id": "npc-jjin",
+    "name": "찐빵",
+    "kind": "difficult",
+    "bio": "항상 20% 깎아달라고 한다. 안 깎아주면 바로 나간다."
+  },
+  {
+    "id": "npc-mrpark",
+    "name": "박 씨",
+    "kind": "undercover",
+    "bio": "말투가 지나치게 정중하다. 질문이 많다."
+  }
+]

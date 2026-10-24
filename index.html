@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PhoneOS" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta
+      name="description"
+      content="A fake iOS-style phone OS trading simulation. Fictional game systems only."
+    />
+    <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>Phone OS Trade Sim</title>
+    <script>
+      // Resolve theme before first paint to avoid a flash of the wrong theme.
+      (function () {
+        try {
+          var stored = JSON.parse(localStorage.getItem('phone-os:os') || 'null');
+          var mode = (stored && stored.state && stored.state.theme) || 'system';
+          var dark =
+            mode === 'dark' ||
+            (mode === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+          if (dark) document.documentElement.style.colorScheme = 'dark';
+        } catch (e) {
+          /* no-op */
+        }
+      })();
+    </script>
+  </head>
+  <body class="h-full">
+    <div id="root" class="h-full"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

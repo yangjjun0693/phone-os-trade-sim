@@ -1,0 +1,32 @@
+[
+  {
+    "id": "clue-1",
+    "marketId": "market-quickdrop",
+    "text": "리뷰 12개가 모두 같은 오타를 쓴다.",
+    "reliable": true
+  },
+  {
+    "id": "clue-2",
+    "marketId": "market-quickdrop",
+    "text": "결제 페이지의 자물쇠 아이콘이 그림이다.",
+    "reliable": true
+  },
+  {
+    "id": "clue-3",
+    "marketId": "market-clearnet",
+    "text": "가격이 시세보다 눈에 띄게 낮다.",
+    "reliable": true
+  },
+  {
+    "id": "clue-4",
+    "marketId": "market-nightbazaar",
+    "text": "메인 배너가 어제 바뀌었다.",
+    "reliable": false
+  },
+  {
+    "id": "clue-5",
+    "marketId": "market-lastcall",
+    "text": "관리자가 폐쇄를 예고하는 공지를 올렸다.",
+    "reliable": true
+  }
+]

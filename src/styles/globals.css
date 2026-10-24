@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+
+  *,
+  *::before,
+  *::after {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  html {
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--os-desktop);
+    color: rgb(var(--ios-text));
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Inter Variable', Inter, system-ui, 'Segoe UI', Roboto,
+      'Helvetica Neue', sans-serif;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #root {
+    height: 100%;
+  }
+
+  input,
+  textarea {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  button {
+    touch-action: manipulation;
+    font: inherit;
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--ios-accent));
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgb(var(--ios-accent) / 0.3);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .glass {
+    background: var(--ios-glass);
+    -webkit-backdrop-filter: var(--ios-glass-filter);
+    backdrop-filter: var(--ios-glass-filter);
+  }
+
+  .glass-strong {
+    background: var(--ios-glass-strong);
+    -webkit-backdrop-filter: var(--ios-glass-filter);
+    backdrop-filter: var(--ios-glass-filter);
+  }
+
+  .squircle {
+    border-radius: var(--ios-icon-radius);
+  }
+
+  .scroll-area {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .label-shadow {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* Reduced motion: keep layout, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

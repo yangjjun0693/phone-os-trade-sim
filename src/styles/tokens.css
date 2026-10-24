@@ -1,0 +1,78 @@
+/**
+ * Design tokens for the fake phone OS.
+ *
+ * Colour tokens are stored as raw RGB triplets so Tailwind can compose them
+ * with an alpha channel: `rgb(var(--ios-bg) / <alpha-value>)`.
+ *
+ * The metric values below are approximations measured from iOS screenshots
+ * (see ATTRIBUTIONS.md). No Apple assets are used, only proportions.
+ */
+:root {
+  /* ---- colour: light ---- */
+  --ios-bg: 242 242 247;
+  --ios-surface: 255 255 255;
+  --ios-elevated: 255 255 255;
+  --ios-text: 10 10 12;
+  --ios-muted: 60 60 67;
+  --ios-separator: 60 60 67;
+  --ios-accent: 0 122 255;
+  --ios-green: 52 199 89;
+  --ios-red: 255 59 48;
+  --ios-orange: 255 149 0;
+  --ios-blue: 0 122 255;
+
+  /* ---- glass / dock ---- */
+  --ios-glass: rgba(255, 255, 255, 0.62);
+  --ios-glass-strong: rgba(255, 255, 255, 0.78);
+  --ios-glass-filter: saturate(180%) blur(20px);
+
+  /* ---- wallpaper (light) ---- */
+  --os-wallpaper: radial-gradient(140% 100% at 20% 0%, #cfe6ff 0%, #eef2f7 45%, #d9d4ea 100%);
+  --os-desktop: radial-gradient(120% 120% at 50% 0%, #23232b 0%, #0a0a0c 65%);
+  --os-status-text: 10 10 12;
+
+  /* ---- metrics (iOS approximations) ---- */
+  --ios-statusbar-h: 54px;
+  --ios-island-w: 126px;
+  --ios-island-h: 37px;
+  --ios-island-top: 11px;
+  --ios-home-indicator-w: 140px;
+  --ios-home-indicator-h: 5px;
+  --ios-icon-size: 60px;
+  --ios-icon-radius: 22.37%;
+  --ios-grid-gap-x: 26px;
+  --ios-grid-gap-y: 22px;
+  --ios-dock-h: 96px;
+  --ios-navbar-h: 44px;
+
+  --phone-max-width: 430px;
+  --phone-aspect: 9 / 19.5;
+}
+
+.dark {
+  --ios-bg: 0 0 0;
+  --ios-surface: 28 28 30;
+  --ios-elevated: 44 44 46;
+  --ios-text: 255 255 255;
+  --ios-muted: 235 235 245;
+  --ios-separator: 84 84 88;
+  --ios-accent: 10 132 255;
+  --ios-green: 48 209 88;
+  --ios-red: 255 69 58;
+  --ios-orange: 255 159 10;
+  --ios-blue: 10 132 255;
+
+  --ios-glass: rgba(30, 30, 32, 0.62);
+  --ios-glass-strong: rgba(18, 18, 20, 0.78);
+
+  --os-wallpaper: radial-gradient(140% 100% at 20% 0%, #1b2a4a 0%, #101427 45%, #1a1024 100%);
+  --os-desktop: radial-gradient(120% 120% at 50% 0%, #101014 0%, #050506 65%);
+  --os-status-text: 255 255 255;
+}
+
+/* Users who ask for less motion get a calmer OS. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-scale: 0;
+  }
+}
