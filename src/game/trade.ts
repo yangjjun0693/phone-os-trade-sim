@@ -80,6 +80,23 @@ const OFFER_QTY: Record<MarketReach, [number, number]> = {
   onion: [10, 25],
 };
 
+/**
+ * Street prices move every day. Deterministic per product + day, so the market
+ * does not reroll while the player is looking at it — only when the day turns.
+ */
+export function priceDrift(productId: string, day: number): number {
+  const rng = createSeededRng(hashString(`${productId}:${day}:drift`));
+  return round2(0.9 + rng() * 0.2);
+}
+
+/**
+ * How much a customer pays relative to street value. Trust 20 (a fresh run) is
+ * the neutral point: strangers pay a little under street, known faces over it.
+ */
+export function trustMultiplier(trust = 20): number {
+  return round2(0.95 + (clamp(trust, 0, 100) / 100) * 0.2);
+}
+
 export interface MarketOffer {
   id: string;
   marketId: string;
@@ -88,9 +105,11 @@ export interface MarketOffer {
   qty: number;
   /** What the market charges per unit. */
   unitPrice: number;
-  /** Reference street value, carried into inventory on delivery. */
+  /** Street value for today, carried into inventory on delivery. */
   marketPrice: number;
   wholesale: number;
+  /** Today's street-price multiplier (0.90–1.10) for the UI. */
+  drift: number;
 }
 
 /**
@@ -123,6 +142,7 @@ export function generateMarketOffers(
       ),
     );
 
+    const drift = priceDrift(product.id, day);
     offers.push({
       id: `${market.id}:${day}:${slot}`,
       marketId: market.id,
@@ -130,8 +150,9 @@ export function generateMarketOffers(
       name: product.name,
       qty,
       unitPrice,
-      marketPrice: product.street,
+      marketPrice: Math.max(1, Math.round(product.street * drift)),
       wholesale: product.wholesale,
+      drift,
     });
   }
 
@@ -309,6 +330,7 @@ export function createCustomerOffer(
   npcs: NpcProfile[],
   heat: number,
   rng: Rng = Math.random,
+  trust = 20,
 ): CustomerOffer | null {
   const available = inventory.filter((item) => item.qty > 0);
   if (available.length === 0 || npcs.length === 0) return null;
@@ -319,8 +341,11 @@ export function createCustomerOffer(
   const kind = rollCustomerKind(rng, heat);
   const profile = npcs[Math.floor(rng() * npcs.length) % npcs.length];
 
+  // Regulars pay a little better as trust builds; strangers pay below street.
   const basePrice =
-    (item.marketPrice ?? item.unitCost * 2.4) * (0.9 + rng() * 0.2);
+    (item.marketPrice ?? item.unitCost * 2.4) *
+    (0.9 + rng() * 0.2) *
+    trustMultiplier(trust);
   const demand = kind === 'difficult' ? -0.5 : kind === 'undercover' ? 0.2 : 0.1;
   const unitPrice = Math.max(
     1,

@@ -25,7 +25,8 @@ export function Section({
       className={cn('mb-6', className)}
     >
       {header ? (
-        <h2 className="px-4 pb-1.5 pt-2 text-[13px] font-medium uppercase tracking-wide text-ios-muted">
+        <h2 className="flex items-center gap-2 px-4 pb-1.5 pt-2 text-[13px] font-medium uppercase tracking-wide text-ios-muted">
+          <span className="h-3 w-[3px] rounded-full bg-app/70" aria-hidden />
           {header}
         </h2>
       ) : null}

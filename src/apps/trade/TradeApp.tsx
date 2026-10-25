@@ -76,6 +76,7 @@ export function TradeApp() {
   const addHeat = useGameStore((s) => s.addHeat);
   const advanceGameTime = useGameStore((s) => s.advanceGameTime);
   const deals = useGameStore((s) => s.deals);
+  const trust = useGameStore((s) => s.trust);
   const gameDateTime = useGameStore((s) => s.gameDateTime);
   const fulfilDeal = useGameStore((s) => s.fulfilDeal);
   const cancelDeal = useGameStore((s) => s.cancelDeal);
@@ -118,7 +119,7 @@ export function TradeApp() {
   };
 
   const callCustomer = () => {
-    const next = createCustomerOffer(inventory, npcs, heat, Math.random);
+    const next = createCustomerOffer(inventory, npcs, heat, Math.random, trust);
     if (!next) {
       haptic(12);
       setFeedback({

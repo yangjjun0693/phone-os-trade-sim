@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { getApp } from '@/apps/registry';
+import { hexToRgbTriplet } from '@/utils/color';
 import { SPRING_SNAPPY } from '@/utils/motion';
 import { appTileId } from './metrics';
 
@@ -20,7 +21,14 @@ export function AppWindow({ appId }: { appId: string }) {
     <motion.div
       layoutId={appTileId(app.id)}
       transition={SPRING_SNAPPY}
-      style={{ borderRadius: 0, backgroundColor: app.gradient[1] }}
+      style={
+        {
+          borderRadius: 0,
+          backgroundColor: app.gradient[1],
+          // Every app paints itself with its own accent.
+          '--app-accent': hexToRgbTriplet(app.accent),
+        } as React.CSSProperties
+      }
       className="absolute inset-0 z-30 overflow-hidden will-change-transform"
     >
       <motion.div

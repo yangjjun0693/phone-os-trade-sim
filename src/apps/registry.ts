@@ -53,6 +53,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   trade: {
     id: 'trade',
     name: '거래',
+    accent: '#22d3ee',
     icon: TradeIcon,
     gradient: ['#22d3ee', '#2563eb'],
     Component: TradeApp,
@@ -60,6 +61,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   messages: {
     id: 'messages',
     name: '메시지',
+    accent: '#12b53c',
     icon: MessagesIcon,
     gradient: ['#5bf675', '#12b53c'],
     Component: MessagesApp,
@@ -67,6 +69,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   messagesCall: {
     id: 'messagesCall',
     name: '메시지/통화',
+    accent: '#059669',
     icon: MessagesCallIcon,
     gradient: ['#34d399', '#059669'],
     Component: MessagesCallApp,
@@ -74,6 +77,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   chroma: {
     id: 'chroma',
     name: 'Chroma',
+    accent: '#4285f4',
     icon: ChromaIcon,
     gradient: ['#f472b6', '#a855f7'],
     Component: ChromaApp,
@@ -81,6 +85,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   sailor: {
     id: 'sailor',
     name: 'Sailor',
+    accent: '#0ea5e9',
     icon: SailorIcon,
     gradient: ['#0ea5e9', '#0369a1'],
     Component: SailorApp,
@@ -88,6 +93,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   shade: {
     id: 'shade',
     name: 'Shade',
+    accent: '#7d4698',
     icon: ShadeIcon,
     gradient: ['#64748b', '#1e293b'],
     Component: ShadeApp,
@@ -95,6 +101,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   wallet: {
     id: 'wallet',
     name: '지갑',
+    accent: '#6b7280',
     icon: WalletIcon,
     gradient: ['#3a3a3c', '#1c1c1e'],
     Component: WalletApp,
@@ -102,6 +109,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   notes: {
     id: 'notes',
     name: '메모',
+    accent: '#f59e0b',
     icon: NotesIcon,
     gradient: ['#fde047', '#f59e0b'],
     Component: NotesApp,
@@ -109,6 +117,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   settings: {
     id: 'settings',
     name: '설정',
+    accent: '#6b7280',
     icon: SettingsIcon,
     gradient: ['#b6bcc6', '#4b5563'],
     Component: SettingsApp,
@@ -116,6 +125,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   gmall: {
     id: 'gmall',
     name: 'Gmall',
+    accent: '#2563eb',
     icon: GmallIcon,
     gradient: ['#60a5fa', '#2563eb'],
     Component: GmailApp,
@@ -123,6 +133,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   protean: {
     id: 'protean',
     name: 'Protean',
+    accent: '#7c3aed',
     icon: ProteanIcon,
     gradient: ['#a78bfa', '#7c3aed'],
     Component: ProteanApp,
@@ -130,6 +141,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   telegraph: {
     id: 'telegraph',
     name: 'Telegraph',
+    accent: '#06b6d4',
     icon: TelegraphIcon,
     gradient: ['#22d3ee', '#06b6d4'],
     Component: TelegraphApp,
@@ -137,6 +149,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   ex: {
     id: 'ex',
     name: 'Ex',
+    accent: '#ec4899',
     icon: ExIcon,
     gradient: ['#f472b6', '#ec4899'],
     Component: ExApp,
@@ -144,6 +157,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   forum: {
     id: 'forum',
     name: '포럼',
+    accent: '#8b5cf6',
     icon: ForumIcon,
     gradient: ['#a78bfa', '#7c3aed'],
     Component: ForumApp,
@@ -151,6 +165,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   contacts: {
     id: 'contacts',
     name: '연락처',
+    accent: '#db2777',
     icon: ContactsIcon,
     gradient: ['#f472b6', '#db2777'],
     Component: ContactsApp,
@@ -158,6 +173,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   bank: {
     id: 'bank',
     name: '초콜렛뱅크',
+    accent: '#ca8a04',
     icon: BankIcon,
     gradient: ['#ffe300', '#ffd600'],
     Component: BankApp,
@@ -165,6 +181,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   news: {
     id: 'news',
     name: '초선일보',
+    accent: '#dc2626',
     icon: NewsIcon,
     gradient: ['#ffffff', '#f4f4f5'],
     Component: NewsApp,
@@ -172,6 +189,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   delivery: {
     id: 'delivery',
     name: '구팡',
+    accent: '#f97316',
     icon: DeliveryIcon,
     gradient: ['#fdfdfd', '#ededee'],
     Component: DeliveryApp,
@@ -179,6 +197,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   map: {
     id: 'map',
     name: 'Maps',
+    accent: '#16a34a',
     icon: MapIcon,
     gradient: ['#55d06a', '#2f7ff0'],
     Component: MapApp,
@@ -186,6 +205,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
   steak: {
     id: 'steak',
     name: 'steak',
+    accent: '#00e701',
     icon: SteakIcon,
     gradient: ['#16394d', '#081923'],
     Component: SteakApp,

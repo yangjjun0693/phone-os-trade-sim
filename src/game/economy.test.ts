@@ -12,7 +12,7 @@ import {
   START_BANK,
   START_CASH,
 } from '@/content/economy';
-import { generateMarketOffers, resolveDayEnd } from './trade';
+import { generateMarketOffers, priceDrift, resolveDayEnd, trustMultiplier } from './trade';
 
 /**
  * Balance guards for the KRW economy. These are not gameplay tests — they keep
@@ -36,6 +36,42 @@ describe('economy: content invariants', () => {
     for (const list of [BANK_QUICK_AMOUNTS, CHIP_QUICK_AMOUNTS]) {
       expect([...list].sort((a, b) => a - b)).toEqual(list);
     }
+  });
+});
+
+describe('economy: street prices move', () => {
+  it('stays inside a sane band and never rerolls mid-day', () => {
+    for (const product of products) {
+      const today = priceDrift(product.id, 3);
+      expect(today).toBeGreaterThanOrEqual(0.9);
+      expect(today).toBeLessThanOrEqual(1.1);
+      expect(priceDrift(product.id, 3)).toBe(today);
+    }
+  });
+
+  it('actually differs from one day to the next', () => {
+    let changed = 0;
+    for (const product of products) {
+      if (priceDrift(product.id, 1) !== priceDrift(product.id, 2)) changed += 1;
+    }
+    expect(changed).toBeGreaterThan(0);
+  });
+
+  it('carries the drift into the offers the markets show', () => {
+    const offer = generateMarketOffers(markets[0], products, 5)[0];
+    const product = products.find((entry) => entry.id === offer.productId)!;
+    expect(offer.marketPrice).toBe(Math.max(1, Math.round(product.street * offer.drift)));
+    expect(offer.drift).toBe(priceDrift(offer.productId, 5));
+  });
+});
+
+describe('economy: trust moves the price', () => {
+  it('climbs with trust, from below street to above it', () => {
+    expect(trustMultiplier(0)).toBeLessThan(1);
+    expect(trustMultiplier(100)).toBeGreaterThan(1);
+    expect(trustMultiplier(60)).toBeGreaterThan(trustMultiplier(20));
+    // Neutral-ish for a fresh run.
+    expect(trustMultiplier(20)).toBeCloseTo(0.99, 2);
   });
 });
 

@@ -80,6 +80,13 @@ export function MarketLinks({
             className="flex w-full items-center gap-3 px-4 py-3 text-left"
           >
             <Search className="size-4 shrink-0 text-ios-accent" aria-hidden />
+            <span
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[13px] font-bold text-white"
+              style={{ backgroundColor: market.accent }}
+              aria-hidden
+            >
+              {market.name.slice(0, 1)}
+            </span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-1.5">
                 <span className="truncate text-[15px]">{market.name}</span>
@@ -126,8 +133,19 @@ function MarketPage({ market }: { market: MarketSite }) {
     <div className="p-4">
       <ReachBanner market={market} />
 
-      <h2 className="text-[22px] font-bold">{market.name}</h2>
-      <p className="mt-1 text-[13px] text-ios-muted">{market.tagline}</p>
+      {/* Each market keeps its own brand colour, like a real shop front. */}
+      <div
+        className="mb-3 flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-white"
+        style={{ background: `linear-gradient(135deg, ${market.accent}, ${market.accent}cc)` }}
+      >
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/20 text-[15px] font-bold">
+          {market.name.slice(0, 1)}
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-[16px] font-bold">{market.name}</span>
+          <span className="block truncate text-[11px] opacity-85">{market.tagline}</span>
+        </span>
+      </div>
 
       <div className="mt-4 rounded-2xl bg-ios-surface p-4 ring-1 ring-black/5 dark:ring-white/5">
         <p className="text-[12px] font-medium text-ios-muted">단서 (일부는 노이즈입니다)</p>

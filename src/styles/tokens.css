@@ -23,6 +23,9 @@
   --ios-purple: 175 82 222;
   --ios-yellow: 255 204 0;
 
+  /* Per-app accent; AppWindow overwrites this with the app's own colour. */
+  --app-accent: 0 122 255;
+
   /* ---- glass / dock ---- */
   --ios-glass: rgba(255, 255, 255, 0.62);
   --ios-glass-strong: rgba(255, 255, 255, 0.78);
@@ -68,6 +71,7 @@
   --ios-blue: 10 132 255;
   --ios-purple: 191 90 242;
   --ios-yellow: 255 214 10;
+  --app-accent: 10 132 255;
 
   --ios-glass: rgba(30, 30, 32, 0.62);
   --ios-glass-strong: rgba(18, 18, 20, 0.78);

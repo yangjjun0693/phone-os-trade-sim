@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MESSAGE_SCRIPTS, findScript } from '@/content/messages';
-import { npcs } from '@/data';
+import { npcs, products } from '@/data';
 import {
   INBOX_LIMIT,
   MIN_GAP_MINUTES,
@@ -54,16 +54,18 @@ describe('messenger content', () => {
     }
   });
 
-  it('points every booking at a real product with a sane deadline', () => {
-    const products = new Set(['product-pill', 'product-jelly', 'product-capsule', 'product-powder', 'product-card']);
+  it('points every booking at a product in the catalogue', () => {
+    const catalogue = new Set(products.map((product) => product.id));
     const bookings = MESSAGE_SCRIPTS.flatMap((script) =>
       script.choices.flatMap((choice) => (choice.booking ? [choice.booking] : [])),
     );
     expect(bookings.length).toBeGreaterThan(2);
     for (const booking of bookings) {
-      expect(products.has(booking.productId), booking.productId).toBe(true);
+      expect(catalogue.has(booking.productId), booking.productId).toBe(true);
       expect(booking.qty).toBeGreaterThan(0);
+      // A deadline has to fit inside one (15-minute) game day.
       expect(booking.dueMinutes).toBeGreaterThanOrEqual(30);
+      expect(booking.dueMinutes).toBeLessThanOrEqual(24 * 60);
     }
   });
 });

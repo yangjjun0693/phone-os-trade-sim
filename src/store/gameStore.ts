@@ -783,6 +783,7 @@ export const useGameStore = create<GameState>()(
                 scriptId: message.scriptId,
                 now: s.gameDateTime,
                 products,
+                trust: s.trust,
               }) ?? undefined;
             if (deal) s.deals = [deal, ...s.deals].slice(0, 30);
           }

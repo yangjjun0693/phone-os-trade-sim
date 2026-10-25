@@ -56,6 +56,12 @@ export interface AppMeta {
   icon: ComponentType<{ size?: number; className?: string }>;
   /** [from, to] CSS colours used for the app-switcher / window chrome. */
   gradient: [string, string];
+  /**
+   * The app's own colour identity. `AppWindow` turns this into the
+   * `--app-accent` CSS variable, so AppShell titles, section headers and
+   * dividers inside the app pick it up automatically.
+   */
+  accent: string;
   Component: ComponentType;
 }
 
@@ -121,6 +127,8 @@ export interface MarketSite {
   status: MarketStatus;
   /** Network layer the site lives on (see {@link MarketReach}). */
   reach: MarketReach;
+  /** The site's own colour, so every market looks like its own shop. */
+  accent: string;
   /** Multiplier applied to wholesale prices (mirrors charge a fee). */
   priceMod: number;
   /** Heat added every time this site is loaded in a browser. */

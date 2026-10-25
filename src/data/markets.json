@@ -8,7 +8,11 @@
     "priceMod": 1,
     "traceHeat": 0,
     "openedDaysAgo": 1450,
-    "traits": ["사업자 등록 정상", "재고가 적다"]
+    "traits": [
+      "사업자 등록 정상",
+      "재고가 적다"
+    ],
+    "accent": "#16a34a"
   },
   {
     "id": "market-hyper",
@@ -19,7 +23,11 @@
     "priceMod": 1,
     "traceHeat": 0,
     "openedDaysAgo": 2100,
-    "traits": ["한 번에 조금씩만 판다", "결제 기록이 남는다"]
+    "traits": [
+      "한 번에 조금씩만 판다",
+      "결제 기록이 남는다"
+    ],
+    "accent": "#2563eb"
   },
   {
     "id": "market-clearnet",
@@ -30,7 +38,11 @@
     "priceMod": 1.15,
     "traceHeat": 1,
     "openedDaysAgo": 12,
-    "traits": ["가격이 시세보다 30% 낮음", "문의 응답이 너무 빠름"]
+    "traits": [
+      "가격이 시세보다 30% 낮음",
+      "문의 응답이 너무 빠름"
+    ],
+    "accent": "#0ea5e9"
   },
   {
     "id": "market-quickdrop",
@@ -41,7 +53,11 @@
     "priceMod": 1.15,
     "traceHeat": 1,
     "openedDaysAgo": 4,
-    "traits": ["리뷰 문체가 전부 동일", "오픈 4일차"]
+    "traits": [
+      "리뷰 문체가 전부 동일",
+      "오픈 4일차"
+    ],
+    "accent": "#f97316"
   },
   {
     "id": "market-nightbazaar",
@@ -52,7 +68,10 @@
     "priceMod": 0.85,
     "traceHeat": 0,
     "openedDaysAgo": 240,
-    "traits": ["오래된 도메인"]
+    "traits": [
+      "오래된 도메인"
+    ],
+    "accent": "#a855f7"
   },
   {
     "id": "market-lastcall",
@@ -64,6 +83,10 @@
     "traceHeat": 0,
     "invite": true,
     "openedDaysAgo": 90,
-    "traits": ["공지에 작별 인사", "초대 코드가 있어야 열린다"]
+    "traits": [
+      "공지에 작별 인사",
+      "초대 코드가 있어야 열린다"
+    ],
+    "accent": "#64748b"
   }
 ]

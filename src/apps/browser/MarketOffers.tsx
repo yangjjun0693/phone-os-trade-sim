@@ -121,17 +121,30 @@ export function MarketOffers({ market }: { market: MarketSite }) {
                 <motion.span
                   animate={bought ? { rotate: [0, -8, 0], scale: [1, 1.08, 1] } : { rotate: 0, scale: 1 }}
                   transition={SPRING_BOUNCY}
-                  className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-ios-accent/10"
+                  className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: `${market.accent}1f` }}
                 >
-                  <Package className="size-4 text-ios-accent" aria-hidden />
+                  <Package className="size-4" style={{ color: market.accent }} aria-hidden />
                 </motion.span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
                     <p className="truncate text-[15px] font-semibold">{offer.name}</p>
                     <span className="shrink-0 text-[13px] text-ios-muted">×{offer.qty}</span>
                   </div>
-                  <p className="mt-0.5 text-[12px] text-ios-muted">
-                    개당 {formatCash(offer.unitPrice)} · 시세 {formatCash(offer.marketPrice)}
+                  <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-ios-muted">
+                    <span>개당 {formatCash(offer.unitPrice)}</span>
+                    <span>· 시세 {formatCash(offer.marketPrice)}</span>
+                    {Math.round(offer.drift * 100) !== 100 ? (
+                      <span
+                        className={cn(
+                          'font-semibold',
+                          offer.drift > 1 ? 'text-ios-red' : 'text-ios-green',
+                        )}
+                      >
+                        {offer.drift > 1 ? '▲' : '▼'}
+                        {Math.abs(Math.round((offer.drift - 1) * 100))}%
+                      </span>
+                    ) : null}
                   </p>
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <span className="flex items-baseline gap-1.5">
@@ -152,11 +165,10 @@ export function MarketOffers({ market }: { market: MarketSite }) {
                       onClick={() => buy(offer)}
                       whileTap={disabled ? undefined : { scale: 0.94 }}
                       transition={SPRING_BOUNCY}
+                      style={disabled ? undefined : { backgroundColor: market.accent }}
                       className={cn(
                         'flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold transition-colors',
-                        disabled
-                          ? 'bg-ios-separator/20 text-ios-muted'
-                          : 'bg-ios-accent text-white',
+                        disabled ? 'bg-ios-separator/20 text-ios-muted' : 'text-white',
                       )}
                     >
                       <AnimatePresence mode="wait" initial={false}>

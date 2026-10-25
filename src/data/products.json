@@ -14,11 +14,25 @@
     "street": 16000
   },
   {
+    "id": "product-syrup",
+    "name": "기침 시럽",
+    "category": "코데인",
+    "wholesale": 8000,
+    "street": 21000
+  },
+  {
     "id": "product-capsule",
     "name": "엑스터시 사탕 10정",
     "category": "메틸렌디옥시메탐페타민",
     "wholesale": 9000,
     "street": 25000
+  },
+  {
+    "id": "product-molly",
+    "name": "몰리 캡슐",
+    "category": "MDMA",
+    "wholesale": 12000,
+    "street": 33000
   },
   {
     "id": "product-powder",
@@ -28,10 +42,38 @@
     "street": 42000
   },
   {
+    "id": "product-vape",
+    "name": "액상 카트리지",
+    "category": "합성 대마",
+    "wholesale": 18000,
+    "street": 45000
+  },
+  {
     "id": "product-card",
     "name": "LSD 카드",
     "category": "카드",
     "wholesale": 26000,
     "street": 72000
+  },
+  {
+    "id": "product-weed",
+    "name": "대마 5g",
+    "category": "대마초",
+    "wholesale": 30000,
+    "street": 80000
+  },
+  {
+    "id": "product-meth",
+    "name": "필로폰 0.5g",
+    "category": "메스암페타민",
+    "wholesale": 45000,
+    "street": 120000
+  },
+  {
+    "id": "product-ampoule",
+    "name": "프로포폴 앰플",
+    "category": "진정제",
+    "wholesale": 55000,
+    "street": 140000
   }
 ]

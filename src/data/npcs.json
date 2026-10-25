@@ -57,5 +57,123 @@
     "kind": "undercover",
     "bio": "시세를 지나치게 잘 안다. 접근이 빠르다.",
     "channel": "phone"
+  },
+  {
+    "id": "npc-bomi",
+    "name": "보미",
+    "kind": "regular",
+    "bio": "클럽 쪽에서 알음알음 소개받은 사람. 새벽에 산다.",
+    "channel": "telegraph",
+    "altChannel": "phone"
+  },
+  {
+    "id": "npc-tae",
+    "name": "태식",
+    "kind": "difficult",
+    "bio": "값을 깎는 대신 수량을 크게 잡는다.",
+    "channel": "phone"
+  },
+  {
+    "id": "npc-min",
+    "name": "민수",
+    "kind": "regular",
+    "bio": "조용하고 말이 없다. 확인만 하고 간다.",
+    "channel": "telegraph"
+  },
+  {
+    "id": "npc-ji",
+    "name": "지연",
+    "kind": "regular",
+    "bio": "친구들 사이에서 소문을 퍼뜨리는 편.",
+    "channel": "phone",
+    "altChannel": "telegraph"
+  },
+  {
+    "id": "npc-chan",
+    "name": "찬영",
+    "kind": "difficult",
+    "bio": "수량을 말하고도 현장에서 절반만 가져간다.",
+    "channel": "telegraph"
+  },
+  {
+    "id": "npc-nari",
+    "name": "나리",
+    "kind": "regular",
+    "bio": "미용실에서 일한다. 손님을 자주 소개한다.",
+    "channel": "phone"
+  },
+  {
+    "id": "npc-woo",
+    "name": "우진",
+    "kind": "difficult",
+    "bio": "조금만 늦어도 바로 다른 데로 간다.",
+    "channel": "telegraph",
+    "altChannel": "phone"
+  },
+  {
+    "id": "npc-hong",
+    "name": "홍 씨",
+    "kind": "regular",
+    "bio": "중고차 딜러. 손이 크고 입이 무겁다.",
+    "channel": "telegraph"
+  },
+  {
+    "id": "npc-eun",
+    "name": "은정",
+    "kind": "regular",
+    "bio": "새로 이사 온 이웃. 아직 아무것도 모른다.",
+    "channel": "phone"
+  },
+  {
+    "id": "npc-jae",
+    "name": "재훈",
+    "kind": "difficult",
+    "bio": "값을 흥정하다가 자리를 뜨는 습관이 있다.",
+    "channel": "phone",
+    "altChannel": "telegraph"
+  },
+  {
+    "id": "npc-park",
+    "name": "경비 아저씨",
+    "kind": "regular",
+    "bio": "주차장에서 밤을 새운다. 눈이 밝다.",
+    "channel": "telegraph"
+  },
+  {
+    "id": "npc-riku",
+    "name": "리쿠",
+    "kind": "undercover",
+    "bio": "말이 짧고, 항상 사진을 요구한다.",
+    "channel": "telegraph"
+  },
+  {
+    "id": "npc-sol",
+    "name": "솔",
+    "kind": "regular",
+    "bio": "대학가 쪽에서 지인을 모은다. 소량을 자주 산다.",
+    "channel": "phone",
+    "altChannel": "telegraph"
+  },
+  {
+    "id": "npc-deok",
+    "name": "덕구",
+    "kind": "difficult",
+    "bio": "선입금을 요구해보라고 은근히 떠본다.",
+    "channel": "telegraph"
+  },
+  {
+    "id": "npc-ha",
+    "name": "하늘",
+    "kind": "undercover",
+    "bio": "취재를 한다고 말하지만 신분증은 없다.",
+    "channel": "phone"
+  },
+  {
+    "id": "npc-gun",
+    "name": "건우",
+    "kind": "regular",
+    "bio": "터미널 근처에서 만나자고만 한다.",
+    "channel": "telegraph",
+    "altChannel": "phone"
   }
 ]

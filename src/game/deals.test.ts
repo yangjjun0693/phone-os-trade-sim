@@ -14,6 +14,7 @@ import {
   remainingMinutes,
   type Deal,
 } from './deals';
+import { trustMultiplier } from './trade';
 
 const NOW = '2026-03-15T02:00:00.000Z';
 const inMinutes = (minutes: number) =>
@@ -40,7 +41,7 @@ const stock = (qty: number, productId = 'product-pill'): InventoryItem[] => [
 ];
 
 describe('booking a deal', () => {
-  it('creates a deal priced off the street value', () => {
+  it('creates a deal priced off the street value and the customer trust', () => {
     const created = createDeal({
       spec: { productId: 'product-pill', qty: 3, dueMinutes: 240 },
       npcId: 'npc-dal',
@@ -48,16 +49,32 @@ describe('booking a deal', () => {
       scriptId: 'msg-dal-ask',
       now: NOW,
       products,
+      trust: 20,
     });
 
     expect(created).not.toBeNull();
     expect(created?.productName).toBe('미상의 알약');
-    expect(created?.unitPrice).toBe(11_000);
+    expect(created?.unitPrice).toBe(Math.round(11_000 * trustMultiplier(20)));
     expect(created?.status).toBe('booked');
     expect(remainingMinutes(created!, NOW)).toBe(240);
   });
 
+  it('pays more once the customer knows you', () => {
+    const deal = (trust: number) =>
+      createDeal({
+        spec: { productId: 'product-pill', qty: 3, dueMinutes: 240 },
+        npcId: 'npc-dal',
+        messageId: 'm1',
+        scriptId: 'msg-dal-ask',
+        now: NOW,
+        products,
+        trust,
+      });
+    expect(deal(80)!.unitPrice).toBeGreaterThan(deal(10)!.unitPrice);
+  });
+
   it('honours the discount factor', () => {
+    const factor = 0.85 * trustMultiplier(20);
     const created = createDeal({
       spec: { productId: 'product-powder', qty: 8, dueMinutes: 240, priceFactor: 0.85 },
       npcId: 'npc-boss',
@@ -65,9 +82,10 @@ describe('booking a deal', () => {
       scriptId: 'msg-boss-bulk',
       now: NOW,
       products,
+      trust: 20,
     });
-    expect(created?.unitPrice).toBe(Math.round(42_000 * 0.85));
-    expect(dealTotal(created!)).toBe(Math.round(42_000 * 0.85) * 8);
+    expect(created?.unitPrice).toBe(Math.round(42_000 * factor));
+    expect(dealTotal(created!)).toBe(Math.round(42_000 * factor) * 8);
   });
 
   it('refuses unknown products and floors the deadline', () => {

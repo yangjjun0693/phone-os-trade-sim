@@ -9,6 +9,7 @@ import { nanoid } from 'nanoid';
 import { addMinutes } from 'date-fns';
 import type { InventoryItem, Place, PlaceKind, Product } from '@/types';
 import { patrolLevel, type PatrolLevel } from './patrol';
+import { trustMultiplier } from './trade';
 
 export type DealStatus = 'booked' | 'done' | 'missed';
 
@@ -104,6 +105,8 @@ export interface CreateDealInput {
   scriptId: string;
   now: string;
   products: readonly Product[];
+  /** Customer trust at the time of booking (0–100). */
+  trust?: number;
 }
 
 /** Books a deal. Returns `null` when the spec points at an unknown product. */
@@ -112,7 +115,7 @@ export function createDeal(input: CreateDealInput): Deal | null {
   if (!product) return null;
 
   const qty = Math.max(1, Math.floor(input.spec.qty));
-  const factor = input.spec.priceFactor ?? 1;
+  const factor = (input.spec.priceFactor ?? 1) * trustMultiplier(input.trust ?? 20);
   return {
     id: `deal-${nanoid(6)}`,
     npcId: input.npcId,

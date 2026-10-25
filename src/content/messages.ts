@@ -239,6 +239,201 @@ export const MESSAGE_SCRIPTS: MessageScript[] = [
   },
 ];
 
+export const MESSAGE_SCRIPTS_EXTRA: MessageScript[] = [
+  {
+    id: 'msg-bomi-club',
+    from: 'npc-bomi',
+    delayMinutes: [30, 120],
+    opener: '클럽 쪽에서 쓰는 애들인데, 몰리 있어? 오늘 새벽까지 필요해.',
+    choices: [
+      {
+        id: 'book',
+        label: '약속을 잡는다',
+        reply: '4개 잡아둘게. 새벽 두 시까지 와.',
+        outcome: '약속이 잡혔다. 금액이 큰 대신 기한이 짧다.',
+        effect: { trust: 4, heat: 2 },
+        booking: { productId: 'product-molly', qty: 4, dueMinutes: 720 },
+      },
+      {
+        id: 'move-phone',
+        label: '문자로 옮기자고 한다',
+        reply: '익명 앱은 확인이 늦어. 문자로 하자.',
+        outcome: '보미가 번호를 알려줬다. 대화가 문자로 옮겨졌다.',
+        effect: { heat: 3, trust: 1 },
+        moveTo: 'phone',
+      },
+      {
+        id: 'later',
+        label: '오늘은 어렵다고 한다',
+        reply: '오늘은 물량이 없어. 내일 보자.',
+        outcome: '보미가 아쉬워하면서도 알겠다고 했다.',
+        effect: { trust: -1 },
+      },
+    ],
+  },
+  {
+    id: 'msg-tae-bulk',
+    from: 'npc-tae',
+    delayMinutes: [40, 150],
+    opener: '값 깎는 대신 많이 가져갈게. 2개 단위로 얘기하자.',
+    choices: [
+      {
+        id: 'deal',
+        label: '대량 약속을 잡는다',
+        reply: '2개 잡아둘게. 값은 10% 빼준다.',
+        outcome: '큰 약속이 잡혔다.',
+        effect: { trust: 3, heat: 2 },
+        booking: { productId: 'product-meth', qty: 2, dueMinutes: 600, priceFactor: 0.9 },
+      },
+      {
+        id: 'hold',
+        label: '값은 못 깎는다고 한다',
+        reply: '이 값이면 남는 게 없어.',
+        outcome: '태식이 고민하다가 다음에 보자고 했다.',
+        effect: { trust: -2 },
+      },
+    ],
+  },
+  {
+    id: 'msg-riku-photo',
+    from: 'npc-riku',
+    delayMinutes: [35, 140],
+    opener: '물건 사진 한 장만 보내줘. 상태 확인용.',
+    choices: [
+      {
+        id: 'refuse',
+        label: '사진은 안 된다고 한다',
+        reply: '사진은 안 보내. 필요하면 직접 보자.',
+        outcome: '상대가 알겠다면서도 계속 사진을 요구한다.',
+        effect: { heat: 1 },
+      },
+      {
+        id: 'send',
+        label: '대충 찍어 보낸다',
+        reply: '(사진을 보냈다)',
+        outcome: '사진에 손끝과 배경이 그대로 담겼다. 위험하다.',
+        effect: { heat: 8, trust: 2 },
+      },
+      {
+        id: 'block',
+        label: '차단한다',
+        reply: '(대화를 종료했습니다)',
+        outcome: '연락을 끊었다.',
+        effect: { heat: -2, trust: -1 },
+      },
+    ],
+  },
+  {
+    id: 'msg-sol-small',
+    from: 'npc-sol',
+    delayMinutes: [20, 90],
+    opener: '오늘 소량만 필요해. 3개 정도.',
+    choices: [
+      {
+        id: 'book',
+        label: '약속을 잡는다',
+        reply: '3개 잡아둘게. 저녁까지 와.',
+        outcome: '소량 약속이 잡혔다. 자주 오는 손님이다.',
+        effect: { trust: 3, heat: 1 },
+        booking: { productId: 'product-syrup', qty: 3, dueMinutes: 480 },
+      },
+      {
+        id: 'move-telegraph',
+        label: '익명 앱으로 옮기자고 한다',
+        reply: '번호 대신 다른 앱으로 하자.',
+        outcome: '솔이 앱을 새로 깔겠다고 했다.',
+        effect: { heat: -2, trust: 1 },
+        moveTo: 'telegraph',
+      },
+      {
+        id: 'no',
+        label: '지금은 없다고 한다',
+        reply: '지금은 없어. 내일 보자.',
+        outcome: '솔이 알겠다고 했다.',
+        effect: { trust: -1 },
+      },
+    ],
+  },
+  {
+    id: 'msg-hong-big',
+    from: 'npc-hong',
+    delayMinutes: [60, 200],
+    opener: '손이 큰 손님을 알고 있다. 좋은 걸로 3개 가능하냐.',
+    choices: [
+      {
+        id: 'deal',
+        label: '약속을 잡는다',
+        reply: '3개 잡아둘게. 값은 10% 빼준다.',
+        outcome: '가장 큰 약속이 잡혔다.',
+        effect: { trust: 4 },
+        booking: { productId: 'product-ampoule', qty: 3, dueMinutes: 900, priceFactor: 0.9 },
+      },
+      {
+        id: 'small',
+        label: '소량만 하겠다고 한다',
+        reply: '지금은 그 정도는 어려워.',
+        outcome: '홍 씨가 아쉬워하면서도 알겠다고 했다.',
+        effect: { trust: -1 },
+      },
+    ],
+  },
+  {
+    id: 'msg-ha-press',
+    from: 'npc-ha',
+    delayMinutes: [45, 180],
+    opener: '안녕하세요, 시내 쪽 사정을 취재하고 있습니다. 잠깐 얘기 가능할까요?',
+    choices: [
+      {
+        id: 'talk',
+        label: '적당히 응한다',
+        reply: '별거 없어요. 그냥 평범하게 살아요.',
+        outcome: '상대가 계속 질문을 이어갔다. 답변이 길어질수록 좋지 않다.',
+        effect: { heat: 7 },
+      },
+      {
+        id: 'refuse',
+        label: '바쁘다고 한다',
+        reply: '죄송하지만 지금은 어렵습니다.',
+        outcome: '상대가 명함만 남기고 물러섰다.',
+        effect: { heat: 1 },
+      },
+      {
+        id: 'block',
+        label: '차단한다',
+        reply: '(대화를 종료했습니다)',
+        outcome: '조용히 정리했다.',
+        effect: { heat: -1, trust: -1 },
+      },
+    ],
+  },
+  {
+    id: 'msg-gun-terminal',
+    from: 'npc-gun',
+    delayMinutes: [50, 190],
+    opener: '터미널 쪽에서 보자. 2개면 된다.',
+    choices: [
+      {
+        id: 'book',
+        label: '약속을 잡는다',
+        reply: '2개 잡아둘게. 열한 시까지 터미널로 와.',
+        outcome: '터미널 약속이 잡혔다. 사람이 많은 곳이다.',
+        effect: { trust: 3, heat: 2 },
+        booking: { productId: 'product-weed', qty: 2, dueMinutes: 600 },
+      },
+      {
+        id: 'move-phone',
+        label: '문자로 옮기자고 한다',
+        reply: '익명 앱 대신 문자로 하자.',
+        outcome: '건우가 번호를 알려줬다.',
+        effect: { heat: 3, trust: 1 },
+        moveTo: 'phone',
+      },
+    ],
+  },
+];
+
+MESSAGE_SCRIPTS.push(...MESSAGE_SCRIPTS_EXTRA);
+
 export function findScript(id: string): MessageScript | undefined {
   return MESSAGE_SCRIPTS.find((script) => script.id === id);
 }

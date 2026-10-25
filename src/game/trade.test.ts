@@ -19,6 +19,7 @@ const market: MarketSite = {
   tagline: 'test',
   status: 'legit',
   reach: 'onion',
+  accent: '#0a84ff',
   priceMod: 1,
   traceHeat: 0,
   openedDaysAgo: 30,
