@@ -18,3 +18,4 @@ export * from './steak';
 export * from './trade';
 export * from './messenger';
 export * from './deals';
+export * from './shipments';

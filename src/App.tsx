@@ -18,8 +18,9 @@ export function App() {
     const id = window.setInterval(() => {
       const store = useGameStore.getState();
       store.advanceGameTime(1);
-      // Customers write in over time; the clock is what drives the inbox.
+      // The clock drives everything that happens over time.
       store.tickMessenger();
+      store.tickShipments();
     }, GAME_CLOCK_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, []);

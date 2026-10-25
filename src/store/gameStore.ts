@@ -19,6 +19,14 @@ import {
 } from '@/game/steak';
 import { npcs, products } from '@/data';
 import { START_BANK, START_CASH, START_CHIPS } from '@/content/economy';
+import { DEFAULT_ADDRESS, type DropAddress } from '@/content/logistics';
+import {
+  advanceShipments,
+  arrivalHeat,
+  createShipment,
+  shippingFee,
+  type Shipment,
+} from '@/game/shipments';
 import { createDeal, expireDeals, fulfilDeal as deliverDeal, type Deal } from '@/game/deals';
 import {
   expireInbox,
@@ -105,6 +113,10 @@ export interface BuyResult {
   ok: boolean;
   error?: string;
   outcome?: PurchaseOutcome;
+  /** The parcel this order created, when the seller actually shipped. */
+  shipment?: Shipment;
+  /** Delivery / storage fee that was charged on top of the lot. */
+  fee?: number;
 }
 
 export interface SellResult {
@@ -134,6 +146,12 @@ export interface DealActionResult {
   error?: string;
   message?: string;
   total?: number;
+}
+
+export interface ShipmentActionResult {
+  ok: boolean;
+  error?: string;
+  message?: string;
 }
 
 export type CustomerAction = 'accept' | 'counter';
@@ -171,6 +189,8 @@ export interface GameState {
   messengerLastAt: string | null;
   /** Appointments booked over the messenger; delivered in the Trade app. */
   deals: Deal[];
+  /** Parcels on the way to a chosen address; collected in 구팡. */
+  shipments: Shipment[];
   stats: GameStats;
   /** The most recent day-end report, shown in the Trade app. */
   lastReport: DayReport | null;
@@ -200,11 +220,15 @@ export interface GameState {
   steakWithdraw: (amount: number) => BankResult;
   playSteakBet: (bet: SteakBet, amount: number) => SteakPlayResult;
   // Core trading loop
-  buyMarketOffer: (offer: MarketOffer, status: MarketStatus) => BuyResult;
+  buyMarketOffer: (offer: MarketOffer, status: MarketStatus, address?: DropAddress) => BuyResult;
   /** Learn an onion address (no-op if it is already known). */
   discoverMarket: (marketId: string) => void;
   /** Roll for new messenger arrivals (safe to call often). */
   tickMessenger: () => void;
+  /** Land any parcels that are due (called by the game clock). */
+  tickShipments: () => void;
+  /** Collect a delivered parcel into inventory. */
+  collectShipment: (shipmentId: string) => ShipmentActionResult;
   /** Answer a thread. Returns the applied effects for the UI to show. */
   answerInbox: (messageId: string, choiceId: string) => InboxAnswer;
   /** Deliver a booked appointment out of stock. */
@@ -308,6 +332,7 @@ function createInitialState() {
     trust: 20,
     messengerLastAt: GAME_EPOCH,
     // One opening appointment so the Trade app explains itself immediately.
+    shipments: [],
     deals: [
       {
         id: 'deal-seed-1',
@@ -358,6 +383,7 @@ type PersistedGame = Pick<
   | 'trust'
   | 'messengerLastAt'
   | 'deals'
+  | 'shipments'
 >;
 
 export const useGameStore = create<GameState>()(
@@ -597,6 +623,50 @@ export const useGameStore = create<GameState>()(
           s.inbox = arrival ? [arrival, ...expired].slice(0, 40) : expired;
           if (arrival) s.messengerLastAt = s.gameDateTime;
         }),
+      tickShipments: () =>
+        set((s) => {
+          if (s.status !== 'playing') return;
+          const { shipments, landed } = advanceShipments(s.shipments, s.gameDateTime);
+          s.shipments = shipments;
+          if (landed.length === 0) return;
+
+          // A parcel landing at your own door is exactly what neighbours notice.
+          const heat = landed.reduce((sum, shipment) => sum + arrivalHeat(shipment), 0);
+          s.heat = Math.min(100, Math.max(0, s.heat + heat));
+          if (s.heat >= 100) {
+            s.status = 'busted';
+            s.statusReason = '집 앞에서 물건이 잡혔다. 더는 버틸 수 없다.';
+          }
+        }),
+      collectShipment: (shipmentId) => {
+        let result: ShipmentActionResult = { ok: false };
+        set((s) => {
+          const shipment = s.shipments.find((entry) => entry.id === shipmentId);
+          if (!shipment) {
+            result = { ok: false, error: '배송 정보를 찾을 수 없습니다.' };
+            return;
+          }
+          if (shipment.status !== 'arrived') {
+            result = { ok: false, error: '아직 수령할 수 없습니다.' };
+            return;
+          }
+
+          s.inventory = addToInventory(s.inventory, {
+            productId: shipment.productId,
+            name: shipment.productName,
+            qty: shipment.qty,
+            unitCost: shipment.unitCost,
+            marketPrice: shipment.marketPrice,
+          });
+          shipment.status = 'collected';
+          shipment.note = undefined;
+          result = {
+            ok: true,
+            message: `${shipment.productName} ${shipment.qty}개를 수령했습니다.`,
+          };
+        });
+        return result;
+      },
       fulfilDeal: (dealId) => {
         let result: DealActionResult = { ok: false };
         set((s) => {
@@ -717,7 +787,7 @@ export const useGameStore = create<GameState>()(
           }
         }),
       // Core trading loop
-      buyMarketOffer: (offer, marketStatus) => {
+      buyMarketOffer: (offer, marketStatus, address = DEFAULT_ADDRESS) => {
         let result: BuyResult = { ok: false };
         set((s) => {
           if (s.status !== 'playing') {
@@ -732,25 +802,33 @@ export const useGameStore = create<GameState>()(
           }
 
           const total = Math.round(offer.unitPrice * offer.qty);
-          if (total > s.cash) {
+          const fee = shippingFee(address);
+          if (total + fee > s.cash) {
             result = { ok: false, error: '현금이 부족합니다.' };
             return;
           }
 
           const outcome = resolvePurchase(offer, marketStatus, Math.random);
-          s.cash -= total;
-          s.stats.spent += total;
+          s.cash -= total + fee;
+          s.stats.spent += total + fee;
           s.purchases[offer.id] = alreadyBought + offer.qty;
           s.heat = Math.min(100, Math.max(0, s.heat + outcome.heatDelta));
 
+          // Stock does not appear out of thin air any more: a seller that
+          // actually shipped creates a parcel the player has to collect.
+          let shipment: Shipment | undefined;
           if (outcome.deliveredQty > 0) {
-            s.inventory = addToInventory(s.inventory, {
+            shipment = createShipment({
+              marketId: offer.marketId,
               productId: offer.productId,
-              name: offer.name,
+              productName: offer.name,
               qty: outcome.deliveredQty,
               unitCost: offer.unitPrice,
               marketPrice: offer.marketPrice,
+              address,
+              now: s.gameDateTime,
             });
+            s.shipments = [shipment, ...s.shipments].slice(0, 40);
           }
 
           if (s.heat >= 100) {
@@ -758,7 +836,7 @@ export const useGameStore = create<GameState>()(
             s.statusReason = '무리한 거래가 추적망을 불렀다. 문 밖에서 발소리가 들린다.';
           }
 
-          result = { ok: true, outcome };
+          result = { ok: true, outcome, shipment, fee };
         });
         return result;
       },
@@ -909,6 +987,7 @@ export const useGameStore = create<GameState>()(
         trust: state.trust,
         messengerLastAt: state.messengerLastAt,
         deals: state.deals,
+        shipments: state.shipments,
       }),
       migrate: (persisted) => {
         const previous = (persisted ?? {}) as Partial<PersistedGame>;
@@ -930,6 +1009,7 @@ export const useGameStore = create<GameState>()(
           trust: previous.trust ?? base.trust,
           messengerLastAt: previous.messengerLastAt ?? base.messengerLastAt,
           deals: previous.deals ?? base.deals,
+          shipments: previous.shipments ?? base.shipments,
         };
       },
     },

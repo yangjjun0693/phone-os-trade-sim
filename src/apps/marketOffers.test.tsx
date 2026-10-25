@@ -35,7 +35,8 @@ describe('MarketOffers', () => {
 
     expect(screen.getByText('매입 완료')).toBeInTheDocument();
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(useGameStore.getState().inventory.length).toBeGreaterThan(0);
+    // The lot is shipped to the chosen address, so it arrives via 구팡.
+    expect(useGameStore.getState().shipments.length).toBeGreaterThan(0);
     expect(useGameStore.getState().cash).toBeLessThan(5_000_000);
   });
 
@@ -49,5 +50,6 @@ describe('MarketOffers', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('사라졌다');
     expect(useGameStore.getState().inventory).toHaveLength(0);
+    expect(useGameStore.getState().shipments).toHaveLength(0);
   });
 });

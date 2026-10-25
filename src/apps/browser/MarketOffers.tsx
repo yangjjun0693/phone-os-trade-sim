@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Package, ShoppingBag, TriangleAlert } from 'lucide-react';
 import { products } from '@/data';
-import { generateMarketOffers, type MarketOffer } from '@/game/trade';
+import { ADDRESSES, DEFAULT_ADDRESS, findAddress, type DropAddress } from '@/content/logistics';
+import { generateMarketOffers, shippingFee, type MarketOffer } from '@/game';
 import { AnimatedNumber, Burst } from '@/components';
 import { useGameStore } from '@/store/gameStore';
 import { cn } from '@/utils/cn';
@@ -28,6 +29,8 @@ export function MarketOffers({ market }: { market: MarketSite }) {
   const buyMarketOffer = useGameStore((s) => s.buyMarketOffer);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [burstId, setBurstId] = useState<string | null>(null);
+  const [address, setAddress] = useState<DropAddress>(DEFAULT_ADDRESS);
+  const fee = shippingFee(address);
 
   const offers = useMemo(
     () => generateMarketOffers(market, products, day),
@@ -35,7 +38,7 @@ export function MarketOffers({ market }: { market: MarketSite }) {
   );
 
   const buy = (offer: MarketOffer) => {
-    const result = buyMarketOffer(offer, market.status);
+    const result = buyMarketOffer(offer, market.status, address);
     if (!result.ok) {
       haptic(12);
       setFeedback({ tone: 'error', text: result.error ?? '주문하지 못했습니다.' });
@@ -47,9 +50,12 @@ export function MarketOffers({ market }: { market: MarketSite }) {
       setBurstId(offer.id);
       window.setTimeout(() => setBurstId(null), 900);
     }
+    const shipping = result.shipment
+      ? ` · ${findAddress(result.shipment.address).label}로 배송 중 (구팡에서 수령)`
+      : '';
     setFeedback({
       tone: outcome?.kind === 'delivered' ? 'ok' : 'warn',
-      text: outcome?.message ?? '주문을 처리했습니다.',
+      text: `${outcome?.message ?? '주문을 처리했습니다.'}${shipping}`,
     });
   };
 
@@ -60,11 +66,45 @@ export function MarketOffers({ market }: { market: MarketSite }) {
         <span className="text-[11px] text-ios-muted">Day {day} · 매일 교체</span>
       </div>
 
+      {/* 수령 주소: 물건은 바로 손에 들어오지 않고 배송된다. */}
+      <div className="mb-3 rounded-2xl bg-ios-surface p-3 ring-1 ring-black/5 dark:ring-white/5">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[12px] font-medium text-ios-muted">수령 주소</span>
+          <span className="text-[11px] text-ios-muted">
+            {fee > 0 ? `배송·보관료 ${formatCash(fee)}` : '배송비 무료'}
+          </span>
+        </div>
+        <div className="mt-2 flex gap-1.5">
+          {ADDRESSES.map((option) => {
+            const active = option.id === address;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setAddress(option.id)}
+                aria-pressed={active}
+                className={cn(
+                  'flex-1 rounded-xl px-2 py-2 text-[12px] font-semibold',
+                  active
+                    ? 'bg-ios-accent text-white'
+                    : 'bg-ios-separator/15 text-ios-muted',
+                )}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-ios-muted">
+          {findAddress(address).hint} · 도착 시 heat +{findAddress(address).heat}
+        </p>
+      </div>
+
       <div className="space-y-2">
         {offers.map((offer, index) => {
           const bought = (purchases[offer.id] ?? 0) >= offer.qty;
           const total = Math.round(offer.unitPrice * offer.qty);
-          const canAfford = cash >= total;
+          const canAfford = cash >= total + fee;
           const disabled = bought || !canAfford || status !== 'playing';
 
           return (
@@ -94,11 +134,18 @@ export function MarketOffers({ market }: { market: MarketSite }) {
                     개당 {formatCash(offer.unitPrice)} · 시세 {formatCash(offer.marketPrice)}
                   </p>
                   <div className="mt-2 flex items-center justify-between gap-2">
-                    <AnimatedNumber
-                      value={total}
-                      format={formatCash}
-                      className="text-[14px] font-semibold"
-                    />
+                    <span className="flex items-baseline gap-1.5">
+                      <AnimatedNumber
+                        value={total}
+                        format={formatCash}
+                        className="text-[14px] font-semibold"
+                      />
+                      {fee > 0 ? (
+                        <span className="text-[11px] text-ios-muted">
+                          + 배송 {formatCash(fee)}
+                        </span>
+                      ) : null}
+                    </span>
                     <motion.button
                       type="button"
                       disabled={disabled}

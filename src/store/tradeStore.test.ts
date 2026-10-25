@@ -60,8 +60,8 @@ afterEach(() => {
 });
 
 describe('buying from a market', () => {
-  it('spends cash and adds the delivered lot to inventory', () => {
-    useGameStore.setState({ inventory: [] });
+  it('spends cash and puts the lot on a delivery', () => {
+    useGameStore.setState({ inventory: [], shipments: [] });
     const offer = generateMarketOffers(market, products, 1)[0];
     const total = offer.unitPrice * offer.qty;
 
@@ -70,10 +70,32 @@ describe('buying from a market', () => {
 
     expect(result.ok).toBe(true);
     expect(result.outcome?.deliveredQty).toBe(offer.qty);
+    expect(result.shipment?.qty).toBe(offer.qty);
     expect(state.cash).toBe(5_000_000 - total);
-    expect(state.inventory[0].qty).toBe(offer.qty);
+    // Goods travel now — they are not in hand until 구팡 is visited.
+    expect(state.inventory).toHaveLength(0);
+    expect(state.shipments[0].status).toBe('in_transit');
     expect(state.heat).toBe(11);
     expect(state.purchases[offer.id]).toBe(offer.qty);
+  });
+
+  it('collects a delivered parcel into inventory', () => {
+    useGameStore.setState({ inventory: [], shipments: [] });
+    const offer = generateMarketOffers(market, products, 1)[0];
+    useGameStore.getState().buyMarketOffer(offer, 'legit');
+
+    const parcel = useGameStore.getState().shipments[0];
+    useGameStore.setState({ gameDateTime: parcel.etaAt });
+    vi.spyOn(Math, 'random').mockReturnValue(0.99); // no seizure, no loss
+    useGameStore.getState().tickShipments();
+
+    const arrived = useGameStore.getState().shipments[0];
+    expect(arrived.status).toBe('arrived');
+
+    const collected = useGameStore.getState().collectShipment(arrived.id);
+    expect(collected.ok).toBe(true);
+    expect(useGameStore.getState().inventory[0].qty).toBe(offer.qty);
+    expect(useGameStore.getState().shipments[0].status).toBe('collected');
   });
 
   it('does not let the player buy the same daily lot twice', () => {

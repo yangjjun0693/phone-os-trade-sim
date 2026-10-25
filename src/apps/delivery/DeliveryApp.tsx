@@ -4,7 +4,10 @@ import { Check, ChevronLeft, ChevronRight, PackageSearch } from 'lucide-react';
 import { PARCELS } from '@/data/parcels';
 import { PARCEL_STATE_LABEL, parcelProgress, type Parcel, type ParcelState } from '@/game/parcels';
 import { Pill, type PillTone } from '@/components';
+import { findAddress } from '@/content/logistics';
+import { SHIPMENT_LABEL, formatShipmentEta, shipmentTotals } from '@/game';
 import { useGameStore } from '@/store/gameStore';
+import { formatCash } from '@/utils/format';
 import { SPRING_SNAPPY, SPRING_SOFT, prefersReducedMotion } from '@/utils/motion';
 import { cn } from '@/utils/cn';
 import { AppShell } from '../AppShell';
@@ -19,6 +22,8 @@ const STATE_TONE: Record<ParcelState, PillTone> = {
 /** 구팡 — parcel tracking whose status moves with the in-game clock. */
 export function DeliveryApp() {
   const gameDateTime = useGameStore((s) => s.gameDateTime);
+  const shipments = useGameStore((s) => s.shipments);
+  const collectShipment = useGameStore((s) => s.collectShipment);
   const [open, setOpen] = useState<Parcel | null>(null);
   const reduced = prefersReducedMotion();
 
@@ -64,6 +69,70 @@ export function DeliveryApp() {
     <div className="relative h-full overflow-hidden bg-ios-bg">
       <AppShell title="구팡" largeTitle>
         <div className="px-4 pb-8">
+          {/* 내 주문: 브라우저에서 산 물량이 여기로 온다. */}
+          {shipments.length > 0 ? (
+            <div className="mb-4">
+              <h2 className="flex items-baseline gap-2 pb-2 pt-1 text-[13px] font-medium text-ios-muted">
+                내 주문
+                <span className="text-[11px]">
+                  배송 중 {shipmentTotals(shipments).in_transit} · 수령 대기{' '}
+                  {shipmentTotals(shipments).arrived}
+                </span>
+              </h2>
+              <ul className="space-y-3">
+                {shipments.slice(0, 6).map((shipment) => {
+                  const arrived = shipment.status === 'arrived';
+                  const option = findAddress(shipment.address);
+                  return (
+                    <li
+                      key={shipment.id}
+                      className="rounded-2xl bg-ios-surface p-4 shadow-sm ring-1 ring-black/5 dark:ring-white/5"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Pill
+                          tone={
+                            shipment.status === 'in_transit'
+                              ? 'blue'
+                              : shipment.status === 'seized' || shipment.status === 'lost'
+                                ? 'red'
+                                : 'green'
+                          }
+                        >
+                          {SHIPMENT_LABEL[shipment.status]}
+                        </Pill>
+                        <span className="text-[11px] text-ios-muted">{option.label}</span>
+                        <span className="ml-auto text-[11px] text-ios-muted">
+                          {shipment.status === 'in_transit'
+                            ? formatShipmentEta(shipment, gameDateTime)
+                            : shipment.status === 'arrived'
+                              ? '지금 수령하세요'
+                              : (shipment.note ?? '')}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 truncate text-[16px] font-semibold">
+                        {shipment.productName} ×{shipment.qty}
+                      </p>
+                      <p className="mt-0.5 text-[12px] text-ios-muted">
+                        {shipment.marketId.replace(/^market-/, '')} · 개당{' '}
+                        {formatCash(shipment.unitCost)}
+                        {shipment.fee > 0 ? ` · 배송료 ${formatCash(shipment.fee)}` : ''}
+                      </p>
+                      {arrived ? (
+                        <button
+                          type="button"
+                          onClick={() => collectShipment(shipment.id)}
+                          className="mt-2.5 h-9 w-full rounded-xl bg-ios-green text-[13px] font-semibold text-white"
+                        >
+                          수령하기
+                        </button>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+
           <h2 className="pb-2 pt-1 text-[13px] font-medium text-ios-muted">진행 중 {active.length}건</h2>
           <ul className="space-y-3">{active.map((row, index) => renderRow(row, index))}</ul>
 
