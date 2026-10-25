@@ -12,6 +12,7 @@ import {
   START_BANK,
   START_CASH,
 } from '@/content/economy';
+import { RUNNERS } from '@/content/runners';
 import { generateMarketOffers, priceDrift, resolveDayEnd, trustMultiplier } from './trade';
 
 /**
@@ -95,10 +96,13 @@ describe('economy: rent', () => {
 });
 
 describe('economy: the day loop is winnable but not trivial', () => {
+  // Market goods are the baseline; special goods come from vendors and are
+  // modelled separately by the runner income below.
+  const standard = products.filter((product) => product.tier !== 'special');
   /** Average margin of one unit sold at street value. */
   const avgUnitMargin =
-    products.reduce((sum, product) => sum + (product.street - product.wholesale), 0) /
-    products.length;
+    standard.reduce((sum, product) => sum + (product.street - product.wholesale), 0) /
+    standard.length;
 
   /**
    * The sell side is the real bottleneck: a customer takes 1–6 units and every
@@ -109,10 +113,15 @@ describe('economy: the day loop is winnable but not trivial', () => {
 
   const grossPerDay = SALES_PER_DAY * AVG_UNITS_PER_SALE * avgUnitMargin;
   const worstRent = RENT_BASE + RENT_STEP_MAX_DAY * RENT_STEP;
-  const netPerDay = grossPerDay - worstRent;
+  // Hired runners sell in the background; assume a small share gets caught.
+  const runnerPerDay =
+    RUNNERS.reduce((sum, runner) => sum + runner.dailyNet, 0) *
+    (1 - RUNNERS.reduce((sum, runner) => sum + runner.catchChance, 0) / RUNNERS.length);
+  const netPerDay = grossPerDay + runnerPerDay - worstRent;
   const monthNet = netPerDay * MAX_DAYS;
 
   it('clears the day expenses on a plausible day of trading', () => {
+    expect(grossPerDay).toBeGreaterThan(worstRent);
     expect(netPerDay).toBeGreaterThan(0);
   });
 

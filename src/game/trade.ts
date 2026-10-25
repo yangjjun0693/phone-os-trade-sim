@@ -19,10 +19,15 @@ import {
   DAY_END_HEAT_DECAY_HOURS,
   HEAT_UNPAID_RENT,
   MAX_DAYS,
+  RAID_BASE_CHANCE,
+  RAID_LOSS_RATIO,
   RENT_BASE,
   RENT_STEP,
   RENT_STEP_MAX_DAY,
   RETIRE_GOAL,
+  RUNNER_CAUGHT_HEAT,
+  STORAGE_CAPACITY,
+  STORAGE_OVERHEAT,
 } from '@/content/economy';
 import { clamp, computeUnitPrice, round2 } from './pricing';
 import { decayHeat, heatFromCash } from './heat';
@@ -121,17 +126,19 @@ export function generateMarketOffers(
   products: Product[],
   day: number,
 ): MarketOffer[] {
-  if (products.length === 0) return [];
+  // Special goods never appear on market shelves — those come from vendors.
+  const catalogue = products.filter((product) => product.tier !== 'special');
+  if (catalogue.length === 0) return [];
   const rng = createSeededRng(hashString(`${market.id}:${day}:offers`));
   const used = new Set<number>();
   const offers: MarketOffer[] = [];
 
   for (let slot = 0; slot < 2; slot += 1) {
-    let index = Math.floor(rng() * products.length) % products.length;
-    if (used.has(index)) index = (index + 1) % products.length;
+    let index = Math.floor(rng() * catalogue.length) % catalogue.length;
+    if (used.has(index)) index = (index + 1) % catalogue.length;
     used.add(index);
 
-    const product = products[index];
+    const product = catalogue[index];
     const [qtyMin, qtyMax] = OFFER_QTY[market.reach] ?? OFFER_QTY.mirror;
     const qty = qtyMin + Math.floor(rng() * (qtyMax - qtyMin + 1));
     const jitter = 0.9 + rng() * 0.2;
@@ -398,11 +405,21 @@ export function resolveCounter(
   };
 }
 
+export interface DayEndRunner {
+  npcId: string;
+  dailyNet: number;
+  catchChance: number;
+}
+
 export interface DayEndInput {
   day: number;
   cash: number;
   heat: number;
   bankBalance: number;
+  /** Units sitting in the stash; too many makes the place interesting. */
+  stockUnits?: number;
+  /** Hired runners: they sell while the player sleeps (and can get caught). */
+  runners?: DayEndRunner[];
 }
 
 export interface DayReport {
@@ -420,6 +437,12 @@ export interface DayReport {
   totalWealth: number;
   status: GameStatus;
   reason: string;
+  /** Runners at work. */
+  runnerIncome: number;
+  runnersCaught: string[];
+  /** Storage raid. */
+  stockUnits: number;
+  raidLost: number;
 }
 
 /** Close the day: rent, a random event, cooling off, then win/lose checks. */
@@ -443,6 +466,35 @@ export function resolveDayEnd(
   let heat = decayHeat(input.heat, DAY_END_HEAT_DECAY_HOURS);
   heat += event?.heatDelta ?? 0;
   if (unpaidRent > 0) heat += HEAT_UNPAID_RENT;
+
+  // Runners sell while the player sleeps — and sometimes get caught.
+  const runners = input.runners ?? [];
+  let runnerIncome = 0;
+  const runnersCaught: string[] = [];
+  for (const runner of runners) {
+    const catchChance = clamp(runner.catchChance + input.heat / 500, 0, 0.6);
+    if (rng() < catchChance) {
+      runnersCaught.push(runner.npcId);
+      heat += RUNNER_CAUGHT_HEAT;
+    } else {
+      runnerIncome += runner.dailyNet;
+    }
+  }
+  cash += runnerIncome;
+
+  // A stash that no longer fits the hiding place attracts attention.
+  const stockUnits = Math.max(0, Math.round(input.stockUnits ?? 0));
+  const overflow = Math.max(0, stockUnits - STORAGE_CAPACITY);
+  let raidLost = 0;
+  if (overflow > 0) {
+    heat += overflow * STORAGE_OVERHEAT;
+    const raidChance = clamp(RAID_BASE_CHANCE + overflow * 0.01 + input.heat / 1000, 0, 0.7);
+    if (rng() < raidChance) {
+      raidLost = Math.floor(stockUnits * RAID_LOSS_RATIO);
+      heat += 10;
+    }
+  }
+
   heat += Math.ceil(heatFromCash(cash) / 2);
   heat = Math.round(clamp(heat, 0, 100));
 
@@ -477,6 +529,10 @@ export function resolveDayEnd(
     totalWealth,
     status,
     reason,
+    runnerIncome: Math.round(runnerIncome),
+    runnersCaught,
+    stockUnits,
+    raidLost,
   };
 }
 

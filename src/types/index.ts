@@ -108,6 +108,8 @@ export interface Product {
   wholesale: number;
   /** Reference street value used for customer offers and UI hints. */
   street: number;
+  /** `special` goods come from vendors, not market sites. */
+  tier?: 'standard' | 'special';
 }
 
 export interface GameNotification {
@@ -150,6 +152,8 @@ export interface NpcProfile {
   channel: MessageChannel;
   /** Second messenger they will agree to move to, if any. */
   altChannel?: MessageChannel;
+  /** True for suppliers: they sell TO the player (see src/content/vendors.ts). */
+  vendor?: boolean;
 }
 
 export interface Clue {

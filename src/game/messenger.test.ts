@@ -182,6 +182,45 @@ describe('answering', () => {
     expect(answer.outcome).toContain('거절');
   });
 
+  it('sells to the player through a supplier when trust allows', () => {
+    const vendor = npcById('npc-vendor-hk')!;
+    const answer = resolveAnswer(
+      message({ scriptId: 'vendor-npc-vendor-hk', npcId: 'npc-vendor-hk', channel: 'phone' }),
+      'order-0',
+      vendor,
+      40,
+    );
+    expect(answer.ok).toBe(true);
+    expect(answer.order?.productId).toBe('product-special-kit');
+    expect(answer.order?.qty).toBe(1);
+  });
+
+  it('refuses a supplier order below the trust it asks for', () => {
+    const vendor = npcById('npc-vendor-cai')!;
+    const answer = resolveAnswer(
+      message({ scriptId: 'vendor-npc-vendor-cai', npcId: 'npc-vendor-cai' }),
+      'order-0',
+      vendor,
+      10,
+    );
+    expect(answer.order).toBeUndefined();
+    expect(answer.outcome).toContain('신뢰');
+    expect(answer.effects.trust).toBeLessThan(0);
+  });
+
+  it('keeps one thread per person', () => {
+    const arrival = rollArrival({
+      now: NOW,
+      lastAt: minutesAgo(MIN_GAP_MINUTES + 10),
+      heat: 60,
+      // 달이 already has something waiting, so she cannot write again.
+      inbox: [message({ npcId: 'npc-dal' })],
+      npcs,
+      rng: () => 0,
+    });
+    expect(arrival?.npcId).not.toBe('npc-dal');
+  });
+
   it('rejects an unknown choice', () => {
     const answer = resolveAnswer(message(), 'nope', npcById('npc-dal'));
     expect(answer.ok).toBe(false);

@@ -25,11 +25,24 @@ export const START_CHIPS = 250_000;
 /* ── 목표 / 기간 ─────────────────────────────────────────── */
 /**
  * 은퇴 목표: 현금 + 예금 합계가 이 값에 도달하면 클리어.
- * 근거(측정): 현재 루프에서 매일 모든 마켓 로트를 사서 시세로 팔면 하루 순이익 ≈ ₩86만,
- * 30일 완벽 플레이 ≈ ₩2,595만. 실수·heat·현금 제약을 감안해 목표는 ₩1,500만.
- * Phase 5(도매/물량/러너) 도입 후 ₩1억으로 상향 예정.
+ * Phase 5에서 품목 11종·스페셜 3종·러너가 들어와 상한이 올라가 ₩1,500만 → ₩2,500만으로 조정.
+ * (밸런스 가드: economy.test.ts 의 "하루 루프는 이길 수 있지만 자명하진 않다")
  */
-export const RETIRE_GOAL = 15_000_000;
+export const RETIRE_GOAL = 25_000_000;
+
+/* ── 재고/보관 ──────────────────────────────────────────── */
+/** 한 곳에 보관할 수 있는 최대 수량(단위). 초과분은 위험해진다. */
+export const STORAGE_CAPACITY = 60;
+/** 초과 1단위당 하루 마감 시 붙는 heat. */
+export const STORAGE_OVERHEAT = 0.4;
+/** 재고가 넘친 상태에서 압수(raid)될 기본 확률. */
+export const RAID_BASE_CHANCE = 0.06;
+/** 압수되면 재고의 이 비율을 잃는다. */
+export const RAID_LOSS_RATIO = 0.4;
+/** 러너 적발 시 오르는 heat. */
+export const RUNNER_CAUGHT_HEAT = 8;
+/** 잡힌 러너가 흘리는 정보로 잃는 신뢰. */
+export const RUNNER_CAUGHT_TRUST = 4;
 /** 이 일수가 지나면 런 종료. */
 export const MAX_DAYS = 30;
 

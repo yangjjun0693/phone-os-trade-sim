@@ -29,7 +29,7 @@ import { ExApp } from './messenger/ExApp';
 import { ForumApp } from './forum/ForumApp';
 import { GmailApp } from './mail/GmailApp';
 import { MapApp } from './map/MapApp';
-import { MessagesApp } from './messages/MessagesApp';
+
 import { MessagesCallApp } from './messenger/MessagesCallApp';
 import { NewsApp } from './news/NewsApp';
 import { NotesApp } from './notes/NotesApp';
@@ -57,14 +57,6 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     icon: TradeIcon,
     gradient: ['#22d3ee', '#2563eb'],
     Component: TradeApp,
-  },
-  messages: {
-    id: 'messages',
-    name: '메시지',
-    accent: '#12b53c',
-    icon: MessagesIcon,
-    gradient: ['#5bf675', '#12b53c'],
-    Component: MessagesApp,
   },
   messagesCall: {
     id: 'messagesCall',

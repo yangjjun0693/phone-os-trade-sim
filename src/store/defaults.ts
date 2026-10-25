@@ -13,9 +13,9 @@ export const DEFAULT_DOCK = ['trade', 'messagesCall', 'chroma', 'settings'];
 export const DEFAULT_PAGES: string[][] = [
   [
     'wallet', 'notes', 'gmall', 'protean',
-    'telegraph', 'ex', 'messages', 'forum',
-    'sailor', 'shade', 'contacts', 'map',
-    'bank', 'news', 'delivery', 'steak',
+    'telegraph', 'ex', 'forum', 'sailor',
+    'shade', 'contacts', 'map', 'bank',
+    'news', 'delivery', 'steak',
   ],
 ];
 
@@ -24,6 +24,6 @@ export const DEFAULT_LAYOUT: HomeLayout = {
   dock: DEFAULT_DOCK,
 };
 
-export const PERSIST_VERSION = 8;
+export const PERSIST_VERSION = 9;
 /** Home layout schema version; bumped separately so game saves are not wiped. */
 export const OS_PERSIST_VERSION = 9;

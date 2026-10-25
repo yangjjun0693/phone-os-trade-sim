@@ -15,9 +15,21 @@
  *      qty: 개수 / dueMinutes: 게임 분 단위 기한 / priceFactor: 시세 대비 배수(1 = 시세)
  */
 import type { MessageChannel } from '@/types';
+import { products } from '@/data';
 import type { BookingSpec } from '@/game/deals';
+import { VENDORS } from './vendors';
 
 export type Channel = MessageChannel;
+
+/** Ordering straight from a supplier (see src/content/vendors.ts). */
+export interface VendorOrder {
+  productId: string;
+  unitPrice: number;
+  qty: number;
+}
+
+const won = (value: number) => `₩${Math.round(value).toLocaleString('ko-KR')}`;
+const productName = (id: string) => products.find((entry) => entry.id === id)?.name ?? id;
 
 export interface MessageChoice {
   id: string;
@@ -32,6 +44,10 @@ export interface MessageChoice {
   moveTo?: Channel;
   /** 이 답장으로 성사되는 약속. */
   booking?: BookingSpec;
+  /** 공급자에게 바로 주문한다(현금 → 배송). */
+  order?: VendorOrder;
+  /** 주문/제안을 받아주는 최소 신뢰. */
+  minTrust?: number;
 }
 
 export interface MessageScript {
@@ -432,7 +448,58 @@ export const MESSAGE_SCRIPTS_EXTRA: MessageScript[] = [
   },
 ];
 
-MESSAGE_SCRIPTS.push(...MESSAGE_SCRIPTS_EXTRA);
+/**
+ * 공급자 대화는 `content/vendors.ts` 에서 자동으로 만들어집니다.
+ * 공급자를 추가하려면 vendors.ts 만 수정하면 됩니다.
+ */
+const VENDOR_SCRIPTS: MessageScript[] = VENDORS.map((vendor) => ({
+  id: `vendor-${vendor.npcId}`,
+  from: vendor.npcId,
+  delayMinutes: [60, 240],
+  opener: vendor.opener,
+  choices: [
+    ...vendor.offers.flatMap((offer, index) => {
+      const stock = Math.max(1, Math.floor(offer.qty));
+      const base = {
+        reply: '그걸로 할게. 입금했어.',
+        outcome: `${offer.note} · 항만 창고로 배송됩니다.`,
+        effect: { heat: 3 },
+        order: { productId: offer.productId, unitPrice: offer.unitPrice, qty: stock },
+      };
+      const haggleUnit = Math.round(offer.unitPrice * (offer.haggleFactor ?? 1));
+      return [
+        {
+          id: `order-${index}`,
+          label: `${productName(offer.productId)} ${stock}개 주문 · ${won(offer.unitPrice * stock)}`,
+          minTrust: offer.minTrust,
+          ...base,
+        },
+        ...(offer.haggleFactor
+          ? [
+              {
+                id: `haggle-${index}`,
+                label: `값을 깎아서 주문 · ${won(haggleUnit * stock)}`,
+                reply: '조금만 빼주면 바로 입금할게.',
+                outcome: '값을 깎아서 받아냈다. 대신 상대가 틱틱거린다.',
+                effect: { heat: 3, trust: -2 },
+                minTrust: Math.min(100, offer.minTrust + 20),
+                order: { productId: offer.productId, unitPrice: haggleUnit, qty: stock },
+              },
+            ]
+          : []),
+      ];
+    }),
+    {
+      id: 'later',
+      label: '다음에 연락한다',
+      reply: '생각해보고 연락할게.',
+      outcome: '상대가 읽고 답이 없다. 연락처는 남아 있다.',
+      effect: {},
+    },
+  ],
+}));
+
+MESSAGE_SCRIPTS.push(...MESSAGE_SCRIPTS_EXTRA, ...VENDOR_SCRIPTS);
 
 export function findScript(id: string): MessageScript | undefined {
   return MESSAGE_SCRIPTS.find((script) => script.id === id);

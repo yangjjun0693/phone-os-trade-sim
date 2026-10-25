@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ARTICLES } from '@/data/news';
-import { PARCELS } from '@/data/parcels';
 import { PLACES } from '@/data/places';
 import { LARGE_DEPOSIT, assessDeposit, validateAmount, type BankTransaction } from './bank';
 import { formatAgo, getFeed, hasBreaking } from './news';
-import { parcelProgress } from './parcels';
 import { isNightHour, patrolLevel } from './patrol';
 
 const NOW = '2026-03-14T21:47:00.000Z';
@@ -60,28 +58,6 @@ describe('patrol', () => {
         expect(['low', 'mid', 'high']).toContain(patrolLevel(place.base, 50, hour, place.nightlife));
       }
     }
-  });
-});
-
-describe('parcels', () => {
-  it('seed parcels land in the expected states at the game epoch', () => {
-    const state = (id: string) => parcelProgress(PARCELS.find((p) => p.id === id)!, NOW).state;
-    expect(state('p-1')).toBe('delivered');
-    expect(state('p-2')).toBe('moving');
-    expect(state('p-3')).toBe('delayed');
-    expect(state('p-4')).toBe('held');
-  });
-
-  it('a delayed parcel eventually moves on', () => {
-    const later = new Date(new Date(NOW).getTime() + 48 * 3_600_000).toISOString();
-    expect(parcelProgress(PARCELS.find((p) => p.id === 'p-3')!, later).state).not.toBe('delayed');
-  });
-
-  it('a held parcel never moves past the hold stage', () => {
-    const later = new Date(new Date(NOW).getTime() + 500 * 3_600_000).toISOString();
-    const progress = parcelProgress(PARCELS.find((p) => p.id === 'p-4')!, later);
-    expect(progress.state).toBe('held');
-    expect(progress.stageIndex).toBe(2);
   });
 });
 

@@ -1,236 +1,174 @@
-import { useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronLeft, ChevronRight, PackageSearch } from 'lucide-react';
-import { PARCELS } from '@/data/parcels';
-import { PARCEL_STATE_LABEL, parcelProgress, type Parcel, type ParcelState } from '@/game/parcels';
-import { Pill, type PillTone } from '@/components';
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { MapPin, PackageSearch } from 'lucide-react';
+import { Pill } from '@/components';
 import { findAddress } from '@/content/logistics';
 import { SHIPMENT_LABEL, formatShipmentEta, shipmentTotals } from '@/game';
 import { useGameStore } from '@/store/gameStore';
 import { formatCash } from '@/utils/format';
-import { SPRING_SNAPPY, SPRING_SOFT, prefersReducedMotion } from '@/utils/motion';
-import { cn } from '@/utils/cn';
+import { SPRING_SNAPPY, fadeUp, staggerContainer } from '@/utils/motion';
 import { AppShell } from '../AppShell';
+import { EmptyState } from '../EmptyState';
+import { Section } from '../SectionList';
 
-const STATE_TONE: Record<ParcelState, PillTone> = {
-  moving: 'blue',
-  delivered: 'green',
-  delayed: 'orange',
-  held: 'red',
-};
+const TONE = {
+  in_transit: 'blue',
+  arrived: 'green',
+  collected: 'neutral',
+  seized: 'red',
+  lost: 'red',
+} as const;
 
-/** 구팡 — parcel tracking whose status moves with the in-game clock. */
+/** 구팡 — only real parcels: everything the player has ordered and must collect. */
 export function DeliveryApp() {
-  const gameDateTime = useGameStore((s) => s.gameDateTime);
   const shipments = useGameStore((s) => s.shipments);
   const collectShipment = useGameStore((s) => s.collectShipment);
-  const [open, setOpen] = useState<Parcel | null>(null);
-  const reduced = prefersReducedMotion();
+  const gameDateTime = useGameStore((s) => s.gameDateTime);
 
-  const rows = useMemo(
-    () => PARCELS.map((parcel) => ({ parcel, progress: parcelProgress(parcel, gameDateTime) })),
-    [gameDateTime],
-  );
-  const active = rows.filter((row) => row.progress.state !== 'delivered');
-  const done = rows.filter((row) => row.progress.state === 'delivered');
-  const openProgress = open ? parcelProgress(open, gameDateTime) : null;
-
-  const renderRow = ({ parcel, progress }: (typeof rows)[number], index: number) => (
-    <motion.li
-      key={parcel.id}
-      layout={!reduced}
-      initial={reduced ? false : { opacity: 0, y: 14, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ ...SPRING_SNAPPY, delay: Math.min(index, 6) * 0.05 }}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen(parcel)}
-        className="flex w-full items-center gap-3 rounded-2xl bg-ios-surface p-4 text-left shadow-sm ring-1 ring-black/5 dark:ring-white/5"
-      >
-        <div className="min-w-0 flex-1">
-          <Pill tone={STATE_TONE[progress.state]}>
-            {PARCEL_STATE_LABEL[progress.state]}
-          </Pill>
-          <p className="mt-1.5 truncate text-[16px] font-semibold">{parcel.label}</p>
-          <p className="mt-0.5 truncate text-[12px] text-ios-muted">
-            {parcel.sender} · {parcel.trackingNo}
-          </p>
-          <p className="mt-1 text-[12px] text-ios-muted">
-            {progress.stageIndex >= 0 ? parcel.stages[progress.stageIndex].label : '접수 대기'}
-          </p>
-        </div>
-        <ChevronRight className="size-5 shrink-0 text-ios-muted" aria-hidden />
-      </button>
-    </motion.li>
+  const totals = useMemo(() => shipmentTotals(shipments), [shipments]);
+  const arrived = shipments.filter((shipment) => shipment.status === 'arrived');
+  const moving = shipments.filter((shipment) => shipment.status === 'in_transit');
+  const finished = shipments.filter(
+    (shipment) =>
+      shipment.status === 'collected' || shipment.status === 'seized' || shipment.status === 'lost',
   );
 
   return (
-    <div className="relative h-full overflow-hidden bg-ios-bg">
-      <AppShell title="구팡" largeTitle>
-        <div className="px-4 pb-8">
-          {/* 내 주문: 브라우저에서 산 물량이 여기로 온다. */}
-          {shipments.length > 0 ? (
-            <div className="mb-4">
-              <h2 className="flex items-baseline gap-2 pb-2 pt-1 text-[13px] font-medium text-ios-muted">
-                내 주문
-                <span className="text-[11px]">
-                  배송 중 {shipmentTotals(shipments).in_transit} · 수령 대기{' '}
-                  {shipmentTotals(shipments).arrived}
-                </span>
-              </h2>
-              <ul className="space-y-3">
-                {shipments.slice(0, 6).map((shipment) => {
-                  const arrived = shipment.status === 'arrived';
-                  const option = findAddress(shipment.address);
-                  return (
-                    <li
-                      key={shipment.id}
-                      className="rounded-2xl bg-ios-surface p-4 shadow-sm ring-1 ring-black/5 dark:ring-white/5"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Pill
-                          tone={
-                            shipment.status === 'in_transit'
-                              ? 'blue'
-                              : shipment.status === 'seized' || shipment.status === 'lost'
-                                ? 'red'
-                                : 'green'
-                          }
-                        >
-                          {SHIPMENT_LABEL[shipment.status]}
-                        </Pill>
-                        <span className="text-[11px] text-ios-muted">{option.label}</span>
-                        <span className="ml-auto text-[11px] text-ios-muted">
-                          {shipment.status === 'in_transit'
-                            ? formatShipmentEta(shipment, gameDateTime)
-                            : shipment.status === 'arrived'
-                              ? '지금 수령하세요'
-                              : (shipment.note ?? '')}
-                        </span>
-                      </div>
-                      <p className="mt-1.5 truncate text-[16px] font-semibold">
-                        {shipment.productName} ×{shipment.qty}
-                      </p>
-                      <p className="mt-0.5 text-[12px] text-ios-muted">
-                        {shipment.marketId.replace(/^market-/, '')} · 개당{' '}
-                        {formatCash(shipment.unitCost)}
-                        {shipment.fee > 0 ? ` · 배송료 ${formatCash(shipment.fee)}` : ''}
-                      </p>
-                      {arrived ? (
-                        <button
-                          type="button"
-                          onClick={() => collectShipment(shipment.id)}
-                          className="mt-2.5 h-9 w-full rounded-xl bg-ios-green text-[13px] font-semibold text-white"
-                        >
-                          수령하기
-                        </button>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : null}
-
-          <h2 className="pb-2 pt-1 text-[13px] font-medium text-ios-muted">진행 중 {active.length}건</h2>
-          <ul className="space-y-3">{active.map((row, index) => renderRow(row, index))}</ul>
-
-          {done.length > 0 ? (
-            <>
-              <h2 className="pb-2 pt-6 text-[13px] font-medium text-ios-muted">배송 완료</h2>
-              <ul className="space-y-3">{done.map((row, index) => renderRow(row, active.length + index))}</ul>
-            </>
-          ) : null}
-
-          <p className="mt-6 flex items-center justify-center gap-1.5 text-[12px] text-ios-muted">
-            <PackageSearch className="size-4" aria-hidden /> 배송 상태는 게임 속 시간에 따라 바뀝니다.
-          </p>
-        </div>
-      </AppShell>
-
-      <AnimatePresence>
-        {open && openProgress ? (
-          <motion.section
-            key={open.id}
-            className="absolute inset-0 z-20 flex flex-col bg-ios-bg"
-            initial={reduced ? false : { x: '100%' }}
-            animate={{ x: 0 }}
-            exit={reduced ? undefined : { x: '100%' }}
-            transition={SPRING_SOFT}
+    <AppShell title="구팡" largeTitle>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={SPRING_SNAPPY}
+        className="mx-4 mb-4 grid grid-cols-3 gap-2 text-center"
+      >
+        {[
+          { label: '배송 중', value: totals.in_transit },
+          { label: '수령 대기', value: totals.arrived },
+          { label: '완료', value: totals.collected },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-2xl bg-ios-surface py-2.5 ring-1 ring-black/5 dark:ring-white/5"
           >
-            <header className="glass-strong shrink-0 border-b border-ios-separator/20 pt-[var(--ios-statusbar-h)]">
-              <div className="flex h-[var(--ios-navbar-h)] items-center px-2">
+            <p className="text-[11px] text-ios-muted">{stat.label}</p>
+            <p className="text-[18px] font-bold tabular-nums">{stat.value}</p>
+          </div>
+        ))}
+      </motion.div>
+
+      {arrived.length > 0 ? (
+        <Section
+          header="수령 대기"
+          footer="수령해야 재고가 됩니다. 오래 두면 좋을 일이 없습니다."
+          delay={0.04}
+        >
+          <motion.ul
+            variants={staggerContainer(0.05)}
+            initial="hidden"
+            animate="show"
+            className="divide-y divide-ios-separator/15"
+          >
+            {arrived.map((shipment) => (
+              <motion.li key={shipment.id} variants={fadeUp} className="px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Pill tone={TONE[shipment.status]}>{SHIPMENT_LABEL[shipment.status]}</Pill>
+                  <span className="text-[11px] text-ios-muted">
+                    {findAddress(shipment.address).label}
+                  </span>
+                </div>
+                <p className="mt-1.5 truncate text-[16px] font-semibold">
+                  {shipment.productName} ×{shipment.qty}
+                </p>
                 <button
                   type="button"
-                  onClick={() => setOpen(null)}
-                  className="flex h-11 items-center gap-0.5 rounded-xl pr-3 text-[16px] text-ios-accent active:opacity-60"
-                  aria-label="목록으로"
+                  onClick={() => collectShipment(shipment.id)}
+                  className="mt-2 h-9 w-full rounded-xl bg-ios-green text-[13px] font-semibold text-white"
                 >
-                  <ChevronLeft className="size-6" aria-hidden /> 배송
+                  수령하기
                 </button>
-              </div>
-            </header>
+              </motion.li>
+            ))}
+          </motion.ul>
+        </Section>
+      ) : null}
 
-            <div className="scroll-area no-scrollbar flex-1 px-5 pb-10 pt-4">
-              <Pill tone={STATE_TONE[openProgress.state]}>
-                {PARCEL_STATE_LABEL[openProgress.state]}
-              </Pill>
-              <h1 className="mt-2 text-[24px] font-bold tracking-tight">{open.label}</h1>
-              <p className="mt-1 text-[13px] text-ios-muted">
-                {open.sender} · {open.trackingNo}
-              </p>
+      <Section
+        header="배송 중"
+        footer="주소에 따라 도착 heat와 압수·분실 위험이 달라집니다."
+        delay={0.08}
+      >
+        {moving.length === 0 ? (
+          <EmptyState
+            icon={PackageSearch}
+            title="오고 있는 물량이 없습니다"
+            description="브라우저의 마켓에서 주문하면 여기로 배송됩니다."
+          />
+        ) : (
+          <>
+            <motion.ul
+              variants={staggerContainer(0.05)}
+              initial="hidden"
+              animate="show"
+              className="divide-y divide-ios-separator/15"
+            >
+              {moving.map((shipment) => (
+                <motion.li key={shipment.id} variants={fadeUp} className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Pill tone={TONE[shipment.status]}>{SHIPMENT_LABEL[shipment.status]}</Pill>
+                    <span className="flex items-center gap-1 text-[11px] text-ios-muted">
+                      <MapPin className="size-3" aria-hidden />
+                      {findAddress(shipment.address).label}
+                    </span>
+                    <span className="ml-auto text-[11px] text-ios-muted">
+                      {formatShipmentEta(shipment, gameDateTime)}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 truncate text-[16px] font-semibold">
+                    {shipment.productName} ×{shipment.qty}
+                  </p>
+                  <p className="mt-0.5 text-[12px] text-ios-muted">
+                    {shipment.marketId.replace(/^market-/, '')} · 개당{' '}
+                    {formatCash(shipment.unitCost)}
+                    {shipment.fee > 0 ? ` · 배송료 ${formatCash(shipment.fee)}` : ''}
+                  </p>
+                </motion.li>
+              ))}
+            </motion.ul>
+            <p className="px-4 pt-3 text-[11px] text-ios-muted">
+              도착 heat: {moving.map((shipment) => findAddress(shipment.address).heat).join(' / ')}
+            </p>
+          </>
+        )}
+      </Section>
 
-              {openProgress.state === 'held' ? (
-                <p className="mt-4 rounded-2xl bg-ios-red/10 p-3.5 text-[13px] leading-relaxed text-ios-red">
-                  물류센터에서 추가 확인이 필요해 배송이 보류되었습니다. 처리 일정은 아직 알 수 없습니다.
+      {finished.length > 0 ? (
+        <Section header="지난 배송" delay={0.12}>
+          <motion.ul
+            variants={staggerContainer(0.04)}
+            initial="hidden"
+            animate="show"
+            className="divide-y divide-ios-separator/15"
+          >
+            {finished.slice(0, 8).map((shipment) => (
+              <motion.li key={shipment.id} variants={fadeUp} className="px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Pill tone={TONE[shipment.status]}>{SHIPMENT_LABEL[shipment.status]}</Pill>
+                  <span className="ml-auto text-[11px] text-ios-muted">
+                    {shipment.note ?? findAddress(shipment.address).label}
+                  </span>
+                </div>
+                <p className="mt-1 truncate text-[15px]">
+                  {shipment.productName} ×{shipment.qty}
                 </p>
-              ) : null}
-              {openProgress.state === 'delayed' ? (
-                <p className="mt-4 rounded-2xl bg-ios-orange/10 p-3.5 text-[13px] leading-relaxed text-ios-orange">
-                  물량 적체로 배송이 지연되고 있습니다.
-                </p>
-              ) : null}
+              </motion.li>
+            ))}
+          </motion.ul>
+        </Section>
+      ) : null}
 
-              <ol className="mt-6">
-                {open.stages.map((stage, index) => {
-                  const reached = index <= openProgress.stageIndex;
-                  const current = index === openProgress.stageIndex;
-                  const isLast = index === open.stages.length - 1;
-                  return (
-                    <li key={stage.label} className="relative flex gap-4 pb-7 last:pb-0">
-                      {!isLast ? (
-                        <span
-                          className={cn(
-                            'absolute left-[13px] top-7 h-[calc(100%-1.75rem)] w-0.5',
-                            index < openProgress.stageIndex ? 'bg-ios-accent' : 'bg-ios-separator/40',
-                          )}
-                          aria-hidden
-                        />
-                      ) : null}
-                      <span
-                        className={cn(
-                          'relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full ring-4 ring-ios-bg',
-                          reached ? 'bg-ios-accent text-white' : 'bg-ios-surface text-ios-muted',
-                          current && openProgress.state !== 'delivered' && 'animate-pulse',
-                        )}
-                      >
-                        {reached ? <Check className="size-4" aria-hidden /> : <span className="size-1.5 rounded-full bg-ios-muted/50" />}
-                      </span>
-                      <div className="pt-0.5">
-                        <p className={cn('text-[15px]', reached ? 'font-semibold' : 'text-ios-muted')}>{stage.label}</p>
-                        {current && openProgress.state === 'held' ? (
-                          <p className="mt-0.5 text-[12px] text-ios-red">이 단계에서 보류됨</p>
-                        ) : null}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-          </motion.section>
-        ) : null}
-      </AnimatePresence>
-    </div>
+      <p className="flex items-center justify-center gap-1.5 px-4 pb-8 pt-2 text-[12px] text-ios-muted">
+        <PackageSearch className="size-4" aria-hidden /> 모든 물량은 게임 속 가짜 상품입니다.
+      </p>
+    </AppShell>
   );
 }

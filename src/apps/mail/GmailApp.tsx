@@ -12,6 +12,7 @@ import { ko } from 'date-fns/locale';
 import { GMAIL_MESSAGES, GMAIL_FOLDERS, type MailMessage, type MailFolder } from './MailTypes';
 import { Pill } from '@/components';
 import { AppShell } from '../AppShell';
+import { PhishingMails } from './PhishingMails';
 import { HamburgerButton, SideDrawer } from '../SideDrawer';
 import { SPRING_SNAPPY, SPRING_SOFT, prefersReducedMotion } from '@/utils/motion';
 import { cn } from '@/utils/cn';
@@ -179,6 +180,9 @@ export function GmailApp() {
   // Message list
   const messageList = (
     <div className="flex-1 overflow-y-auto">
+      {/* 수상한 메일: 열면 손해, 무시하면 그만. */}
+      <PhishingMails />
+
       {messages.length === 0 ? (
         <div className="flex h-full items-center justify-center text-ios-muted">
           <p className="text-[14px]">메일이 없습니다</p>

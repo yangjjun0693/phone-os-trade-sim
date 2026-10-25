@@ -44,7 +44,7 @@ describe('<App />', () => {
     await userEvent.click(await screen.findByLabelText('메시지/통화'));
 
     expect(useOSStore.getState().openAppId).toBe('messagesCall');
-    expect(await screen.findByText('대화')).toBeInTheDocument();
+    expect(await screen.findByText('거래 메시지')).toBeInTheDocument();
 
     await act(async () => {
       useOSStore.getState().goHome();

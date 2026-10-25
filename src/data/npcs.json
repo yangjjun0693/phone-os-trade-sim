@@ -175,5 +175,29 @@
     "bio": "터미널 근처에서 만나자고만 한다.",
     "channel": "telegraph",
     "altChannel": "phone"
+  },
+  {
+    "id": "npc-vendor-mnl",
+    "name": "마닐라 바이어",
+    "kind": "regular",
+    "bio": "해외에서 직송한다. 스페셜만 취급하고 선입금을 고집한다.",
+    "channel": "telegraph",
+    "vendor": true
+  },
+  {
+    "id": "npc-vendor-hk",
+    "name": "홍콩 상회",
+    "kind": "regular",
+    "bio": "묶음 물량을 넘긴다. 값은 무난하지만 잔말이 많다.",
+    "channel": "phone",
+    "vendor": true
+  },
+  {
+    "id": "npc-vendor-cai",
+    "name": "카이로 중개인",
+    "kind": "difficult",
+    "bio": "최저가를 부르지만 통로가 거칠다. 신뢰가 낮으면 상대하지 않는다.",
+    "channel": "telegraph",
+    "vendor": true
   }
 ]

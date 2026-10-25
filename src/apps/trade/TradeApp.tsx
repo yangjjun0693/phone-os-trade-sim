@@ -34,6 +34,7 @@ import {
   type DayReport,
 } from '@/game/trade';
 import { AnimatedNumber, Burst, Pill } from '@/components';
+import { STORAGE_CAPACITY } from '@/content/economy';
 import { useGameStore } from '@/store/gameStore';
 import { cn } from '@/utils/cn';
 import { formatCash } from '@/utils/format';
@@ -90,6 +91,7 @@ export function TradeApp() {
   const wealth = totalWealth(cash, bankBalance);
   const progress = Math.min(1, wealth / RETIRE_GOAL);
   const stockValue = inventory.reduce((sum, item) => sum + item.unitCost * item.qty, 0);
+  const stockUnits = inventory.reduce((sum, item) => sum + item.qty, 0);
   const cashRisk = Math.ceil(heatFromCash(cash) / 2);
 
   const booked = deals.filter((deal) => deal.status === 'booked');
@@ -503,8 +505,12 @@ export function TradeApp() {
           header="재고"
           footer={
             inventory.length
-              ? `재고 원가 ${formatCash(stockValue)} · 브라우저에서 매입`
-              : '브라우저의 암시장에서 물건을 매입하세요.'
+              ? `재고 원가 ${formatCash(stockValue)} · 보관 ${stockUnits}/${STORAGE_CAPACITY}${
+                  stockUnits > STORAGE_CAPACITY
+                    ? ' · 초과분은 마감 때 heat와 압수 위험이 커집니다'
+                    : ''
+                }`
+              : '브라우저에서 매입하면 배송을 거쳐 여기로 들어옵니다.'
           }
           delay={0.1}
         >
@@ -646,6 +652,26 @@ function DayReportSheet({ report, onClose }: { report: DayReport; onClose: () =>
             value={formatCash(report.totalWealth)}
             detail={`예금 ${formatCash(report.bankAfter)}`}
           />
+          {report.runnerIncome > 0 || report.runnersCaught.length > 0 ? (
+            <ReportLine
+              label="러너"
+              value={report.runnerIncome > 0 ? `+${formatCash(report.runnerIncome)}` : '—'}
+              detail={
+                report.runnersCaught.length > 0
+                  ? `${report.runnersCaught.length}명 적발 · heat·신뢰 손실`
+                  : '자동 판매 수익'
+              }
+              tone={report.runnerIncome > 0 ? 'good' : 'bad'}
+            />
+          ) : null}
+          {report.raidLost > 0 ? (
+            <ReportLine
+              label="압수"
+              value={`-${report.raidLost}개`}
+              detail={`보관 초과로 재고를 잃었습니다 (보관 ${report.stockUnits}개)`}
+              tone="bad"
+            />
+          ) : null}
         </div>
 
         {report.event ? (

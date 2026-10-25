@@ -145,6 +145,60 @@ describe('buying from a market', () => {
   });
 });
 
+describe('supplier orders', () => {
+  it('pays up front and ships the goods to the warehouse', () => {
+    useGameStore.setState({
+      cash: 5_000_000,
+      trust: 40,
+      shipments: [],
+      inbox: [
+        {
+          id: 'm-vendor',
+          scriptId: 'vendor-npc-vendor-hk',
+          npcId: 'npc-vendor-hk',
+          channel: 'phone',
+          arrivedAt: GAME_EPOCH,
+          status: 'unread',
+        },
+      ],
+    });
+
+    const answer = useGameStore.getState().answerInbox('m-vendor', 'order-1');
+    const state = useGameStore.getState();
+
+    expect(answer.ok).toBe(true);
+    expect(answer.order?.productId).toBe('product-meth');
+    expect(state.shipments[0].productId).toBe('product-meth');
+    expect(state.shipments[0].address).toBe('storage');
+    // 38,000 × 6 plus the warehouse fee.
+    expect(state.cash).toBe(5_000_000 - 38_000 * 6 - 30_000);
+  });
+
+  it('refuses when the supplier does not trust the player yet', () => {
+    useGameStore.setState({
+      cash: 5_000_000,
+      trust: 5,
+      shipments: [],
+      inbox: [
+        {
+          id: 'm-vendor2',
+          scriptId: 'vendor-npc-vendor-cai',
+          npcId: 'npc-vendor-cai',
+          channel: 'telegraph',
+          arrivedAt: GAME_EPOCH,
+          status: 'unread',
+        },
+      ],
+    });
+
+    const answer = useGameStore.getState().answerInbox('m-vendor2', 'order-0');
+
+    expect(answer.order).toBeUndefined();
+    expect(useGameStore.getState().shipments).toHaveLength(0);
+    expect(useGameStore.getState().cash).toBe(5_000_000);
+  });
+});
+
 describe('selling to customers', () => {
   it('pays cash, removes stock and adds a little heat', () => {
     const result = useGameStore.getState().sellToCustomer(customer(), 'accept');

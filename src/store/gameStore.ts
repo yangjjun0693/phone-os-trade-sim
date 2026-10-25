@@ -18,7 +18,14 @@ import {
   type SteakOutcome,
 } from '@/game/steak';
 import { npcs, places, products } from '@/data';
-import { START_BANK, START_CASH, START_CHIPS } from '@/content/economy';
+import { PHISHING_MAILS } from '@/content/phishing';
+import { findRunner } from '@/content/runners';
+import {
+  RUNNER_CAUGHT_TRUST,
+  START_BANK,
+  START_CASH,
+  START_CHIPS,
+} from '@/content/economy';
 import { DEFAULT_ADDRESS, type DropAddress } from '@/content/logistics';
 import {
   advanceShipments,
@@ -161,6 +168,15 @@ export interface ShipmentActionResult {
   message?: string;
 }
 
+/** A hired runner. */
+export interface Runner {
+  id: string;
+  npcId: string;
+  hiredAt: string;
+  dailyNet: number;
+  catchChance: number;
+}
+
 export type CustomerAction = 'accept' | 'counter';
 
 export interface GameState {
@@ -198,6 +214,10 @@ export interface GameState {
   deals: Deal[];
   /** Parcels on the way to a chosen address; collected in 구팡. */
   shipments: Shipment[];
+  /** Hired runners: they sell while the player sleeps. */
+  runners: Runner[];
+  /** Phishing mails already dealt with (opened or dismissed). */
+  handledMails: string[];
   stats: GameStats;
   /** The most recent day-end report, shown in the Trade app. */
   lastReport: DayReport | null;
@@ -236,6 +256,12 @@ export interface GameState {
   tickShipments: () => void;
   /** Collect a delivered parcel into inventory. */
   collectShipment: (shipmentId: string) => ShipmentActionResult;
+  /** Hire someone to sell for you (pay the fee up front). */
+  hireRunner: (npcId: string) => ShipmentActionResult;
+  /** Let a runner go. */
+  fireRunner: (runnerId: string) => void;
+  /** Open or dismiss a phishing mail. */
+  handleMail: (mailId: string, action: 'open' | 'ignore') => ShipmentActionResult;
   /** Answer a thread. Returns the applied effects for the UI to show. */
   answerInbox: (messageId: string, choiceId: string) => InboxAnswer;
   /** Pick where a booked appointment happens. */
@@ -320,11 +346,22 @@ function createInitialState() {
         arrivedAt: GAME_EPOCH,
         status: 'unread',
       },
+      // A supplier introduces himself early, so the special tier is discoverable.
+      {
+        id: 'msg-seed-3',
+        scriptId: 'vendor-npc-vendor-hk',
+        npcId: 'npc-vendor-hk',
+        channel: 'phone',
+        arrivedAt: GAME_EPOCH,
+        status: 'unread',
+      },
     ] satisfies InboxMessage[],
     trust: 20,
     messengerLastAt: GAME_EPOCH,
     // One opening appointment so the Trade app explains itself immediately.
     shipments: [],
+    runners: [] as Runner[],
+    handledMails: [] as string[],
     deals: [
       {
         id: 'deal-seed-1',
@@ -376,6 +413,8 @@ type PersistedGame = Pick<
   | 'messengerLastAt'
   | 'deals'
   | 'shipments'
+  | 'runners'
+  | 'handledMails'
 >;
 
 export const useGameStore = create<GameState>()(
@@ -630,6 +669,67 @@ export const useGameStore = create<GameState>()(
             s.statusReason = '집 앞에서 물건이 잡혔다. 더는 버틸 수 없다.';
           }
         }),
+      hireRunner: (npcId) => {
+        let result: ShipmentActionResult = { ok: false };
+        set((s) => {
+          const template = findRunner(npcId);
+          if (!template) {
+            result = { ok: false, error: '고용할 수 없는 사람입니다.' };
+            return;
+          }
+          if (s.runners.some((runner) => runner.npcId === npcId)) {
+            result = { ok: false, error: '이미 일하고 있습니다.' };
+            return;
+          }
+          if (s.cash < template.hireCost) {
+            result = { ok: false, error: '고용비가 부족합니다.' };
+            return;
+          }
+          s.cash -= template.hireCost;
+          s.runners.push({
+            id: `runner-${template.npcId}`,
+            npcId: npcId,
+            hiredAt: s.gameDateTime,
+            dailyNet: template.dailyNet,
+            catchChance: template.catchChance,
+          });
+          result = { ok: true, message: `${npcs.find((n) => n.id === npcId)?.name ?? '러너'}을(를) 고용했습니다.` };
+        });
+        return result;
+      },
+      fireRunner: (runnerId) =>
+        set((s) => {
+          s.runners = s.runners.filter((runner) => runner.id !== runnerId);
+        }),
+      handleMail: (mailId, action) => {
+        let result: ShipmentActionResult = { ok: false };
+        set((s) => {
+          const mail = PHISHING_MAILS.find((entry) => entry.id === mailId);
+          if (!mail) {
+            result = { ok: false, error: '메일을 찾을 수 없습니다.' };
+            return;
+          }
+          if (s.handledMails.includes(mailId)) {
+            result = { ok: false, error: '이미 처리한 메일입니다.' };
+            return;
+          }
+          s.handledMails.push(mailId);
+
+          if (action === 'ignore') {
+            result = { ok: true, message: mail.safeNote };
+            return;
+          }
+
+          if (mail.open.cash) s.cash = Math.max(0, s.cash - mail.open.cash);
+          if (mail.open.heat) s.heat = Math.min(100, Math.max(0, s.heat + mail.open.heat));
+          if (s.heat >= 100) {
+            s.status = 'busted';
+            s.statusReason = '수상한 메일을 열었다가 위치가 드러났다.';
+          }
+          result = { ok: true, message: mail.open.note };
+        });
+        return result;
+      },
       collectShipment: (shipmentId) => {
         let result: ShipmentActionResult = { ok: false };
         set((s) => {
@@ -751,10 +851,38 @@ export const useGameStore = create<GameState>()(
           }
 
           const npc = npcs.find((entry) => entry.id === message.npcId);
-          const answer = resolveAnswer(message, choiceId, npc);
+          const answer = resolveAnswer(message, choiceId, npc, s.trust);
           if (!answer.ok) {
             result = answer;
             return;
+          }
+
+          // Supplier orders are paid up front and shipped through the warehouse.
+          if (answer.order) {
+            const total = Math.round(answer.order.unitPrice * answer.order.qty);
+            const fee = shippingFee('storage');
+            if (s.cash < total + fee) {
+              result = {
+                ...answer,
+                ok: false,
+                error: `현금이 부족합니다. (필요 ${(total + fee).toLocaleString('ko-KR')}원)`,
+              };
+              return;
+            }
+            s.cash -= total + fee;
+            s.stats.spent += total + fee;
+            const product = products.find((entry) => entry.id === answer.order!.productId);
+            const shipment = createShipment({
+              marketId: 'vendor',
+              productId: answer.order.productId,
+              productName: product?.name ?? answer.order.productId,
+              qty: answer.order.qty,
+              unitCost: answer.order.unitPrice,
+              marketPrice: product?.street ?? answer.order.unitPrice * 2,
+              address: 'storage',
+              now: s.gameDateTime,
+            });
+            s.shipments = [shipment, ...s.shipments].slice(0, 40);
           }
 
           message.status = 'answered';
@@ -936,9 +1064,34 @@ export const useGameStore = create<GameState>()(
               cash: s.cash,
               heat: s.heat,
               bankBalance: s.bank.balance,
+              stockUnits: s.inventory.reduce((sum, item) => sum + item.qty, 0),
+              runners: s.runners.map((runner) => ({
+                npcId: runner.npcId,
+                dailyNet: runner.dailyNet,
+                catchChance: runner.catchChance,
+              })),
             },
             Math.random,
           );
+
+          // Caught runners are gone, and a raid takes stock off the shelf.
+          if (report.runnersCaught.length > 0) {
+            s.runners = s.runners.filter(
+              (runner) => !report.runnersCaught.includes(runner.npcId),
+            );
+            s.trust = Math.max(0, s.trust - RUNNER_CAUGHT_TRUST * report.runnersCaught.length);
+          }
+          if (report.raidLost > 0) {
+            let left = report.raidLost;
+            // Work backwards so the newest stacks take the hit first.
+            for (let index = s.inventory.length - 1; index >= 0 && left > 0; index -= 1) {
+              const item = s.inventory[index];
+              const taken = Math.min(item.qty, left);
+              item.qty -= taken;
+              left -= taken;
+            }
+            s.inventory = s.inventory.filter((item) => item.qty > 0);
+          }
 
           s.cash = report.cashAfter;
           s.bank.balance = report.bankAfter;
@@ -1004,6 +1157,8 @@ export const useGameStore = create<GameState>()(
         messengerLastAt: state.messengerLastAt,
         deals: state.deals,
         shipments: state.shipments,
+        runners: state.runners,
+        handledMails: state.handledMails,
       }),
       migrate: (persisted) => {
         const previous = (persisted ?? {}) as Partial<PersistedGame>;
@@ -1026,6 +1181,8 @@ export const useGameStore = create<GameState>()(
           messengerLastAt: previous.messengerLastAt ?? base.messengerLastAt,
           deals: previous.deals ?? base.deals,
           shipments: previous.shipments ?? base.shipments,
+          runners: previous.runners ?? base.runners,
+          handledMails: previous.handledMails ?? base.handledMails,
         };
       },
     },

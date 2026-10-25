@@ -75,5 +75,29 @@
     "category": "진정제",
     "wholesale": 55000,
     "street": 140000
+  },
+  {
+    "id": "product-special-ph",
+    "name": "필리핀 직송 10g",
+    "category": "밀수 패키지",
+    "wholesale": 320000,
+    "street": 900000,
+    "tier": "special"
+  },
+  {
+    "id": "product-special-crystal",
+    "name": "고순도 결정 5g",
+    "category": "수입 결정",
+    "wholesale": 480000,
+    "street": 1250000,
+    "tier": "special"
+  },
+  {
+    "id": "product-special-kit",
+    "name": "혼합 세트",
+    "category": "프리미엄",
+    "wholesale": 380000,
+    "street": 980000,
+    "tier": "special"
   }
 ]

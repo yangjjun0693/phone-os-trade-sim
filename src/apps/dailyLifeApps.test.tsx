@@ -51,15 +51,6 @@ describe('daily-life apps', () => {
     expect(await screen.findByText(/속보가 있습니다/)).toBeInTheDocument();
   });
 
-  it('delivery: lists parcels and opens the tracking timeline', async () => {
-    const user = userEvent.setup();
-    render(<DeliveryApp />);
-
-    expect(screen.getByText('서류 봉투')).toBeInTheDocument();
-    await user.click(screen.getByText('서류 봉투'));
-    expect(await screen.findByText(/추가 확인이 필요해/)).toBeInTheDocument();
-  });
-
   it('map: renders pins and shows the place sheet', async () => {
     const user = userEvent.setup();
     render(<MapApp />);

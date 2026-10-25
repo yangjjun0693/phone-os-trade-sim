@@ -227,6 +227,48 @@ describe('day end', () => {
     expect(report.reason).toContain('30일');
   });
 
+  it('pays the runners that were not caught', () => {
+    // 1st roll: no random event. 2nd: the safe runner. 3rd: the careless one.
+    const rolls = [0.99, 0.99, 0.01];
+    let index = 0;
+    const report = resolveDayEnd(
+      {
+        day: 3,
+        cash: 1_000_000,
+        heat: 0,
+        bankBalance: 0,
+        runners: [
+          { npcId: 'safe', dailyNet: 100_000, catchChance: 0 },
+          { npcId: 'careless', dailyNet: 100_000, catchChance: 0.5 },
+        ],
+      },
+      () => rolls[index++] ?? 0.99,
+    );
+
+    expect(report.runnerIncome).toBe(100_000);
+    expect(report.runnersCaught).toEqual(['careless']);
+  });
+
+  it('raids a stash that does not fit the hiding place', () => {
+    const report = resolveDayEnd(
+      { day: 4, cash: 1_000_000, heat: 20, bankBalance: 0, stockUnits: 200 },
+      () => 0.5,
+    );
+
+    expect(report.stockUnits).toBe(200);
+    expect(report.raidLost).toBeGreaterThan(0);
+    // Overflow heat is charged even when the raid itself rolls badly.
+    expect(report.heatAfter).toBeGreaterThan(report.heatBefore - 20);
+  });
+
+  it('leaves a modest stash alone', () => {
+    const report = resolveDayEnd(
+      { day: 4, cash: 1_000_000, heat: 0, bankBalance: 0, stockUnits: 10 },
+      () => 0.5,
+    );
+    expect(report.raidLost).toBe(0);
+  });
+
   it('combines cash and bank into net worth', () => {
     expect(totalWealth(1200, 8800)).toBe(10_000);
   });

@@ -15,6 +15,7 @@ import {
   type Channel,
   type MessageChoice,
   type MessageScript,
+  type VendorOrder,
 } from '@/content/messages';
 import type { NpcProfile } from '@/types';
 import type { BookingSpec } from './deals';
@@ -98,8 +99,10 @@ export function rollArrival(input: {
 
   const known = new Set(input.npcs.map((npc) => npc.id));
   const used = new Set(pending.map((message) => message.scriptId));
+  // One thread per person: someone who is already waiting does not write again.
+  const waiting = new Set(pending.map((message) => message.npcId));
   const pool = MESSAGE_SCRIPTS.filter(
-    (script) => !used.has(script.id) && known.has(script.from),
+    (script) => !used.has(script.id) && known.has(script.from) && !waiting.has(script.from),
   );
   if (pool.length === 0) return null;
 
@@ -132,6 +135,8 @@ export interface AnswerResult {
   moved: boolean;
   /** Set when this answer booked an appointment for the Trade app. */
   booking?: BookingSpec;
+  /** Set when this answer ordered stock from a supplier. */
+  order?: VendorOrder;
 }
 
 const emptyAnswer = (message: InboxMessage, error: string): AnswerResult => ({
@@ -152,6 +157,7 @@ export function resolveAnswer(
   message: InboxMessage,
   choiceId: string,
   npc?: NpcProfile,
+  trust = 100,
 ): AnswerResult {
   const script = findScript(message.scriptId);
   if (!script) return emptyAnswer(message, '대화 내용을 찾을 수 없습니다.');
@@ -164,6 +170,29 @@ export function resolveAnswer(
     trust: choice.effect?.trust ?? 0,
     cash: choice.effect?.cash ?? 0,
   };
+
+  // Suppliers only trade with people they trust.
+  if (choice.order) {
+    if (choice.minTrust !== undefined && trust < choice.minTrust) {
+      return {
+        ok: true,
+        effects: { ...effects, trust: effects.trust - 1 },
+        reply: choice.reply,
+        outcome: `${npc?.name ?? '상대'}가 아직은 상대할 단계가 아니라며 거절했다. (신뢰 ${choice.minTrust} 필요)`,
+        channel: message.channel,
+        moved: false,
+      };
+    }
+    return {
+      ok: true,
+      effects,
+      reply: choice.reply,
+      outcome: choice.outcome,
+      channel: message.channel,
+      moved: false,
+      order: choice.order,
+    };
+  }
 
   // Asking someone to move apps only works if they are willing.
   if (choice.moveTo && choice.moveTo !== message.channel) {
