@@ -140,6 +140,18 @@ export function MapApp() {
     [heat, hour],
   );
 
+  // Places that the Trade app has booked a handover at show up as 약속 spots.
+  const deals = useGameStore((s) => s.deals);
+  const meetingPlaceIds = useMemo(
+    () =>
+      new Set(
+        deals
+          .filter((deal) => deal.status === 'booked' && deal.placeId)
+          .map((deal) => deal.placeId as string),
+      ),
+    [deals],
+  );
+
   const clock = `${String(hour).padStart(2, '0')}:${String(
     new Date(gameDateTime).getMinutes(),
   ).padStart(2, '0')}`;
@@ -251,6 +263,11 @@ export function MapApp() {
               <span className="mt-0.5 whitespace-nowrap rounded bg-white/85 px-1 text-[10px] font-semibold text-[#1c1c1e] shadow-sm">
                 {place.name}
               </span>
+              {meetingPlaceIds.has(place.id) ? (
+                <span className="mt-0.5 whitespace-nowrap rounded bg-ios-accent px-1 text-[9px] font-bold text-white shadow-sm">
+                  약속
+                </span>
+              ) : null}
             </button>
           );
         })}

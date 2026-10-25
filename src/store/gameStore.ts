@@ -17,7 +17,7 @@ import {
   type SteakGameId,
   type SteakOutcome,
 } from '@/game/steak';
-import { npcs, products } from '@/data';
+import { npcs, places, products } from '@/data';
 import { START_BANK, START_CASH, START_CHIPS } from '@/content/economy';
 import { DEFAULT_ADDRESS, type DropAddress } from '@/content/logistics';
 import {
@@ -27,7 +27,14 @@ import {
   shippingFee,
   type Shipment,
 } from '@/game/shipments';
-import { createDeal, expireDeals, fulfilDeal as deliverDeal, type Deal } from '@/game/deals';
+import {
+  createDeal,
+  expireDeals,
+  findMeeting,
+  fulfilDeal as deliverDeal,
+  meetingOptions,
+  type Deal,
+} from '@/game/deals';
 import {
   expireInbox,
   resolveAnswer,
@@ -231,6 +238,8 @@ export interface GameState {
   collectShipment: (shipmentId: string) => ShipmentActionResult;
   /** Answer a thread. Returns the applied effects for the UI to show. */
   answerInbox: (messageId: string, choiceId: string) => InboxAnswer;
+  /** Pick where a booked appointment happens. */
+  chooseMeetPlace: (dealId: string, placeId: string) => void;
   /** Deliver a booked appointment out of stock. */
   fulfilDeal: (dealId: string) => DealActionResult;
   /** Walk away from an appointment (trust penalty). */
@@ -650,6 +659,11 @@ export const useGameStore = create<GameState>()(
         });
         return result;
       },
+      chooseMeetPlace: (dealId, placeId) =>
+        set((s) => {
+          const deal = s.deals.find((entry) => entry.id === dealId);
+          if (deal && deal.status === 'booked') deal.placeId = placeId;
+        }),
       fulfilDeal: (dealId) => {
         let result: DealActionResult = { ok: false };
         set((s) => {
@@ -662,8 +676,25 @@ export const useGameStore = create<GameState>()(
             result = { ok: false, error: '약속을 찾을 수 없습니다.' };
             return;
           }
-          const outcome = deliverDeal(deal, s.inventory);
+
+          // Where they meet decides both the trip length and the risk.
+          const hour = new Date(s.gameDateTime).getHours();
+          const options = meetingOptions(places, 'home', s.heat, hour);
+          const meeting = findMeeting(options, deal.placeId ?? 'home') ?? options[0];
+          if (meeting && !deal.placeId) deal.placeId = meeting.placeId;
+
+          const outcome = deliverDeal(deal, s.inventory, meeting);
+          s.gameDateTime = addMinutes(new Date(s.gameDateTime), outcome.minutes).toISOString();
+
           if (!outcome.ok) {
+            s.inventory = outcome.inventory;
+            s.heat = Math.min(100, Math.max(0, s.heat + outcome.heat));
+            s.trust = Math.max(0, s.trust - 2);
+            deal.status = 'missed';
+            if (s.heat >= 100) {
+              s.status = 'busted';
+              s.statusReason = '약속 장소에 잠복이 있었다.';
+            }
             result = { ok: false, error: outcome.error };
             return;
           }
@@ -676,7 +707,6 @@ export const useGameStore = create<GameState>()(
           s.stats.revenue += outcome.cash;
           s.stats.unitsSold += deal.qty;
           deal.status = 'done';
-          s.gameDateTime = addMinutes(new Date(s.gameDateTime), 20).toISOString();
 
           if (s.heat >= 100) {
             s.status = 'busted';
@@ -733,6 +763,8 @@ export const useGameStore = create<GameState>()(
           message.outcome = answer.outcome;
           message.moved = answer.moved;
           message.channel = answer.channel;
+          // Typing and arranging takes a little of the day, like everything else.
+          s.gameDateTime = addMinutes(new Date(s.gameDateTime), 5).toISOString();
 
           s.heat = Math.min(100, Math.max(0, Math.round(s.heat + answer.effects.heat)));
           s.trust = Math.min(100, Math.max(0, Math.round(s.trust + answer.effects.trust)));

@@ -7,7 +7,8 @@
  */
 import { nanoid } from 'nanoid';
 import { addMinutes } from 'date-fns';
-import type { InventoryItem, Product } from '@/types';
+import type { InventoryItem, Place, PlaceKind, Product } from '@/types';
+import { patrolLevel, type PatrolLevel } from './patrol';
 
 export type DealStatus = 'booked' | 'done' | 'missed';
 
@@ -32,8 +33,68 @@ export interface Deal {
   createdAt: string;
   dueAt: string;
   status: DealStatus;
+  /** Where the two of them meet. Chosen in the Trade app (미정이면 내 집). */
+  placeId?: string;
   /** Where the deal came from, so the UI can explain it. */
   source: { messageId: string; scriptId: string };
+}
+
+/** One place the player could meet at, priced in time and patrol risk. */
+export interface MeetingOption {
+  placeId: string;
+  name: string;
+  kind: PlaceKind;
+  patrol: PatrolLevel;
+  /** In-game minutes to get there from home. */
+  tripMinutes: number;
+  /** Heat added when the meeting actually happens. */
+  heatDelta: number;
+  /** Chance the meeting is a trap. */
+  stingChance: number;
+}
+
+const PATROL_STING: Record<PatrolLevel, number> = { low: 0.02, mid: 0.1, high: 0.25 };
+const PATROL_HEAT: Record<PatrolLevel, number> = { low: 0, mid: 1, high: 2 };
+
+/** Places you could actually meet at (the police box is not one of them). */
+export function meetingOptions(
+  places: readonly Place[],
+  homePlaceId: string,
+  heat: number,
+  hour: number,
+): MeetingOption[] {
+  const home = places.find((place) => place.id === homePlaceId);
+  return places
+    .filter((place) => place.kind !== 'police')
+    .map((place) => {
+      const patrol = patrolLevel(place.base, heat, hour, place.nightlife);
+      const distance = home
+        ? Math.hypot(place.x - home.x, place.y - home.y)
+        : 0;
+      return {
+        placeId: place.id,
+        name: place.name,
+        kind: place.kind,
+        patrol,
+        tripMinutes: Math.round(Math.min(45, Math.max(6, distance / 10))),
+        heatDelta: PATROL_HEAT[patrol],
+        stingChance: PATROL_STING[patrol],
+      };
+    })
+    .sort((a, b) => PATROL_HEAT[a.patrol] - PATROL_HEAT[b.patrol] || a.tripMinutes - b.tripMinutes);
+}
+
+export function findMeeting(
+  options: readonly MeetingOption[],
+  placeId: string | undefined,
+): MeetingOption | undefined {
+  if (!placeId) return undefined;
+  return options.find((option) => option.placeId === placeId);
+}
+
+/** Short label for the risk, used in the Trade app. */
+export function patrolLabelOf(level: PatrolLevel): string {
+  return level === 'low' ? '한산함' : level === 'mid' ? '순찰 있음' : '순찰 잦음';
 }
 
 export interface CreateDealInput {
@@ -107,38 +168,60 @@ export interface FulfilResult {
   inventory: InventoryItem[];
   cash: number;
   heat: number;
+  /** In-game minutes the errand costs (travel included). */
+  minutes: number;
+  /** The place was watched and the meeting went wrong. */
+  stung: boolean;
   message: string;
 }
 
 /**
- * Delivers a booked deal out of stock. Cash and heat come back to the caller
- * so the store stays the only place that mutates the run.
+ * Delivers a booked deal out of stock. Cash, heat and the time the errand
+ * takes come back to the caller so the store stays the only place that mutates
+ * the run. When a meeting place is given, its patrol level decides whether the
+ * handover is clean or a trap.
  */
 export function fulfilDeal(
   deal: Deal,
   inventory: readonly InventoryItem[],
+  meeting?: MeetingOption,
+  rng: () => number = Math.random,
 ): FulfilResult {
-  if (deal.status !== 'booked') {
-    return {
-      ok: false,
-      error: '이미 처리된 약속입니다.',
-      inventory: [...inventory],
-      cash: 0,
-      heat: 0,
-      message: '',
-    };
-  }
+  const trip = meeting?.tripMinutes ?? 15;
+  const minutes = 20 + trip;
+  const bail = (error: string): FulfilResult => ({
+    ok: false,
+    error,
+    inventory: [...inventory],
+    cash: 0,
+    heat: 0,
+    minutes: 0,
+    stung: false,
+    message: '',
+  });
+
+  if (deal.status !== 'booked') return bail('이미 처리된 약속입니다.');
 
   const stack = inventory.find(
     (item) => item.productId === deal.productId && item.qty >= deal.qty,
   );
-  if (!stack) {
+  if (!stack) return bail(`${deal.productName} ${deal.qty}개가 필요합니다.`);
+
+  // A watched spot can turn the handover into a trap: the stock is gone and
+  // the errand still costs you the walk.
+  const watched = meeting ? rng() < meeting.stingChance : false;
+  if (watched) {
+    const gone = inventory
+      .map((item) => (item.id === stack.id ? { ...item, qty: 0 } : item))
+      .filter((item) => item.qty > 0);
     return {
       ok: false,
-      error: `${deal.productName} ${deal.qty}개가 필요합니다.`,
-      inventory: [...inventory],
+      error: `${meeting?.name ?? '약속 장소'}에 잠복이 있었다. 물량을 통째로 잃었다.`,
+      inventory: gone,
       cash: 0,
-      heat: 0,
+      heat: 10,
+      minutes,
+      stung: true,
       message: '',
     };
   }
@@ -148,12 +231,15 @@ export function fulfilDeal(
     .filter((item) => item.qty > 0);
 
   const total = dealTotal(deal);
+  const heat = (deal.qty >= 6 ? 2 : 1) + (meeting?.heatDelta ?? 0);
   return {
     ok: true,
     inventory: inventory2,
     cash: total,
-    heat: deal.qty >= 6 ? 2 : 1,
-    message: `${deal.productName} ${deal.qty}개를 약속대로 넘겼습니다. (${total.toLocaleString('ko-KR')}원)`,
+    heat,
+    minutes,
+    stung: false,
+    message: `${deal.productName} ${deal.qty}개를 ${meeting ? meeting.name : '약속 장소'}에서 넘겼습니다. (${total.toLocaleString('ko-KR')}원)`,
   };
 }
 

@@ -66,6 +66,22 @@ export interface HomeLayout {
   dock: string[];
 }
 
+/** A meeting spot on the fictional city map (see src/data/places.ts). */
+export type PlaceKind = 'home' | 'shop' | 'park' | 'transit' | 'market' | 'port' | 'police';
+
+export interface Place {
+  id: string;
+  name: string;
+  kind: PlaceKind;
+  /** Position on the 400x560 city map. */
+  x: number;
+  y: number;
+  /** 0 quiet .. 3 constantly watched. */
+  base: number;
+  nightlife?: boolean;
+  note: string;
+}
+
 export interface InventoryItem {
   id: string;
   /** Links a stack to the fictional product catalogue. */

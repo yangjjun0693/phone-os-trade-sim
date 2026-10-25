@@ -12,3 +12,5 @@ export const markets = marketsRaw as MarketSite[];
 export const npcs = npcsRaw as NpcProfile[];
 export const clues = cluesRaw as Clue[];
 export const products = productsRaw as Product[];
+
+export { PLACES as places, KIND_LABEL as placeKindLabel, MAP_W, MAP_H } from './places';

@@ -1,17 +1,6 @@
-export type PlaceKind = 'home' | 'shop' | 'park' | 'transit' | 'market' | 'port' | 'police';
+import type { Place, PlaceKind } from '@/types';
 
-export interface Place {
-  id: string;
-  name: string;
-  kind: PlaceKind;
-  /** Position on the 400x560 city map. */
-  x: number;
-  y: number;
-  /** 0 quiet .. 3 constantly watched. */
-  base: number;
-  nightlife?: boolean;
-  note: string;
-}
+export type { Place, PlaceKind };
 
 export const MAP_W = 400;
 export const MAP_H = 560;

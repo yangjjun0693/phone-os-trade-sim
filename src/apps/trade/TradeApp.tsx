@@ -11,14 +11,17 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { npcs } from '@/data';
+import { npcs, places } from '@/data';
 import {
   dealStats,
   dealTotal,
+  findMeeting,
   formatDealEta,
   heatFromCash,
   heatLabel,
   heatTier,
+  meetingOptions,
+  patrolLabelOf,
   remainingMinutes,
 } from '@/game';
 import {
@@ -90,6 +93,12 @@ export function TradeApp() {
 
   const booked = deals.filter((deal) => deal.status === 'booked');
   const appointmentStats = dealStats(deals);
+  const hour = new Date(gameDateTime).getHours();
+  // Safety first, then the shortest walk.
+  const meetSpots = meetingOptions(places, 'home', heat, hour);
+  const spotsToShow = meetSpots.slice(0, 4);
+
+  const chooseMeetPlace = useGameStore((s) => s.chooseMeetPlace);
 
   const runDeal = (dealId: string) => {
     const result = fulfilDeal(dealId);
@@ -421,6 +430,51 @@ export function TradeApp() {
                   <p className="mt-0.5 text-[12px] text-ios-muted">
                     {deal.productName} ×{deal.qty} · 개당 {formatCash(deal.unitPrice)} · 보유 {stock}개
                   </p>
+
+                  {/* Where to meet: safety vs. a shorter walk. */}
+                  {(() => {
+                    const chosen = findMeeting(meetSpots, deal.placeId);
+                    return (
+                      <div className="mt-2 rounded-xl bg-ios-bg/60 px-3 py-2 ring-1 ring-black/5 dark:ring-white/5">
+                        <div className="flex items-center justify-between text-[12px]">
+                          <span className="font-medium">
+                            만남 장소 {chosen ? `· ${chosen.name}` : '· 미정'}
+                          </span>
+                          {chosen ? (
+                            <span className="text-ios-muted">
+                              {patrolLabelOf(chosen.patrol)} · 이동 {chosen.tripMinutes}분
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="no-scrollbar mt-1.5 flex gap-1.5 overflow-x-auto">
+                          {spotsToShow.map((option) => {
+                            const active = option.placeId === deal.placeId;
+                            return (
+                              <button
+                                key={option.placeId}
+                                type="button"
+                                onClick={() => chooseMeetPlace(deal.id, option.placeId)}
+                                aria-pressed={active}
+                                className={cn(
+                                  'shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium',
+                                  active
+                                    ? 'bg-ios-accent text-white'
+                                    : option.patrol === 'high'
+                                      ? 'bg-ios-red/15 text-ios-red'
+                                      : option.patrol === 'mid'
+                                        ? 'bg-ios-orange/15 text-ios-orange'
+                                        : 'bg-ios-green/15 text-ios-green',
+                                )}
+                              >
+                                {option.name} · {option.tripMinutes}분
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <button
                       type="button"

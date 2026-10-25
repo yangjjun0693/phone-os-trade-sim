@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { products } from '@/data';
+import { places, products } from '@/data';
 import type { InventoryItem } from '@/types';
 import {
   createDeal,
   dealStats,
   dealTotal,
   expireDeals,
+  findMeeting,
   formatDealEta,
   fulfilDeal,
   isExpired,
+  meetingOptions,
   remainingMinutes,
   type Deal,
 } from './deals';
@@ -124,6 +126,72 @@ describe('delivering a deal', () => {
   it('cannot deliver twice', () => {
     const result = fulfilDeal(deal({ status: 'done' }), stock(5));
     expect(result.ok).toBe(false);
+  });
+});
+
+describe('meeting places', () => {
+  const home = 'home';
+
+  it('never offers the police box as a place to meet', () => {
+    const options = meetingOptions(places, home, 10, 22);
+    expect(options.length).toBeGreaterThan(0);
+    expect(options.some((option) => option.kind === 'police')).toBe(false);
+  });
+
+  it('puts the quietest places first', () => {
+    const options = meetingOptions(places, home, 90, 23);
+    const rank = { low: 0, mid: 1, high: 2 } as const;
+    for (let index = 1; index < options.length; index += 1) {
+      expect(rank[options[index].patrol]).toBeGreaterThanOrEqual(
+        rank[options[index - 1].patrol],
+      );
+    }
+  });
+
+  it('prices the walk from home, within a sane range', () => {
+    const options = meetingOptions(places, home, 10, 12);
+    for (const option of options) {
+      expect(option.tripMinutes).toBeGreaterThanOrEqual(6);
+      expect(option.tripMinutes).toBeLessThanOrEqual(45);
+    }
+    const closest = [...options].sort((a, b) => a.tripMinutes - b.tripMinutes)[0];
+    expect(findMeeting(options, closest.placeId)?.name).toBe(closest.name);
+    expect(findMeeting(options, undefined)).toBeUndefined();
+  });
+
+  it('makes a watched spot both likelier to sting and hotter', () => {
+    const quiet = meetingOptions(places, home, 0, 12).find((option) => option.patrol === 'low');
+    const hot = meetingOptions(places, home, 100, 23).find((option) => option.patrol === 'high');
+    expect(hot && quiet).toBeTruthy();
+    if (hot && quiet) {
+      expect(hot.stingChance).toBeGreaterThan(quiet.stingChance);
+      expect(hot.heatDelta).toBeGreaterThan(quiet.heatDelta);
+    }
+  });
+});
+
+describe('delivering through a meeting place', () => {
+  it('costs the walk and adds the place heat', () => {
+    const meeting = meetingOptions(places, 'home', 0, 12).find((option) => option.patrol === 'low')!;
+    const result = fulfilDeal(deal(), stock(5), meeting, () => 0.99);
+
+    expect(result.ok).toBe(true);
+    expect(result.stung).toBe(false);
+    expect(result.minutes).toBe(20 + meeting.tripMinutes);
+    expect(result.heat).toBe(1 + meeting.heatDelta);
+  });
+
+  it('loses the stock when the spot is watched', () => {
+    const watched = meetingOptions(places, 'home', 100, 23).find(
+      (option) => option.patrol === 'high',
+    )!;
+    const result = fulfilDeal(deal(), stock(5), watched, () => 0.01);
+
+    expect(result.ok).toBe(false);
+    expect(result.stung).toBe(true);
+    expect(result.inventory).toHaveLength(0);
+    expect(result.heat).toBe(10);
+    expect(result.minutes).toBeGreaterThan(0);
   });
 });
 
