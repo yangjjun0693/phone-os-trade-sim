@@ -6,6 +6,7 @@ import {
   Paperclip, Smile, Settings, Shield, AlertTriangle
 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
+import { MessengerChat } from './MessengerChat';
 import { MessengerInbox } from './MessengerInbox';
 import { TELEGRAPH_CONTACTS, TELEGRAPH_CONVERSATIONS, type Conversation, type MessengerMessage, type MessengerContact } from './MessengerTypes';
 import { AppShell } from '../AppShell';
@@ -18,6 +19,8 @@ export function TelegraphApp() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [newMessage, setNewMessage] = useState('');
+  /** Game thread opened from the inbox (null = no thread open). */
+  const [openThreadId, setOpenThreadId] = useState<string | null>(null);
   const [typingContact, setTypingContact] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const gameDateTime = useGameStore(s => s.gameDateTime);
@@ -148,6 +151,7 @@ export function TelegraphApp() {
   const reduced = prefersReducedMotion();
 
   return (
+    <div className="relative h-full overflow-hidden">
     <AppShell
       title="Telegraph"
       largeTitle={false}
@@ -182,7 +186,7 @@ export function TelegraphApp() {
 
           {/* 게임 메시지 (익명 채널) */}
           <div className="border-b border-ios-separator/20">
-            <MessengerInbox channel="telegraph" />
+            <MessengerInbox channel="telegraph" onOpenThread={setOpenThreadId} />
           </div>
 
           {/* Conversations */}
@@ -244,6 +248,15 @@ export function TelegraphApp() {
         </main>
       </div>
     </AppShell>
+
+      {openThreadId ? (
+        <MessengerChat
+          channel="telegraph"
+          messageId={openThreadId}
+          onClose={() => setOpenThreadId(null)}
+        />
+      ) : null}
+    </div>
   );
 }
 

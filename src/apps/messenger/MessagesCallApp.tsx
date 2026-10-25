@@ -6,6 +6,7 @@ import {
   Contact, Voicemail, Hash, UserPlus, MessageCircle, Clock
 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
+import { MessengerChat } from './MessengerChat';
 import { MessengerInbox } from './MessengerInbox';
 import { MESSAGES_CALL_CONTACTS, MESSAGES_CALL_CONVERSATIONS, type Conversation, type MessengerMessage, type MessengerContact } from './MessengerTypes';
 import { AppShell } from '../AppShell';
@@ -19,6 +20,8 @@ export function MessagesCallApp() {
   const [viewMode, setViewMode] = useState<'chats' | 'calls' | 'contacts'>('chats');
   const [newMessage, setNewMessage] = useState('');
   const [typingContact, setTypingContact] = useState<string | null>(null);
+  /** Game thread opened from the inbox (null = no thread open). */
+  const [openThreadId, setOpenThreadId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const gameDateTime = useGameStore(s => s.gameDateTime);
 
@@ -112,6 +115,7 @@ export function MessagesCallApp() {
   ];
 
   return (
+    <div className="relative h-full overflow-hidden">
     <AppShell
       title="메시지/통화"
       largeTitle={false}
@@ -185,7 +189,7 @@ export function MessagesCallApp() {
           <div className="flex-1 overflow-y-auto">
             {viewMode === 'chats' && (
               <div className="border-b border-ios-separator/20">
-                <MessengerInbox channel="phone" />
+                <MessengerInbox channel="phone" onOpenThread={setOpenThreadId} />
               </div>
             )}
 
@@ -257,6 +261,15 @@ export function MessagesCallApp() {
         </main>
       </div>
     </AppShell>
+
+      {openThreadId ? (
+        <MessengerChat
+          channel="phone"
+          messageId={openThreadId}
+          onClose={() => setOpenThreadId(null)}
+        />
+      ) : null}
+    </div>
   );
 }
 
