@@ -9,7 +9,15 @@
  * whether to answer there or move the conversation to the other channel.
  */
 import { nanoid } from 'nanoid';
-import { MESSAGE_SCRIPTS, findScript, type Channel, type MessageChoice, type MessageScript } from '@/content/messages';
+import {
+  MESSAGE_SCRIPTS,
+  findScript,
+  type Channel,
+  type MessageChoice,
+  type MessageScript,
+} from '@/content/messages';
+import type { NpcProfile } from '@/types';
+import type { BookingSpec } from './deals';
 import type { Rng } from './customers';
 import { clamp } from './pricing';
 
@@ -50,9 +58,15 @@ export function channelHint(channel: Channel): string {
     : '실명 · 즉시 도착하지만 기록이 남는다';
 }
 
-function pickChannel(script: MessageScript, rng: Rng): Channel {
-  if (script.channel !== 'either') return script.channel;
-  return rng() < 0.5 ? 'telegraph' : 'phone';
+/** 채널은 사람마다 정해져 있습니다 (npcs.json 의 `channel`). */
+export function channelForNpc(npc: NpcProfile | undefined): Channel {
+  return npc?.channel ?? 'telegraph';
+}
+
+/** 이 사람이 옮겨갈 의향이 있는지. 거절하면 대화는 그대로 남습니다. */
+export function acceptsChannel(npc: NpcProfile, channel: Channel): boolean {
+  if (npc.channel === channel) return true;
+  return npc.altChannel === channel;
 }
 
 /**
@@ -65,6 +79,8 @@ export function rollArrival(input: {
   lastAt: string | null;
   heat: number;
   inbox: readonly InboxMessage[];
+  /** Everyone the player could hear from; the person decides the channel. */
+  npcs: readonly NpcProfile[];
   rng?: Rng;
 }): InboxMessage | null {
   const rng = input.rng ?? Math.random;
@@ -80,16 +96,20 @@ export function rollArrival(input: {
   const chance = clamp(0.3 + input.heat / 250, 0.25, 0.7);
   if (rng() > chance) return null;
 
+  const known = new Set(input.npcs.map((npc) => npc.id));
   const used = new Set(pending.map((message) => message.scriptId));
-  const pool = MESSAGE_SCRIPTS.filter((script) => !used.has(script.id));
+  const pool = MESSAGE_SCRIPTS.filter(
+    (script) => !used.has(script.id) && known.has(script.from),
+  );
   if (pool.length === 0) return null;
 
   const script = pool[Math.floor(rng() * pool.length) % pool.length];
+  const npc = input.npcs.find((entry) => entry.id === script.from);
   return {
     id: `msg-${nanoid(6)}`,
     scriptId: script.id,
     npcId: script.from,
-    channel: pickChannel(script, rng),
+    channel: channelForNpc(npc),
     arrivedAt: input.now,
     status: 'unread',
   };
@@ -110,50 +130,72 @@ export interface AnswerResult {
   /** Channel the thread ends up in after answering. */
   channel: Channel;
   moved: boolean;
+  /** Set when this answer booked an appointment for the Trade app. */
+  booking?: BookingSpec;
 }
 
-/** Applies one choice to one message. The script data owns all the numbers. */
+const emptyAnswer = (message: InboxMessage, error: string): AnswerResult => ({
+  ok: false,
+  error,
+  effects: { heat: 0, trust: 0, cash: 0 },
+  reply: '',
+  outcome: '',
+  channel: message.channel,
+  moved: false,
+});
+
+/**
+ * Applies one choice to one message. The script data owns the numbers; the NPC
+ * owns the channels, so a "let's switch apps" offer can be refused.
+ */
 export function resolveAnswer(
   message: InboxMessage,
   choiceId: string,
+  npc?: NpcProfile,
 ): AnswerResult {
   const script = findScript(message.scriptId);
-  if (!script) {
-    return {
-      ok: false,
-      error: '대화 내용을 찾을 수 없습니다.',
-      effects: { heat: 0, trust: 0, cash: 0 },
-      reply: '',
-      outcome: '',
-      channel: message.channel,
-      moved: false,
-    };
-  }
+  if (!script) return emptyAnswer(message, '대화 내용을 찾을 수 없습니다.');
+
   const choice = script.choices.find((entry) => entry.id === choiceId);
-  if (!choice) {
+  if (!choice) return emptyAnswer(message, '선택할 수 없는 답장입니다.');
+
+  const effects = {
+    heat: choice.effect?.heat ?? 0,
+    trust: choice.effect?.trust ?? 0,
+    cash: choice.effect?.cash ?? 0,
+  };
+
+  // Asking someone to move apps only works if they are willing.
+  if (choice.moveTo && choice.moveTo !== message.channel) {
+    const allowed = npc ? acceptsChannel(npc, choice.moveTo) : false;
+    if (!allowed) {
+      return {
+        ok: true,
+        effects: { ...effects, trust: effects.trust - 1 },
+        reply: choice.reply,
+        outcome: `${npc?.name ?? '상대'}는 ${channelLabel(message.channel)}만 쓴다며 거절했다.`,
+        channel: message.channel,
+        moved: false,
+      };
+    }
     return {
-      ok: false,
-      error: '선택할 수 없는 답장입니다.',
-      effects: { heat: 0, trust: 0, cash: 0 },
-      reply: '',
-      outcome: '',
-      channel: message.channel,
-      moved: false,
+      ok: true,
+      effects,
+      reply: choice.reply,
+      outcome: choice.outcome,
+      channel: choice.moveTo,
+      moved: true,
     };
   }
 
-  const moved = Boolean(choice.moveTo && choice.moveTo !== message.channel);
   return {
     ok: true,
-    effects: {
-      heat: choice.effect?.heat ?? 0,
-      trust: choice.effect?.trust ?? 0,
-      cash: choice.effect?.cash ?? 0,
-    },
+    effects,
     reply: choice.reply,
     outcome: choice.outcome,
-    channel: choice.moveTo ?? message.channel,
-    moved,
+    channel: message.channel,
+    moved: false,
+    booking: choice.booking,
   };
 }
 

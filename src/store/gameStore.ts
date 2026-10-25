@@ -17,7 +17,9 @@ import {
   type SteakGameId,
   type SteakOutcome,
 } from '@/game/steak';
+import { npcs, products } from '@/data';
 import { START_BANK, START_CASH, START_CHIPS } from '@/content/economy';
+import { createDeal, expireDeals, fulfilDeal as deliverDeal, type Deal } from '@/game/deals';
 import {
   expireInbox,
   resolveAnswer,
@@ -122,6 +124,18 @@ export interface DayEndResult {
   report?: DayReport;
 }
 
+export interface InboxAnswer extends AnswerResult {
+  /** The appointment this answer booked, if any. */
+  deal?: Deal;
+}
+
+export interface DealActionResult {
+  ok: boolean;
+  error?: string;
+  message?: string;
+  total?: number;
+}
+
 export type CustomerAction = 'accept' | 'counter';
 
 export interface GameState {
@@ -155,6 +169,8 @@ export interface GameState {
   trust: number;
   /** Game time of the last arrival roll. */
   messengerLastAt: string | null;
+  /** Appointments booked over the messenger; delivered in the Trade app. */
+  deals: Deal[];
   stats: GameStats;
   /** The most recent day-end report, shown in the Trade app. */
   lastReport: DayReport | null;
@@ -190,7 +206,11 @@ export interface GameState {
   /** Roll for new messenger arrivals (safe to call often). */
   tickMessenger: () => void;
   /** Answer a thread. Returns the applied effects for the UI to show. */
-  answerInbox: (messageId: string, choiceId: string) => AnswerResult;
+  answerInbox: (messageId: string, choiceId: string) => InboxAnswer;
+  /** Deliver a booked appointment out of stock. */
+  fulfilDeal: (dealId: string) => DealActionResult;
+  /** Walk away from an appointment (trust penalty). */
+  cancelDeal: (dealId: string) => void;
   /** Mark a thread as opened. */
   openInbox: (messageId: string) => void;
   sellToCustomer: (offer: CustomerOffer, action: CustomerAction) => SellResult;
@@ -287,6 +307,21 @@ function createInitialState() {
     ] satisfies InboxMessage[],
     trust: 20,
     messengerLastAt: GAME_EPOCH,
+    // One opening appointment so the Trade app explains itself immediately.
+    deals: [
+      {
+        id: 'deal-seed-1',
+        npcId: 'npc-dal',
+        productId: 'product-jelly',
+        productName: '녹색 젤리',
+        qty: 4,
+        unitPrice: 16_000,
+        createdAt: GAME_EPOCH,
+        dueAt: '2026-03-15T03:47:00.000Z',
+        status: 'booked',
+        source: { messageId: 'msg-seed-1', scriptId: 'msg-dal-ask' },
+      },
+    ] satisfies Deal[],
     stats: {
       sales: 0,
       revenue: 0,
@@ -322,6 +357,7 @@ type PersistedGame = Pick<
   | 'inbox'
   | 'trust'
   | 'messengerLastAt'
+  | 'deals'
 >;
 
 export const useGameStore = create<GameState>()(
@@ -539,15 +575,74 @@ export const useGameStore = create<GameState>()(
       tickMessenger: () =>
         set((s) => {
           if (s.status !== 'playing') return;
+
+          // 1. Conversations the player ignored go quiet.
           const expired = expireInbox(s.inbox, s.gameDateTime);
+
+          // 2. Appointments that ran out cost trust.
+          const { deals, missed } = expireDeals(s.deals, s.gameDateTime);
+          s.deals = deals;
+          if (missed.length > 0) {
+            s.trust = Math.max(0, s.trust - 4 * missed.length);
+          }
+
+          // 3. Somebody might write in. The person decides the channel.
           const arrival = rollArrival({
             now: s.gameDateTime,
             lastAt: s.messengerLastAt,
             heat: s.heat,
             inbox: expired,
+            npcs,
           });
           s.inbox = arrival ? [arrival, ...expired].slice(0, 40) : expired;
           if (arrival) s.messengerLastAt = s.gameDateTime;
+        }),
+      fulfilDeal: (dealId) => {
+        let result: DealActionResult = { ok: false };
+        set((s) => {
+          if (s.status !== 'playing') {
+            result = { ok: false, error: '이번 판은 이미 끝났습니다.' };
+            return;
+          }
+          const deal = s.deals.find((entry) => entry.id === dealId);
+          if (!deal) {
+            result = { ok: false, error: '약속을 찾을 수 없습니다.' };
+            return;
+          }
+          const outcome = deliverDeal(deal, s.inventory);
+          if (!outcome.ok) {
+            result = { ok: false, error: outcome.error };
+            return;
+          }
+
+          s.inventory = outcome.inventory;
+          s.cash += outcome.cash;
+          s.heat = Math.min(100, Math.max(0, s.heat + outcome.heat));
+          s.trust = Math.min(100, s.trust + 2);
+          s.stats.sales += 1;
+          s.stats.revenue += outcome.cash;
+          s.stats.unitsSold += deal.qty;
+          deal.status = 'done';
+          s.gameDateTime = addMinutes(new Date(s.gameDateTime), 20).toISOString();
+
+          if (s.heat >= 100) {
+            s.status = 'busted';
+            s.statusReason = '약속 장소에 잠복이 있었다.';
+          } else if (totalWealth(s.cash, s.bank.balance) >= RETIRE_GOAL) {
+            s.status = 'retired';
+            s.statusReason = '약속을 꾸준히 지켜 목표 금액을 채웠다.';
+          }
+
+          result = { ok: true, message: outcome.message, total: outcome.cash };
+        });
+        return result;
+      },
+      cancelDeal: (dealId) =>
+        set((s) => {
+          const deal = s.deals.find((entry) => entry.id === dealId);
+          if (!deal || deal.status !== 'booked') return;
+          deal.status = 'missed';
+          s.trust = Math.max(0, s.trust - 3);
         }),
       openInbox: (messageId) =>
         set((s) => {
@@ -555,7 +650,7 @@ export const useGameStore = create<GameState>()(
           if (message && message.status === 'unread') message.status = 'open';
         }),
       answerInbox: (messageId, choiceId) => {
-        let result: AnswerResult = {
+        let result: InboxAnswer = {
           ok: false,
           error: '대화를 찾을 수 없습니다.',
           effects: { heat: 0, trust: 0, cash: 0 },
@@ -571,7 +666,9 @@ export const useGameStore = create<GameState>()(
             result = { ...result, error: '이미 답장했습니다.' };
             return;
           }
-          const answer = resolveAnswer(message, choiceId);
+
+          const npc = npcs.find((entry) => entry.id === message.npcId);
+          const answer = resolveAnswer(message, choiceId, npc);
           if (!answer.ok) {
             result = answer;
             return;
@@ -590,11 +687,26 @@ export const useGameStore = create<GameState>()(
             s.cash = Math.max(0, Math.round(s.cash + answer.effects.cash));
           }
 
+          // An accepted answer can book an appointment for the Trade app.
+          let deal: Deal | undefined;
+          if (answer.booking) {
+            deal =
+              createDeal({
+                spec: answer.booking,
+                npcId: message.npcId,
+                messageId: message.id,
+                scriptId: message.scriptId,
+                now: s.gameDateTime,
+                products,
+              }) ?? undefined;
+            if (deal) s.deals = [deal, ...s.deals].slice(0, 30);
+          }
+
           if (s.heat >= 100) {
             s.status = 'busted';
             s.statusReason = '메신저에서 남긴 기록이 추적망에 걸렸다.';
           }
-          result = answer;
+          result = { ...answer, deal };
         });
         return result;
       },
@@ -796,6 +908,7 @@ export const useGameStore = create<GameState>()(
         inbox: state.inbox,
         trust: state.trust,
         messengerLastAt: state.messengerLastAt,
+        deals: state.deals,
       }),
       migrate: (persisted) => {
         const previous = (persisted ?? {}) as Partial<PersistedGame>;
@@ -816,6 +929,7 @@ export const useGameStore = create<GameState>()(
           inbox: previous.inbox ?? base.inbox,
           trust: previous.trust ?? base.trust,
           messengerLastAt: previous.messengerLastAt ?? base.messengerLastAt,
+          deals: previous.deals ?? base.deals,
         };
       },
     },

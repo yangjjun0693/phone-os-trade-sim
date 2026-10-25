@@ -31,9 +31,16 @@ const products: Product[] = [
 ];
 
 const npcs: NpcProfile[] = [
-  { id: 'n1', name: '달이', kind: 'regular', bio: '단골' },
-  { id: 'n2', name: '찐빵', kind: 'difficult', bio: '진상' },
-  { id: 'n3', name: '박 씨', kind: 'undercover', bio: '수상함' },
+  { id: 'n1', name: '달이', kind: 'regular', bio: '단골', channel: 'telegraph' },
+  { id: 'n2', name: '찐빵', kind: 'difficult', bio: '진상', channel: 'phone' },
+  {
+    id: 'n3',
+    name: '박 씨',
+    kind: 'undercover',
+    bio: '수상함',
+    channel: 'phone',
+    altChannel: 'telegraph',
+  },
 ];
 
 const inventory: InventoryItem[] = [

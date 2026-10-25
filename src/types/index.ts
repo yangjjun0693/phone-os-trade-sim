@@ -18,6 +18,12 @@ export type MarketReach = 'clearnet' | 'mirror' | 'onion';
 
 export type CustomerKind = 'regular' | 'difficult' | 'undercover';
 
+/**
+ * Which messenger a person actually uses. People have their own channel, so
+ * asking someone to switch apps only works if they are willing to.
+ */
+export type MessageChannel = 'telegraph' | 'phone';
+
 export type RiskTier = 'calm' | 'watched' | 'hot' | 'burned';
 
 /** Identity kinds for the fictional game identity system. */
@@ -116,6 +122,10 @@ export interface NpcProfile {
   kind: CustomerKind;
   /** Cosmetic bio shown in the messenger. */
   bio: string;
+  /** The messenger this person uses. */
+  channel: MessageChannel;
+  /** Second messenger they will agree to move to, if any. */
+  altChannel?: MessageChannel;
 }
 
 export interface Clue {

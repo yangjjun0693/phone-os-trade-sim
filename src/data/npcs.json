@@ -3,48 +3,59 @@
     "id": "npc-dal",
     "name": "달이",
     "kind": "regular",
-    "bio": "매주 금요일 같은 시간에 나타나는 단골."
+    "bio": "매주 금요일 같은 시간에 나타나는 단골.",
+    "channel": "telegraph"
   },
   {
     "id": "npc-jjin",
     "name": "찐빵",
     "kind": "difficult",
-    "bio": "항상 20% 깎아달라고 한다. 안 깎아주면 바로 나간다."
+    "bio": "항상 20% 깎아달라고 한다. 안 깎아주면 바로 나간다.",
+    "channel": "phone"
   },
   {
     "id": "npc-mrpark",
     "name": "박 씨",
     "kind": "undercover",
-    "bio": "말투가 지나치게 정중하다. 질문이 많다."
+    "bio": "말투가 지나치게 정중하다. 질문이 많다.",
+    "channel": "phone"
   },
   {
     "id": "npc-yuna",
     "name": "유나",
     "kind": "regular",
-    "bio": "약속 시간을 정확히 지킨다. 현금만 쓴다."
+    "bio": "약속 시간을 정확히 지킨다. 현금만 쓴다.",
+    "channel": "telegraph",
+    "altChannel": "phone"
   },
   {
     "id": "npc-hyun",
     "name": "현이",
     "kind": "difficult",
-    "bio": "수량을 자주 바꾸고 늦게 온다."
+    "bio": "수량을 자주 바꾸고 늦게 온다.",
+    "channel": "phone",
+    "altChannel": "telegraph"
   },
   {
     "id": "npc-seo",
     "name": "서 씨",
     "kind": "regular",
-    "bio": "새벽에만 연락이 온다. 조용한 편."
+    "bio": "새벽에만 연락이 온다. 조용한 편.",
+    "channel": "telegraph",
+    "altChannel": "phone"
   },
   {
     "id": "npc-boss",
     "name": "중간상",
     "kind": "regular",
-    "bio": "물량을 통째로 넘겨받는 상인. 값은 짜다."
+    "bio": "물량을 통째로 넘겨받는 상인. 값은 짜다.",
+    "channel": "telegraph"
   },
   {
     "id": "npc-gray",
     "name": "회색 코트",
     "kind": "undercover",
-    "bio": "시세를 지나치게 잘 안다. 접근이 빠르다."
+    "bio": "시세를 지나치게 잘 안다. 접근이 빠르다.",
+    "channel": "phone"
   }
 ]

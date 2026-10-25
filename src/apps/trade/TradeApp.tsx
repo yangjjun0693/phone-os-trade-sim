@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRightLeft,
   Banknote,
+  CalendarClock,
   Flame,
   Package,
   Target,
@@ -11,7 +12,15 @@ import {
   X,
 } from 'lucide-react';
 import { npcs } from '@/data';
-import { heatFromCash, heatLabel, heatTier } from '@/game';
+import {
+  dealStats,
+  dealTotal,
+  formatDealEta,
+  heatFromCash,
+  heatLabel,
+  heatTier,
+  remainingMinutes,
+} from '@/game';
 import {
   MAX_DAYS,
   RETIRE_GOAL,
@@ -63,6 +72,10 @@ export function TradeApp() {
   const endDay = useGameStore((s) => s.endDay);
   const addHeat = useGameStore((s) => s.addHeat);
   const advanceGameTime = useGameStore((s) => s.advanceGameTime);
+  const deals = useGameStore((s) => s.deals);
+  const gameDateTime = useGameStore((s) => s.gameDateTime);
+  const fulfilDeal = useGameStore((s) => s.fulfilDeal);
+  const cancelDeal = useGameStore((s) => s.cancelDeal);
 
   const [customer, setCustomer] = useState<CustomerOffer | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -74,6 +87,26 @@ export function TradeApp() {
   const progress = Math.min(1, wealth / RETIRE_GOAL);
   const stockValue = inventory.reduce((sum, item) => sum + item.unitCost * item.qty, 0);
   const cashRisk = Math.ceil(heatFromCash(cash) / 2);
+
+  const booked = deals.filter((deal) => deal.status === 'booked');
+  const appointmentStats = dealStats(deals);
+
+  const runDeal = (dealId: string) => {
+    const result = fulfilDeal(dealId);
+    if (!result.ok) {
+      haptic(12);
+      setFeedback({ tone: 'error', text: result.error ?? '약속을 처리하지 못했습니다.' });
+      return;
+    }
+    setFeedback({ tone: 'ok', text: result.message ?? '약속을 지켰습니다.' });
+    haptic(8);
+  };
+
+  const dropDeal = (dealId: string) => {
+    cancelDeal(dealId);
+    setFeedback({ tone: 'warn', text: '약속을 취소했다. 신뢰가 조금 떨어졌다.' });
+    haptic(10);
+  };
 
   const callCustomer = () => {
     const next = createCustomerOffer(inventory, npcs, heat, Math.random);
@@ -349,6 +382,67 @@ export function TradeApp() {
             </motion.div>
           ) : null}
         </AnimatePresence>
+
+        <Section
+          header="약속"
+          footer={
+            booked.length > 0
+              ? `잡힌 약속 ${appointmentStats.booked}건 · 완료 ${appointmentStats.done} · 놓침 ${appointmentStats.missed}`
+              : `완료 ${appointmentStats.done} · 놓침 ${appointmentStats.missed} · 약속은 메신저 답장으로 생깁니다.`
+          }
+          delay={0.08}
+        >
+          {booked.length === 0 ? (
+            <EmptyState
+              icon={CalendarClock}
+              title="잡힌 약속이 없습니다"
+              description="메신저에서 손님 제안에 답장하면 거래 앱에 약속이 뜹니다."
+            />
+          ) : (
+            booked.map((deal) => {
+              const npc = npcs.find((entry) => entry.id === deal.npcId);
+              const stock = inventory
+                .filter((item) => item.productId === deal.productId)
+                .reduce((sum, item) => sum + item.qty, 0);
+              const enough = stock >= deal.qty;
+              const late = remainingMinutes(deal, gameDateTime) <= 0;
+              return (
+                <div
+                  key={deal.id}
+                  className="border-b border-ios-separator/15 px-4 py-3 last:border-b-0"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[15px] font-semibold">{npc?.name ?? '손님'}</span>
+                    <Pill tone={late ? 'red' : 'blue'}>{formatDealEta(deal, gameDateTime)}</Pill>
+                    <span className="ml-auto text-[15px] font-semibold tabular-nums">
+                      {formatCash(dealTotal(deal))}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-[12px] text-ios-muted">
+                    {deal.productName} ×{deal.qty} · 개당 {formatCash(deal.unitPrice)} · 보유 {stock}개
+                  </p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      disabled={!enough || status !== 'playing'}
+                      onClick={() => runDeal(deal.id)}
+                      className="flex h-9 items-center justify-center rounded-xl bg-ios-green text-[13px] font-semibold text-white disabled:bg-ios-separator/20 disabled:text-ios-muted"
+                    >
+                      {enough ? '약속 이행' : '재고 부족'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => dropDeal(deal.id)}
+                      className="flex h-9 items-center justify-center rounded-xl bg-ios-separator/20 text-[13px] font-semibold text-ios-muted"
+                    >
+                      약속 취소
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </Section>
 
         <Section
           header="재고"
