@@ -65,14 +65,15 @@ describe('osStore / home layout', () => {
   it('reorders icons inside a page', () => {
     useOSStore.getState().moveApp('notes', 'wallet');
 
-    expect(useOSStore.getState().layout.pages[0]).toEqual(['notes', 'wallet', 'gmall', 'protean']);
+    expect(useOSStore.getState().layout.pages[0].slice(0, 4)).toEqual(['notes', 'wallet', 'gmall', 'protean']);
   });
 
   it('moves an icon from a page into the dock', () => {
     useOSStore.getState().moveApp('notes', 'dock');
 
     const layout = useOSStore.getState().layout;
-    expect(layout.pages[0]).toEqual(['wallet', 'gmall', 'protean']);
+    expect(layout.pages[0]).not.toContain('notes');
+    expect(layout.pages[0].slice(0, 3)).toEqual(['wallet', 'gmall', 'protean']);
     expect(layout.dock).toContain('notes');
   });
 

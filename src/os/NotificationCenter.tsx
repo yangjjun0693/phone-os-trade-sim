@@ -1,10 +1,10 @@
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
 import { BellOff, X } from 'lucide-react';
 import { getApp } from '@/apps/registry';
 import { useGameClock } from '@/hooks/useGameClock';
 import { useOSStore } from '@/store/osStore';
-import { SPRING_SOFT } from '@/utils/motion';
+import { SPRING_BOUNCY, SPRING_SOFT, listItem, staggerContainer } from '@/utils/motion';
 
 /** Pull-down shade: game clock plus the notification feed. */
 export function NotificationCenter() {
@@ -37,14 +37,16 @@ export function NotificationCenter() {
             <p className="text-[13px] font-medium opacity-70">{date}</p>
             <p className="text-[52px] font-bold leading-none tabular-nums">{time}</p>
           </div>
-          <button
+          <motion.button
             type="button"
             aria-label="알림 모두 지우기"
             onClick={clearNotifications}
+            whileTap={{ scale: 0.86, rotate: 90 }}
+            transition={SPRING_BOUNCY}
             className="mt-2 flex size-8 items-center justify-center rounded-full bg-black/10 text-ios-text"
           >
             <X className="size-4" aria-hidden />
-          </button>
+          </motion.button>
         </div>
 
         <div className="scroll-area no-scrollbar mt-5 flex-1 px-4 pb-10">
@@ -54,22 +56,32 @@ export function NotificationCenter() {
               <p className="text-[14px]">알림이 없습니다</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
-              {notifications.map((item) => (
-                <div
-                  key={item.id}
-                  className="glass-strong flex items-start gap-2.5 rounded-2xl p-3 text-ios-text shadow-lg ring-1 ring-inset ring-white/15"
-                >
-                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-white/20 text-[11px]">
-                    {getApp(item.appId)?.name.slice(0, 1) ?? '!'}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-semibold">{item.title}</p>
-                    <p className="mt-0.5 text-[13px] opacity-80">{item.body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <motion.div
+              variants={staggerContainer(0.05)}
+              initial="hidden"
+              animate="show"
+              className="flex flex-col gap-2"
+            >
+              <AnimatePresence initial={false}>
+                {notifications.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    variants={listItem}
+                    exit={{ opacity: 0, x: 40, transition: { duration: 0.16 } }}
+                    className="glass-strong flex items-start gap-2.5 rounded-2xl p-3 text-ios-text shadow-lg ring-1 ring-inset ring-white/15"
+                  >
+                    <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-white/20 text-[11px]">
+                      {getApp(item.appId)?.name.slice(0, 1) ?? '!'}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold">{item.title}</p>
+                      <p className="mt-0.5 text-[13px] opacity-80">{item.body}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { useResolvedTheme } from '@/hooks/useResolvedTheme';
 import { OSShell } from '@/os/OSShell';
 import { PhoneFrame } from '@/os/PhoneFrame';
@@ -21,8 +22,12 @@ export function App() {
   }, []);
 
   return (
-    <PhoneFrame>
-      <OSShell />
-    </PhoneFrame>
+    // `reducedMotion="user"` makes every Framer animation honour the OS
+    // setting: transforms are dropped, opacity fades are kept.
+    <MotionConfig reducedMotion="user">
+      <PhoneFrame>
+        <OSShell />
+      </PhoneFrame>
+    </MotionConfig>
   );
 }

@@ -4,6 +4,7 @@ import { useOSStore } from '@/store/osStore';
 import { AppSwitcher } from './AppSwitcher';
 import { AppWindow } from './AppWindow';
 import { ControlCenter } from './ControlCenter';
+import { GameStatusOverlay } from './GameStatusOverlay';
 import { HomeIndicator } from './HomeIndicator';
 import { HomeScreen } from './HomeScreen';
 import { LockScreen } from './LockScreen';
@@ -95,10 +96,12 @@ export function OSShell() {
 
       {/* brightness dimmer driven by the control centre */}
       <div
-        className="pointer-events-none absolute inset-0 z-[60] bg-black"
+        className="pointer-events-none absolute inset-0 z-[60] bg-black transition-opacity duration-300 ease-ios"
         style={{ opacity: dim }}
         aria-hidden
       />
+
+      {locked ? null : <GameStatusOverlay />}
     </div>
   );
 }

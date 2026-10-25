@@ -1,34 +1,69 @@
 [
   {
-    "id": "market-nightbazaar",
-    "name": "NightBazaar",
-    "tagline": "24/7 · 신뢰도 98% · 에스크로 지원",
+    "id": "market-pharmacy",
+    "name": "가온약국",
+    "tagline": "영수증 발급 · 일반 의약품",
     "status": "legit",
-    "openedDaysAgo": 240,
-    "traits": ["오래된 도메인"]
+    "reach": "clearnet",
+    "priceMod": 1,
+    "traceHeat": 0,
+    "openedDaysAgo": 1450,
+    "traits": ["사업자 등록 정상", "재고가 적다"]
   },
   {
-    "id": "market-quickdrop",
-    "name": "QuickDrop",
-    "tagline": "오늘만 특가 · 선입금 필수",
-    "status": "scam",
-    "openedDaysAgo": 4,
-    "traits": ["리뷰 문체가 전부 동일", "오픈 4일차"]
+    "id": "market-hyper",
+    "name": "가온마트",
+    "tagline": "회원 할인 · 당일 배송",
+    "status": "legit",
+    "reach": "clearnet",
+    "priceMod": 1,
+    "traceHeat": 0,
+    "openedDaysAgo": 2100,
+    "traits": ["한 번에 조금씩만 판다", "결제 기록이 남는다"]
   },
   {
     "id": "market-clearnet",
     "name": "ClearNet-Mirror",
     "tagline": "검증된 파트너 · 대량 환영",
     "status": "honeypot",
+    "reach": "mirror",
+    "priceMod": 1.15,
+    "traceHeat": 1,
     "openedDaysAgo": 12,
     "traits": ["가격이 시세보다 30% 낮음", "문의 응답이 너무 빠름"]
+  },
+  {
+    "id": "market-quickdrop",
+    "name": "QuickDrop",
+    "tagline": "오늘만 특가 · 선입금 필수",
+    "status": "scam",
+    "reach": "mirror",
+    "priceMod": 1.15,
+    "traceHeat": 1,
+    "openedDaysAgo": 4,
+    "traits": ["리뷰 문체가 전부 동일", "오픈 4일차"]
+  },
+  {
+    "id": "market-nightbazaar",
+    "name": "NightBazaar",
+    "tagline": "24/7 · 신뢰도 98% · 에스크로 지원",
+    "status": "legit",
+    "reach": "onion",
+    "priceMod": 0.85,
+    "traceHeat": 0,
+    "openedDaysAgo": 240,
+    "traits": ["오래된 도메인"]
   },
   {
     "id": "market-lastcall",
     "name": "LastCall",
     "tagline": "폐쇄 준비 중 · 재고 정리",
     "status": "closing",
+    "reach": "onion",
+    "priceMod": 0.85,
+    "traceHeat": 0,
+    "invite": true,
     "openedDaysAgo": 90,
-    "traits": ["공지에 작별 인사"]
+    "traits": ["공지에 작별 인사", "초대 코드가 있어야 열린다"]
   }
 ]

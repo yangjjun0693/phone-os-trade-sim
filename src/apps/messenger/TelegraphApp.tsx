@@ -149,22 +149,22 @@ export function TelegraphApp() {
   return (
     <AppShell
       title="Telegraph"
-      largeTitle={!selectedConversation}
+      largeTitle={false}
       className="flex flex-col h-full"
       trailing={
         <div className="flex items-center gap-1">
-          <button onClick={() => setShowSettings(!showSettings)} className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="설정">
+          <button onClick={() => setShowSettings(!showSettings)} className="p-2 rounded-xl text-ios-muted" aria-label="설정">
             <Settings className="size-5" />
           </button>
-          <button className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="새 대화" disabled>
+          <button className="p-2 rounded-xl text-ios-muted" aria-label="새 대화" disabled>
             <Edit className="size-5" />
           </button>
         </div>
       }
     >
-      <div className="flex h-full">
-        {/* Conversation List */}
-        <aside className="w-80 shrink-0 flex flex-col border-r border-ios-separator/20 bg-ios-bg">
+      <div className="flex h-full min-h-0">
+        {/* Conversation List: full screen until a chat is opened */}
+        <aside className={cn('min-h-0 w-full flex-col bg-ios-bg', selectedConversation ? 'hidden' : 'flex')}>
           {/* Search */}
           <div className="p-3 border-b border-ios-separator/20">
             <div className="relative">
@@ -220,7 +220,7 @@ export function TelegraphApp() {
         </aside>
 
         {/* Chat View */}
-        <main className="flex-1 flex flex-col min-w-0 relative">
+        <main className={cn('relative min-w-0 flex-1 flex-col', selectedConversation ? 'flex' : 'hidden')}>
           {selectedConversation ? (
             <TelegraphChatView
               conversation={selectedConversation}
@@ -272,7 +272,7 @@ function TelegraphConversationRow({
       onClick={onClick}
       className={cn(
         'relative flex items-start gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors group',
-        selected ? 'bg-ios-accent/15 ring-1 ring-ios-accent/30' : 'hover:bg-ios-separator/10'
+        selected ? 'bg-ios-accent/15 ring-1 ring-ios-accent/30' : ''
       )}
     >
       <div className="relative size-12 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-ios-purple to-ios-blue flex items-center justify-center text-[18px]">
@@ -311,9 +311,14 @@ function TelegraphConversationRow({
             {lastMsg?.senderName === 'NightOwl' ? '나: ' : ''}{lastMsg?.content ?? '메시지 없음'}
           </p>
           {conv.unreadCount > 0 && (
-            <span className="shrink-0 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-ios-accent text-white">
+            <motion.span
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={SPRING_BOUNCY}
+              className="shrink-0 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-ios-accent text-white"
+            >
               {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
-            </span>
+            </motion.span>
           )}
           {conv.autoDeleteTimer && conv.autoDeleteTimer > 0 && (
             <div className="shrink-0 flex items-center gap-1 text-[11px] text-ios-muted">
@@ -325,15 +330,15 @@ function TelegraphConversationRow({
       </div>
 
       {/* Context menu on long press / right click */}
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 transition-opacity">
         <div className="flex items-center gap-1 rounded-lg bg-ios-surface ring-1 ring-black/5 dark:ring-white/5 p-1">
-          <button onClick={onPin} className="p-2 rounded text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label={conv.pinned ? '고정 해제' : '고정'}>
+          <button onClick={onPin} className="p-2 rounded text-ios-muted" aria-label={conv.pinned ? '고정 해제' : '고정'}>
             <Pin className={cn('size-4', conv.pinned ? 'fill-current text-ios-accent' : '')} />
           </button>
-          <button onClick={onMute} className="p-2 rounded text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label={conv.muted ? '알림 켜기' : '알림 끄기'}>
+          <button onClick={onMute} className="p-2 rounded text-ios-muted" aria-label={conv.muted ? '알림 켜기' : '알림 끄기'}>
             <BellOff className={cn('size-4', conv.muted ? 'fill-current text-ios-orange' : '')} />
           </button>
-          <button onClick={onDelete} className="p-2 rounded text-ios-muted hover:text-ios-red hover:bg-ios-red/10" aria-label="삭제">
+          <button onClick={onDelete} className="p-2 rounded text-ios-muted" aria-label="삭제">
             <Trash2 className="size-4" />
           </button>
         </div>
@@ -422,7 +427,7 @@ function TelegraphChatView({
     <div className="flex h-full flex-col">
       {/* Chat Header */}
       <div className="glass-strong sticky top-0 z-10 flex items-center gap-3 border-b border-ios-separator/20 px-4 py-3">
-        <button onClick={onBack} className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="뒤로">
+        <button onClick={onBack} className="p-2 rounded-xl text-ios-muted" aria-label="뒤로">
           <ChevronLeft className="size-5" />
         </button>
         <div className="relative size-10 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-ios-purple to-ios-blue flex items-center justify-center text-[16px]">
@@ -446,17 +451,17 @@ function TelegraphChatView({
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <button className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="음성 통화" disabled>
+          <button className="p-2 rounded-xl text-ios-muted" aria-label="음성 통화" disabled>
             <Mic className="size-5" />
           </button>
-          <button className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="영상 통화" disabled>
+          <button className="p-2 rounded-xl text-ios-muted" aria-label="영상 통화" disabled>
             <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M23 9a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2z" />
               <rect x="9" y="13" width="6" height="6" rx="1" />
               <circle cx="9" cy="9" r="1" />
             </svg>
           </button>
-          <button className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="더보기">
+          <button className="p-2 rounded-xl text-ios-muted" aria-label="더보기">
             <MoreVertical className="size-5" />
           </button>
         </div>
@@ -466,10 +471,15 @@ function TelegraphChatView({
       <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundImage: 'radial-gradient(circle at center, transparent 50%, transparent 50%)' }}>
         {conversation.autoDeleteTimer && conversation.autoDeleteTimer > 0 && (
           <div className="flex justify-center mb-4">
-            <span className="px-3 py-1.5 text-[11px] font-medium rounded-full bg-ios-orange/20 text-ios-orange flex items-center gap-1">
+            <motion.span
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={SPRING_SNAPPY}
+              className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-medium rounded-full bg-ios-orange/20 text-ios-orange"
+            >
               <Clock className="size-3" />
               이 대화는 {formatTimer(conversation.autoDeleteTimer)} 후 자동 삭제됩니다
-            </span>
+            </motion.span>
           </div>
         )}
 
@@ -505,7 +515,7 @@ function TelegraphChatView({
       {/* Input */}
       <div className="glass-strong sticky bottom-0 z-10 border-t border-ios-separator/20 px-3 py-3">
         <div className="flex items-end gap-2">
-          <button className="p-2.5 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15 shrink-0" aria-label="첨부" disabled>
+          <button className="p-2.5 rounded-xl text-ios-muted shrink-0" aria-label="첨부" disabled>
             <Paperclip className="size-5" />
           </button>
           <div className="flex-1 relative">
@@ -522,7 +532,7 @@ function TelegraphChatView({
           <button
             onClick={onSend}
             disabled={!newMessage.trim()}
-            className="p-2.5 rounded-xl bg-ios-accent text-white shrink-0 hover:bg-ios-accent/90 disabled:opacity-40 disabled:hover:bg-ios-accent transition-colors"
+            className="p-2.5 rounded-xl bg-ios-accent text-white shrink-0 disabled:opacity-40 transition-colors"
             aria-label="전송"
           >
             <Send className="size-5" />

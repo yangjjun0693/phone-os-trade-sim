@@ -6,10 +6,21 @@ export function formatCash(value: number): string {
   return `₩${Math.round(value).toLocaleString('ko-KR')}`;
 }
 
+/** `5000` -> `5,000` — steak chips have no currency glyph. */
+export function formatChips(value: number): string {
+  return Math.round(value).toLocaleString('ko-KR');
+}
+
+/** `1200000` -> `₩120만`, `30000000` -> `₩3,000만`, `120000000` -> `₩1.2억`. */
 export function formatCompactCash(value: number): string {
   const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `₩${(value / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000) return `₩${(value / 1_000).toFixed(1)}K`;
+  if (abs >= 100_000_000) {
+    const eok = value / 100_000_000;
+    return `₩${(Math.round(eok * 10) / 10).toLocaleString('ko-KR')}억`;
+  }
+  if (abs >= 10_000) {
+    return `₩${Math.round(value / 10_000).toLocaleString('ko-KR')}만`;
+  }
   return formatCash(value);
 }
 

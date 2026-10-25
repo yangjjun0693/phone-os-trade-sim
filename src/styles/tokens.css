@@ -20,6 +20,8 @@
   --ios-red: 255 59 48;
   --ios-orange: 255 149 0;
   --ios-blue: 0 122 255;
+  --ios-purple: 175 82 222;
+  --ios-yellow: 255 204 0;
 
   /* ---- glass / dock ---- */
   --ios-glass: rgba(255, 255, 255, 0.62);
@@ -47,6 +49,9 @@
 
   --phone-max-width: 430px;
   --phone-aspect: 9 / 19.5;
+
+  /* Multiplier applied by JS-driven motion; 0 when the user asks for less. */
+  --motion-scale: 1;
 }
 
 .dark {
@@ -61,6 +66,8 @@
   --ios-red: 255 69 58;
   --ios-orange: 255 159 10;
   --ios-blue: 10 132 255;
+  --ios-purple: 191 90 242;
+  --ios-yellow: 255 214 10;
 
   --ios-glass: rgba(30, 30, 32, 0.62);
   --ios-glass-strong: rgba(18, 18, 20, 0.78);

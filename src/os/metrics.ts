@@ -13,4 +13,3 @@ export const ICON_RADIUS_RATIO = 0.2237;
 export const appTileId = (appId: string) => `app-tile-${appId}`;
 
 export const ISLAND_COLLAPSED = { width: 126, height: 37 };
-export const ISLAND_EXPANDED = { width: 260, height: 46 };

@@ -113,44 +113,57 @@ export function MessagesCallApp() {
   return (
     <AppShell
       title="메시지/통화"
-      largeTitle={!selectedConversation && viewMode === 'chats'}
+      largeTitle={false}
       className="flex flex-col h-full"
       trailing={
         <div className="flex items-center gap-1">
-          <button onClick={() => setViewMode('contacts')} className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="새 메시지">
+          <button onClick={() => setViewMode('contacts')} className="p-2 rounded-xl text-ios-muted" aria-label="새 메시지">
             <UserPlus className="size-5" />
           </button>
-          <button className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="설정">
+          <button className="p-2 rounded-xl text-ios-muted" aria-label="설정">
             <Settings className="size-5" />
           </button>
         </div>
       }
     >
-      <div className="flex h-full">
-        {/* Sidebar */}
-        <aside className="w-80 shrink-0 flex flex-col border-r border-ios-separator/20 bg-ios-bg">
+      <div className="flex h-full min-h-0">
+        {/* List: full screen until a chat is opened */}
+        <aside className={cn('min-h-0 w-full flex-col bg-ios-bg', selectedConversation && viewMode === 'chats' ? 'hidden' : 'flex')}>
           {/* Tab Bar */}
           <div className="flex border-b border-ios-separator/20">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => { setViewMode(tab.id as any); setSelectedConversation(null); }}
-                className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 py-3 text-[14px] font-medium border-b-2 transition-colors',
-                  viewMode === tab.id
-                    ? 'border-ios-accent text-ios-accent'
-                    : 'border-transparent text-ios-muted hover:text-ios-text'
-                )}
-              >
-                <tab.icon className="size-5" aria-hidden />
-                {tab.label}
-                {tab.count > 0 && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-ios-red text-white">
-                    {tab.count > 9 ? '9+' : tab.count}
-                  </span>
-                )}
-              </button>
-            ))}
+            {tabs.map(tab => {
+              const active = viewMode === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => { setViewMode(tab.id as any); setSelectedConversation(null); }}
+                  className={cn(
+                    'relative flex-1 flex items-center justify-center gap-1.5 py-3 text-[14px] font-medium transition-colors',
+                    active ? 'text-ios-accent' : 'text-ios-muted'
+                  )}
+                >
+                  <tab.icon className="size-5" aria-hidden />
+                  {tab.label}
+                  {tab.count > 0 && (
+                    <motion.span
+                      initial={{ scale: 0.5 }}
+                      animate={{ scale: 1 }}
+                      transition={SPRING_BOUNCY}
+                      className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-ios-red text-white"
+                    >
+                      {tab.count > 9 ? '9+' : tab.count}
+                    </motion.span>
+                  )}
+                  {active ? (
+                    <motion.span
+                      layoutId="messages-tab-underline"
+                      transition={SPRING_SNAPPY}
+                      className="absolute inset-x-6 bottom-0 h-0.5 rounded-full bg-ios-accent"
+                    />
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
 
           {/* Search */}
@@ -217,7 +230,7 @@ export function MessagesCallApp() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 flex flex-col min-w-0 relative">
+        <main className={cn('relative min-w-0 flex-1 flex-col', selectedConversation && viewMode === 'chats' ? 'flex' : 'hidden')}>
           {selectedConversation && viewMode === 'chats' ? (
             <MessagesCallChatView
               conversation={selectedConversation}
@@ -269,7 +282,7 @@ function MessagesCallConversationRow({
       onClick={onClick}
       className={cn(
         'relative flex items-start gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors group',
-        selected ? 'bg-ios-accent/15 ring-1 ring-ios-accent/30' : 'hover:bg-ios-separator/10'
+        selected ? 'bg-ios-accent/15 ring-1 ring-ios-accent/30' : ''
       )}
     >
       <div className="relative size-12 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-ios-green to-ios-blue flex items-center justify-center text-[18px]">
@@ -301,19 +314,24 @@ function MessagesCallConversationRow({
             {lastMsg?.senderName === '김철수' ? '나: ' : ''}{lastMsg?.content ?? '메시지 없음'}
           </p>
           {conv.unreadCount > 0 && (
-            <span className="shrink-0 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-ios-accent text-white">
+            <motion.span
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={SPRING_BOUNCY}
+              className="shrink-0 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-ios-accent text-white"
+            >
               {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
-            </span>
+            </motion.span>
           )}
         </div>
       </div>
 
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 transition-opacity">
         <div className="flex items-center gap-1 rounded-lg bg-ios-surface ring-1 ring-black/5 dark:ring-white/5 p-1">
-          <button onClick={onPin} className="p-2 rounded text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label={conv.pinned ? '고정 해제' : '고정'}>
+          <button onClick={onPin} className="p-2 rounded text-ios-muted" aria-label={conv.pinned ? '고정 해제' : '고정'}>
             <Pin className={cn('size-4', conv.pinned ? 'fill-current text-ios-accent' : '')} />
           </button>
-          <button onClick={onMute} className="p-2 rounded text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label={conv.muted ? '알림 켜기' : '알림 끄기'}>
+          <button onClick={onMute} className="p-2 rounded text-ios-muted" aria-label={conv.muted ? '알림 켜기' : '알림 끄기'}>
             <BellOff className={cn('size-4', conv.muted ? 'fill-current text-ios-orange' : '')} />
           </button>
         </div>
@@ -354,7 +372,7 @@ function CallHistoryView({ contacts, searchQuery, formatTime }: { contacts: Mess
         <motion.div
           key={index}
           layout
-          className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-ios-separator/10"
+          className="flex items-center gap-3 px-3 py-3 rounded-xl"
         >
           <div className="size-12 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-ios-green to-ios-blue flex items-center justify-center text-[20px]">
             {call.contact.avatar}
@@ -368,7 +386,7 @@ function CallHistoryView({ contacts, searchQuery, formatTime }: { contacts: Mess
             </div>
             <p className="text-[12px] text-ios-muted">{formatTime(call.time)} · {call.duration}</p>
           </div>
-          <button className="p-2 rounded-xl text-ios-muted hover:text-ios-green hover:bg-ios-green/10" aria-label="전화 걸기">
+          <button className="p-2 rounded-xl text-ios-muted" aria-label="전화 걸기">
             <Phone className="size-5" />
           </button>
         </motion.div>
@@ -389,7 +407,7 @@ function ContactsView({ contacts, searchQuery, formatTime }: { contacts: Messeng
         <motion.div
           key={contact.id}
           layout
-          className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-ios-separator/10 cursor-pointer"
+          className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer"
         >
           <div className="size-12 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-ios-green to-ios-blue flex items-center justify-center text-[20px]">
             {contact.avatar}
@@ -405,12 +423,12 @@ function ContactsView({ contacts, searchQuery, formatTime }: { contacts: Messeng
             <p className="text-[12px] text-ios-muted">{contact.bio}</p>
           </div>
           <div className="flex items-center gap-1">
-            <button className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/10" aria-label="메시지">
+            <button className="p-2 rounded-xl text-ios-muted" aria-label="메시지">
               <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
             </button>
-            <button className="p-2 rounded-xl text-ios-muted hover:text-ios-green hover:bg-ios-green/10" aria-label="전화">
+            <button className="p-2 rounded-xl text-ios-muted" aria-label="전화">
               <Phone className="size-5" />
             </button>
           </div>
@@ -446,7 +464,7 @@ function MessagesCallChatView({
     <div className="flex h-full flex-col">
       {/* Chat Header */}
       <div className="glass-strong sticky top-0 z-10 flex items-center gap-3 border-b border-ios-separator/20 px-4 py-3">
-        <button onClick={onBack} className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="뒤로">
+        <button onClick={onBack} className="p-2 rounded-xl text-ios-muted" aria-label="뒤로">
           <ChevronLeft className="size-5" />
         </button>
         <div className="relative size-10 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-ios-green to-ios-blue flex items-center justify-center text-[16px]">
@@ -464,13 +482,13 @@ function MessagesCallChatView({
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <button className="p-2 rounded-xl text-ios-muted hover:text-ios-green hover:bg-ios-green/10" aria-label="음성 통화" disabled>
+          <button className="p-2 rounded-xl text-ios-muted" aria-label="음성 통화" disabled>
             <Phone className="size-5" />
           </button>
-          <button className="p-2 rounded-xl text-ios-muted hover:text-ios-green hover:bg-ios-green/10" aria-label="영상 통화" disabled>
+          <button className="p-2 rounded-xl text-ios-muted" aria-label="영상 통화" disabled>
             <Video className="size-5" />
           </button>
-          <button className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="더보기">
+          <button className="p-2 rounded-xl text-ios-muted" aria-label="더보기">
             <MoreVertical className="size-5" />
           </button>
         </div>
@@ -510,10 +528,10 @@ function MessagesCallChatView({
       {/* Input */}
       <div className="glass-strong sticky bottom-0 z-10 border-t border-ios-separator/20 px-3 py-3">
         <div className="flex items-end gap-2">
-          <button className="p-2.5 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15 shrink-0" aria-label="첨부" disabled>
+          <button className="p-2.5 rounded-xl text-ios-muted shrink-0" aria-label="첨부" disabled>
             <Paperclip className="size-5" />
           </button>
-          <button className="p-2.5 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15 shrink-0" aria-label="이모티콘" disabled>
+          <button className="p-2.5 rounded-xl text-ios-muted shrink-0" aria-label="이모티콘" disabled>
             <Smile className="size-5" />
           </button>
           <div className="flex-1 relative">
@@ -530,7 +548,7 @@ function MessagesCallChatView({
           <button
             onClick={onSend}
             disabled={!newMessage.trim()}
-            className="p-2.5 rounded-xl bg-ios-green text-white shrink-0 hover:bg-ios-green/90 disabled:opacity-40 disabled:hover:bg-ios-green transition-colors"
+            className="p-2.5 rounded-xl bg-ios-green text-white shrink-0 disabled:opacity-40 transition-colors"
             aria-label="전송"
           >
             <Check className="size-5" />
@@ -649,7 +667,7 @@ function CallKeypadView({ onCall }: { onCall: (number: string) => void }) {
       {number && (
         <button
           onClick={() => setNumber(n => n.slice(0, -1))}
-          className="mt-4 p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15"
+          className="mt-4 p-2 rounded-xl text-ios-muted"
           aria-label="지우기"
         >
           <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -677,7 +695,7 @@ function ContactsMainView({ contacts, onSelect }: { contacts: MessengerContact[]
               key={contact.id}
               layout
               onClick={() => onSelect(contact)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-ios-separator/10 cursor-pointer"
+              className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer"
             >
               <div className="relative size-12 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-ios-green to-ios-blue flex items-center justify-center text-[20px]">
                 {contact.avatar}
@@ -692,12 +710,12 @@ function ContactsMainView({ contacts, onSelect }: { contacts: MessengerContact[]
                 <p className="text-[12px] text-ios-muted">@{contact.handle} · {contact.bio}</p>
               </div>
               <div className="flex items-center gap-1">
-                <button className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/10" aria-label="메시지">
+                <button className="p-2 rounded-xl text-ios-muted" aria-label="메시지">
                   <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
                 </button>
-                <button className="p-2 rounded-xl text-ios-muted hover:text-ios-green hover:bg-ios-green/10" aria-label="전화">
+                <button className="p-2 rounded-xl text-ios-muted" aria-label="전화">
                   <Phone className="size-5" />
                 </button>
               </div>

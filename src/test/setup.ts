@@ -20,6 +20,10 @@ if (!window.HTMLElement.prototype.scrollTo) {
   window.HTMLElement.prototype.scrollTo = vi.fn();
 }
 
+// jsdom throws "Not implemented" for window.scrollTo; Framer Motion calls it
+// while measuring layout animations.
+window.scrollTo = vi.fn();
+
 // Framer Motion's layout projection needs these observers; jsdom lacks both.
 if (!('ResizeObserver' in globalThis)) {
   class ResizeObserverStub {

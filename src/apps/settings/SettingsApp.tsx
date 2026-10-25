@@ -2,15 +2,16 @@ import { useRef, useState, useMemo } from 'react';
 import { Cloud, Download, Info, Moon, RotateCcw, Sun, Upload, User, UserCheck, Shield, AlertTriangle, LogOut, Key, Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { SAVE_VERSION, SaveDataSchema, localSaveService, type SaveData } from '@/lib/saveService';
-import { useGameStore } from '@/store/gameStore';
+import { useGameStore, type SteakState } from '@/store/gameStore';
 import { useOSStore } from '@/store/osStore';
 import { computeTotalExposure, getExposureTier, getExposureTierColor, getIdentityLabel, getIdentityDescription, getSupportedIdentities, switchIdentity, logoutIdentity, getAppIdentity, type IdentityKind } from '@/game';
 import type { InventoryItem, ThemeMode, IdentityState, AppIdentityMap } from '@/types';
 import { cn } from '@/utils/cn';
+import { AnimatedNumber, Pill, Segmented } from '@/components';
 import { AppShell } from '../AppShell';
 import { Row, Section } from '../SectionList';
 import { getApp } from '../registry';
-import { SPRING_SNAPPY, prefersReducedMotion } from '@/utils/motion';
+import { SPRING_BOUNCY, SPRING_SNAPPY, prefersReducedMotion } from '@/utils/motion';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
@@ -40,9 +41,11 @@ function Toggle({
         checked ? 'bg-ios-green' : 'bg-ios-separator/30',
       )}
     >
-      <span
+      <motion.span
+        layout
+        transition={SPRING_BOUNCY}
         className={cn(
-          'absolute top-0.5 size-7 rounded-full bg-white shadow transition-all',
+          'absolute top-0.5 size-7 rounded-full bg-white shadow',
           checked ? 'left-[22px]' : 'left-0.5',
         )}
       />
@@ -57,11 +60,13 @@ function snapshot(): SaveData {
     version: SAVE_VERSION,
     savedAt: new Date().toISOString(),
     game: {
+      playerName: game.playerName,
       cash: game.cash,
       heat: game.heat,
       day: game.day,
       gameDateTime: game.gameDateTime,
       inventory: game.inventory,
+      steak: game.steak,
     },
     os: {
       theme: os.theme,
@@ -117,7 +122,7 @@ function IdentityRow({ appId, appName, Icon, gradient, identity, onSwitch, onLog
                   'px-3 py-1.5 rounded-xl text-[12px] font-medium transition-colors',
                   identity.active === 'realname'
                     ? 'bg-ios-blue text-white'
-                    : 'bg-ios-separator/20 text-ios-muted hover:bg-ios-separator/30'
+                    : 'bg-ios-separator/20 text-ios-muted'
                 )}
               >
                 실명
@@ -129,7 +134,7 @@ function IdentityRow({ appId, appName, Icon, gradient, identity, onSwitch, onLog
                   'px-3 py-1.5 rounded-xl text-[12px] font-medium transition-colors',
                   identity.active === 'alias'
                     ? 'bg-ios-purple text-white'
-                    : 'bg-ios-separator/20 text-ios-muted hover:bg-ios-separator/30'
+                    : 'bg-ios-separator/20 text-ios-muted'
                 )}
               >
                 별명
@@ -139,7 +144,7 @@ function IdentityRow({ appId, appName, Icon, gradient, identity, onSwitch, onLog
           {identity.loggedIn && (
             <button
               onClick={onLogout}
-              className="p-2 rounded-xl text-ios-muted hover:text-ios-red hover:bg-ios-red/10"
+              className="p-2 rounded-xl text-ios-muted"
               aria-label="로그아웃"
             >
               <LogOut className="size-4" />
@@ -165,6 +170,8 @@ export function SettingsApp() {
   const setTheme = useOSStore((s) => s.setTheme);
   const resetLayout = useOSStore((s) => s.resetLayout);
 
+  const playerName = useGameStore((s) => s.playerName);
+  const day = useGameStore((s) => s.day);
   const identities = useGameStore(s => s.identities);
   const gameDateTime = useGameStore(s => s.gameDateTime);
   const switchIdentityStore = useGameStore(s => s.switchIdentity);
@@ -220,19 +227,25 @@ export function SettingsApp() {
       }
       const { game, os } = parsed.data as {
         game?: {
+          playerName?: string;
           cash?: number;
           heat?: number;
           day?: number;
           gameDateTime?: string;
           inventory?: InventoryItem[];
+          steak?: SteakState;
         };
         os?: { theme?: ThemeMode; layout?: ReturnType<typeof useOSStore.getState>['layout'] };
       };
 
       const gameStore = useGameStore.getState();
+      if (typeof game?.playerName === 'string') gameStore.setPlayerName(game.playerName);
       if (typeof game?.cash === 'number') gameStore.setCash(game.cash);
       if (typeof game?.heat === 'number') gameStore.setHeat(game.heat);
       if (Array.isArray(game?.inventory)) gameStore.setInventory(game.inventory);
+      if (game?.steak && typeof game.steak.chips === 'number' && Array.isArray(game.steak.bets)) {
+        gameStore.setSteak(game.steak);
+      }
 
       if (os?.theme) setTheme(os.theme);
       if (os?.layout) useOSStore.getState().setLayout(os.layout);
@@ -245,21 +258,39 @@ export function SettingsApp() {
 
   return (
     <AppShell title="설정" largeTitle>
-      <Section header="신원 관리" footer="각 앱별로 사용할 신원(실명/별명)을 선택하세요. 노출도는 게임 내 가상 수치입니다.">
+      <Section header="프로필" footer="이름은 이 기기 안의 가상 플레이어 정보입니다.">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0, rotate: -12 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+            transition={SPRING_BOUNCY}
+            className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-ios-accent to-ios-purple text-[19px] font-semibold text-white shadow-sm"
+          >
+            <span className="relative">{playerName.slice(0, 1)}</span>
+          </motion.div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[17px] font-semibold">{playerName}</p>
+            <p className="text-[12px] text-ios-muted">가상 신원 · Day {day}</p>
+          </div>
+          <Pill tone="green">플레이어</Pill>
+        </div>
+      </Section>
+
+      <Section header="신원 관리" footer="각 앱별로 사용할 신원(실명/별명)을 선택하세요. 노출도는 게임 내 가상 수치입니다." delay={0.05}>
         {/* Exposure Summary */}
         <motion.div
           initial={prefersReducedMotion() ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={SPRING_SNAPPY}
-          className="mx-4 mb-4 p-4 rounded-2xl ring-1 ring-black/5 dark:ring-white/5"
+          className="relative mx-4 mb-4 overflow-hidden rounded-2xl p-4 ring-1 ring-black/5 dark:ring-white/5"
           style={{ background: `linear-gradient(135deg, ${exposureBgColor}/20, ${exposureBgColor}/5)` }}
         >
-          <div className="flex items-center justify-between">
+          <div className="relative flex items-center justify-between">
             <div>
               <p className="text-[13px] font-medium text-ios-muted">총 노출도</p>
-              <p className="mt-1 text-[28px] font-bold tabular-nums" style={{ color: `var(--ios-${exposureTextColor})` }}>
-                {totalExposure}
-              </p>
+              <span style={{ color: `var(--ios-${exposureTextColor})` }}>
+                <AnimatedNumber value={totalExposure} className="mt-1 block text-[28px] font-bold" />
+              </span>
               <p className="mt-1 text-[12px] font-medium" style={{ color: `var(--ios-${exposureTextColor})` }}>
                 {exposureTier === 'low' ? '낮음' : exposureTier === 'medium' ? '보통' : exposureTier === 'high' ? '높음' : '위험'}
               </p>
@@ -329,25 +360,16 @@ export function SettingsApp() {
         </AnimatePresence>
       </Section>
 
-      <Section header="화면">
+      <Section header="화면" delay={0.1}>
         <div className="px-4 py-3">
           <p className="mb-2 text-[13px] text-ios-muted">테마</p>
-          <div className="flex rounded-xl bg-ios-separator/15 p-0.5">
-            {THEME_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={theme === option.value}
-                onClick={() => setTheme(option.value)}
-                className={cn(
-                  'flex-1 rounded-[10px] py-1.5 text-[14px] font-medium transition-colors',
-                  theme === option.value ? 'bg-ios-surface shadow-sm' : 'text-ios-muted',
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            options={THEME_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+            value={theme}
+            onChange={setTheme}
+            tone="surface"
+            className="rounded-xl p-0.5"
+          />
         </div>
         <Row
           icon={
@@ -369,7 +391,7 @@ export function SettingsApp() {
         />
       </Section>
 
-      <Section header="저장" footer="실제 키는 커밋되지 않습니다. .env.example를 참고하세요.">
+      <Section header="저장" footer="실제 키는 커밋되지 않습니다. .env.example를 참고하세요." delay={0.15}>
         <Row
           icon={<Cloud className="size-4 text-ios-muted" aria-hidden />}
           title="클라우드 저장"
@@ -403,7 +425,7 @@ export function SettingsApp() {
         />
       </Section>
 
-      <Section header="정보">
+      <Section header="정보" delay={0.2}>
         <Row icon={<Info className="size-4 text-ios-muted" aria-hidden />} title="버전" value="0.1.0" />
         <Row
           icon={<Info className="size-4 text-ios-muted" aria-hidden />}

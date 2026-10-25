@@ -1,35 +1,43 @@
 import {
+  BankIcon,
   ChromaIcon,
+  DeliveryIcon,
   ContactsIcon,
   ExIcon,
   ForumIcon,
   GmallIcon,
-  MailIcon,
+  MapIcon,
   MessagesCallIcon,
   MessagesIcon,
+  NewsIcon,
   NotesIcon,
   ProteanIcon,
   SailorIcon,
   SettingsIcon,
   ShadeIcon,
+  SteakIcon,
   TelegraphIcon,
   TradeIcon,
   WalletIcon,
 } from './icons';
 import type { AppMeta } from '@/types';
-import { BrowserApp } from './browser/BrowserApp';
+import { BankApp } from './bank/BankApp';
 import { ChromaApp } from './browser/ChromaApp';
 import { ContactsApp } from './contacts/ContactsApp';
+import { DeliveryApp } from './delivery/DeliveryApp';
 import { ExApp } from './messenger/ExApp';
 import { ForumApp } from './forum/ForumApp';
 import { GmailApp } from './mail/GmailApp';
+import { MapApp } from './map/MapApp';
 import { MessagesApp } from './messages/MessagesApp';
 import { MessagesCallApp } from './messenger/MessagesCallApp';
+import { NewsApp } from './news/NewsApp';
 import { NotesApp } from './notes/NotesApp';
 import { ProteanApp } from './mail/ProteanApp';
 import { SailorApp } from './browser/SailorApp';
 import { SettingsApp } from './settings/SettingsApp';
 import { ShadeApp } from './browser/ShadeApp';
+import { SteakApp } from './steak/SteakApp';
 import { TelegraphApp } from './messenger/TelegraphApp';
 import { TradeApp } from './trade/TradeApp';
 import { WalletApp } from './wallet/WalletApp';
@@ -146,6 +154,41 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     icon: ContactsIcon,
     gradient: ['#f472b6', '#db2777'],
     Component: ContactsApp,
+  },
+  bank: {
+    id: 'bank',
+    name: '초콜렛뱅크',
+    icon: BankIcon,
+    gradient: ['#ffe300', '#ffd600'],
+    Component: BankApp,
+  },
+  news: {
+    id: 'news',
+    name: '초선일보',
+    icon: NewsIcon,
+    gradient: ['#ffffff', '#f4f4f5'],
+    Component: NewsApp,
+  },
+  delivery: {
+    id: 'delivery',
+    name: '구팡',
+    icon: DeliveryIcon,
+    gradient: ['#fdfdfd', '#ededee'],
+    Component: DeliveryApp,
+  },
+  map: {
+    id: 'map',
+    name: 'Maps',
+    icon: MapIcon,
+    gradient: ['#55d06a', '#2f7ff0'],
+    Component: MapApp,
+  },
+  steak: {
+    id: 'steak',
+    name: 'steak',
+    icon: SteakIcon,
+    gradient: ['#16394d', '#081923'],
+    Component: SteakApp,
   },
 };
 

@@ -29,8 +29,8 @@ describe('heat', () => {
   });
 
   it('adds risk for holding large amounts of cash', () => {
-    expect(heatFromCash(400)).toBe(0);
-    expect(heatFromCash(1240)).toBeGreaterThan(0);
+    expect(heatFromCash(400_000)).toBe(0);
+    expect(heatFromCash(1_500_000)).toBeGreaterThan(0);
   });
 
   it('cools down over time but never below zero', () => {
@@ -60,6 +60,9 @@ describe('markets', () => {
     name: 'Test',
     tagline: '',
     status: 'honeypot',
+    reach: 'onion',
+    priceMod: 1,
+    traceHeat: 0,
     openedDaysAgo: 3,
     traits: ['too cheap'],
   };

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { EX_POSTS, type ExPost } from './MessengerTypes';
+import { Burst, Pill } from '@/components';
 import { AppShell } from '../AppShell';
 import { SPRING_SNAPPY, SPRING_SOFT, SPRING_BOUNCY, prefersReducedMotion } from '@/utils/motion';
 import { cn } from '@/utils/cn';
@@ -75,10 +76,10 @@ export function ExApp() {
       className="flex flex-col h-full"
       trailing={
         <div className="flex items-center gap-1">
-          <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="알림">
+          <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 rounded-xl text-ios-muted" aria-label="알림">
             <Bell className="size-5" />
           </button>
-          <button onClick={handleRefresh} disabled={refreshing} className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="새로고침">
+          <button onClick={handleRefresh} disabled={refreshing} className="p-2 rounded-xl text-ios-muted" aria-label="새로고침">
             {refreshing ? (
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
                 <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -95,7 +96,7 @@ export function ExApp() {
               </svg>
             )}
           </button>
-          <button className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="게시글 작성" disabled>
+          <button className="p-2 rounded-xl text-ios-muted" aria-label="게시글 작성" disabled>
             <Plus className="size-5" />
           </button>
         </div>
@@ -286,7 +287,7 @@ function ExPostCard({
           </div>
           <p className="text-[12px] text-ios-muted">{formatTime(post.timestamp)}</p>
         </div>
-        <button onClick={e => { e.stopPropagation(); onFlag(post.id, e); }} className="p-2 rounded-xl text-ios-muted hover:text-ios-red hover:bg-ios-red/10 shrink-0" aria-label="신고">
+        <button onClick={e => { e.stopPropagation(); onFlag(post.id, e); }} className="p-2 rounded-xl text-ios-muted shrink-0" aria-label="신고">
           <Flag className="size-4" />
         </button>
       </div>
@@ -303,7 +304,7 @@ function ExPostCard({
             className="mt-2 p-2 rounded-xl bg-ios-yellow/10 border border-ios-yellow/20 flex items-center gap-2"
           >
             <Zap className="size-3.5 text-ios-yellow shrink-0" />
-            <span className="text-[12px] font-medium text-ios-yellow">단서 발견:</span>
+            <Pill tone="yellow">단서 발견</Pill>
             <span className="text-[12px] text-ios-text">{post.clueText}</span>
           </motion.div>
         )}
@@ -314,16 +315,23 @@ function ExPostCard({
         <div className="flex items-center gap-4">
           <button
             onClick={e => { e.stopPropagation(); onLike(post.id); }}
-            className={cn('flex items-center gap-1.5 p-1.5 rounded-xl transition-colors', post.liked ? 'text-ios-red' : 'text-ios-muted hover:text-ios-red hover:bg-ios-red/10')}
+            className={cn('flex items-center gap-1.5 p-1.5 rounded-xl transition-colors', post.liked ? 'text-ios-red' : 'text-ios-muted')}
             aria-label={post.liked ? '좋아요 취소' : '좋아요'}
             aria-pressed={post.liked}
           >
-            <Heart className={cn('size-5', post.liked ? 'fill-current' : '')} />
+            <motion.span
+              animate={post.liked ? { scale: [1, 1.45, 1] } : { scale: 1 }}
+              transition={SPRING_BOUNCY}
+              className="flex"
+            >
+              <Heart className={cn('size-5', post.liked ? 'fill-current' : '')} />
+            </motion.span>
             {post.likes > 0 && <span className="text-[13px] tabular-nums">{post.likes > 999 ? '999+' : post.likes}</span>}
+            <Burst show={post.liked} count={8} radius={26} colors={['#ff3b30', '#ff9f0a', '#ff2d55']} duration={0.6} />
           </button>
           <button
             onClick={e => { e.stopPropagation(); onRepost(post.id, e); }}
-            className="flex items-center gap-1.5 p-1.5 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/10"
+            className="flex items-center gap-1.5 p-1.5 rounded-xl text-ios-muted"
             aria-label="리포스트"
           >
             <Repeat className="size-5" />
@@ -331,7 +339,7 @@ function ExPostCard({
           </button>
           <button
             onClick={e => { e.stopPropagation(); onShare(post.id, e); }}
-            className="flex items-center gap-1.5 p-1.5 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/10"
+            className="flex items-center gap-1.5 p-1.5 rounded-xl text-ios-muted"
             aria-label="공유"
           >
             <Share2 className="size-5" />
@@ -339,7 +347,7 @@ function ExPostCard({
           </button>
           <button
             onClick={e => { e.stopPropagation(); onBookmark(post.id, e); }}
-            className="flex items-center gap-1.5 p-1.5 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/10"
+            className="flex items-center gap-1.5 p-1.5 rounded-xl text-ios-muted"
             aria-label="북마크"
           >
             <Bookmark className="size-5" />
@@ -384,7 +392,7 @@ function ExPostDetail({
     >
       {/* Detail Header */}
       <div className="glass-strong sticky top-0 z-10 flex items-center gap-3 border-b border-ios-separator/20 px-4 py-3">
-        <button onClick={onClose} className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="뒤로">
+        <button onClick={onClose} className="p-2 rounded-xl text-ios-muted" aria-label="뒤로">
           <ChevronLeft className="size-5" />
         </button>
         <div className="size-10 shrink-0 rounded-full overflow-hidden bg-gradient-to-br from-ios-purple to-ios-pink flex items-center justify-center text-[20px]">
@@ -398,7 +406,7 @@ function ExPostDetail({
           </div>
           <p className="text-[12px] text-ios-muted">{formatTime(post.timestamp)}</p>
         </div>
-        <button onClick={e => onFlag(post.id, e)} className="p-2 rounded-xl text-ios-muted hover:text-ios-red hover:bg-ios-red/10" aria-label="신고">
+        <button onClick={e => onFlag(post.id, e)} className="p-2 rounded-xl text-ios-muted" aria-label="신고">
           <Flag className="size-4" />
         </button>
       </div>
@@ -430,7 +438,7 @@ function ExPostDetail({
             <div className="flex items-center gap-4">
               <button
                 onClick={e => onLike(post.id)}
-                className={cn('flex items-center gap-1.5 p-2 rounded-xl transition-colors', post.liked ? 'text-ios-red bg-ios-red/10' : 'text-ios-muted hover:text-ios-red hover:bg-ios-red/10')}
+                className={cn('flex items-center gap-1.5 p-2 rounded-xl transition-colors', post.liked ? 'text-ios-red bg-ios-red/10' : 'text-ios-muted')}
                 aria-label={post.liked ? '좋아요 취소' : '좋아요'}
                 aria-pressed={post.liked}
               >
@@ -439,7 +447,7 @@ function ExPostDetail({
               </button>
               <button
                 onClick={e => onRepost(post.id, e)}
-                className="flex items-center gap-1.5 p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/10"
+                className="flex items-center gap-1.5 p-2 rounded-xl text-ios-muted"
                 aria-label="리포스트"
               >
                 <Repeat className="size-5" />
@@ -447,7 +455,7 @@ function ExPostDetail({
               </button>
               <button
                 onClick={e => onShare(post.id, e)}
-                className="flex items-center gap-1.5 p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/10"
+                className="flex items-center gap-1.5 p-2 rounded-xl text-ios-muted"
                 aria-label="공유"
               >
                 <Share2 className="size-5" />
@@ -455,7 +463,7 @@ function ExPostDetail({
               </button>
               <button
                 onClick={e => onBookmark(post.id, e)}
-                className="flex items-center gap-1.5 p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/10"
+                className="flex items-center gap-1.5 p-2 rounded-xl text-ios-muted"
                 aria-label="북마크"
               >
                 <Bookmark className="size-5" />

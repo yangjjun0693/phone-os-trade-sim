@@ -8,10 +8,12 @@ import type { AppMeta } from '@/types';
 
 function AppCard({
   app,
+  index,
   onOpen,
   onClose,
 }: {
   app: AppMeta;
+  index: number;
   onOpen: () => void;
   onClose: () => void;
 }) {
@@ -35,14 +37,16 @@ function AppCard({
   return (
     <motion.div
       layout
+      initial={{ opacity: 0, y: 26, scale: 0.94 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.85 }}
-      transition={SPRING_SNAPPY}
+      transition={{ ...SPRING_SNAPPY, delay: Math.min(index, 5) * 0.05 }}
       className="w-[70%] shrink-0 snap-center"
     >
       <div {...bind()}>
-        <div className="overflow-hidden rounded-[26px] bg-ios-surface shadow-2xl ring-1 ring-white/10">
+        <div className="relative overflow-hidden rounded-[26px] bg-ios-surface shadow-2xl ring-1 ring-white/10">
           <div
-            className="flex h-[92px] items-center gap-2.5 px-4 text-white"
+            className="relative flex h-[92px] items-center gap-2.5 overflow-hidden px-4 text-white"
             style={{
               background: `linear-gradient(150deg, ${app.gradient[0]}, ${app.gradient[1]})`,
             }}
@@ -96,10 +100,11 @@ export function AppSwitcher() {
           ) : (
             <div className="no-scrollbar flex w-full snap-x snap-mandatory gap-3 overflow-x-auto px-8">
               <AnimatePresence initial={false}>
-                {apps.map((app) => (
+                {apps.map((app, index) => (
                   <AppCard
                     key={app.id}
                     app={app}
+                    index={index}
                     onOpen={() => openApp(app.id)}
                     onClose={() => removeRecent(app.id)}
                   />

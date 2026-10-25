@@ -9,6 +9,13 @@ export type OverlayKind = 'none' | 'notification' | 'control' | 'appSwitcher';
 /** Hidden behaviour of a fake grey-market site. Nothing is fully reliable. */
 export type MarketStatus = 'legit' | 'scam' | 'honeypot' | 'closing';
 
+/**
+ * Which network layer a site lives on. This is what makes the three browsers
+ * different: Chroma only reaches clearnet shops, Sailor reaches their mirrors,
+ * and Shade is the only way onto the onion layer.
+ */
+export type MarketReach = 'clearnet' | 'mirror' | 'onion';
+
 export type CustomerKind = 'regular' | 'difficult' | 'undercover';
 
 export type RiskTier = 'calm' | 'watched' | 'hot' | 'burned';
@@ -55,9 +62,24 @@ export interface HomeLayout {
 
 export interface InventoryItem {
   id: string;
+  /** Links a stack to the fictional product catalogue. */
+  productId?: string;
   name: string;
   qty: number;
   unitCost: number;
+  /** Expected fictional street value per unit, used to price customer offers. */
+  marketPrice?: number;
+}
+
+/** A fictional product sold by the grey-market sites. */
+export interface Product {
+  id: string;
+  name: string;
+  category: string;
+  /** What the market charges the player per unit. */
+  wholesale: number;
+  /** Reference street value used for customer offers and UI hints. */
+  street: number;
 }
 
 export interface GameNotification {
@@ -75,6 +97,14 @@ export interface MarketSite {
   /** Cosmetic tagline shown in the fake browser. */
   tagline: string;
   status: MarketStatus;
+  /** Network layer the site lives on (see {@link MarketReach}). */
+  reach: MarketReach;
+  /** Multiplier applied to wholesale prices (mirrors charge a fee). */
+  priceMod: number;
+  /** Heat added every time this site is loaded in a browser. */
+  traceHeat: number;
+  /** Onion sites that need an invite before Shade can open them. */
+  invite?: boolean;
   openedDaysAgo: number;
   /** Arbitrary hidden traits the player can learn to read. */
   traits: string[];

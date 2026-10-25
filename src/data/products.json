@@ -1,0 +1,37 @@
+[
+  {
+    "id": "product-pill",
+    "name": "미상의 알약",
+    "category": "알약",
+    "wholesale": 4000,
+    "street": 11000
+  },
+  {
+    "id": "product-jelly",
+    "name": "녹색 젤리",
+    "category": "젤리",
+    "wholesale": 6000,
+    "street": 16000
+  },
+  {
+    "id": "product-capsule",
+    "name": "파란 캡슐",
+    "category": "캡슐",
+    "wholesale": 9000,
+    "street": 25000
+  },
+  {
+    "id": "product-powder",
+    "name": "글리터 파우더",
+    "category": "분말",
+    "wholesale": 15000,
+    "street": 42000
+  },
+  {
+    "id": "product-card",
+    "name": "무표정 카드",
+    "category": "카드",
+    "wholesale": 26000,
+    "street": 72000
+  }
+]

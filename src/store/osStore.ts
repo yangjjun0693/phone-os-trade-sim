@@ -8,7 +8,7 @@ import type {
   PhoneStatus,
   ThemeMode,
 } from '@/types';
-import { DEFAULT_LAYOUT, PERSIST_VERSION } from './defaults';
+import { DEFAULT_LAYOUT, OS_PERSIST_VERSION } from './defaults';
 
 const RECENTS_LIMIT = 8;
 
@@ -221,7 +221,7 @@ export const useOSStore = create<OSState>()(
     })),
     {
       name: 'phone-os:os',
-      version: PERSIST_VERSION,
+      version: OS_PERSIST_VERSION,
       storage: createJSONStorage(() => localStorage),
       // Persist only durable OS preferences, never transient UI state.
       partialize: (state): PersistedOS => ({
@@ -234,7 +234,7 @@ export const useOSStore = create<OSState>()(
       migrate: (persisted, version) => {
         const previous = (persisted ?? {}) as Partial<PersistedOS>;
         if (version < 1) return { ...previous, layout: DEFAULT_LAYOUT } as PersistedOS;
-        if (version < 4) return { ...previous, layout: DEFAULT_LAYOUT } as PersistedOS;
+        if (version < 7) return { ...previous, layout: DEFAULT_LAYOUT } as PersistedOS;
         return previous as PersistedOS;
       },
     },

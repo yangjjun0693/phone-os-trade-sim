@@ -14,6 +14,8 @@ export interface AppIconProps {
   /** Jiggle + disable the open animation target while arranging icons. */
   editable?: boolean;
   jiggleDelay?: number;
+  /** Dock icons render without a text label, like iOS. */
+  showLabel?: boolean;
   onOpen?: () => void;
   onLongPress?: () => void;
 }
@@ -28,6 +30,7 @@ export const AppIcon = memo(function AppIcon({
   shared = true,
   editable = false,
   jiggleDelay = 0,
+  showLabel = true,
   onOpen,
   onLongPress,
 }: AppIconProps) {
@@ -66,10 +69,13 @@ export const AppIcon = memo(function AppIcon({
         {...handlers}
       >
         <Icon size={size} className="block" aria-hidden />
+        <span className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-b from-white/25 via-transparent to-black/10" aria-hidden />
       </motion.button>
-      <span className="label-shadow max-w-full truncate text-[11px] font-medium leading-tight text-white">
-        {app.name}
-      </span>
+      {showLabel && (
+        <span className="label-shadow max-w-full truncate text-[11px] font-medium leading-tight text-white">
+          {app.name}
+        </span>
+      )}
     </div>
   );
 });

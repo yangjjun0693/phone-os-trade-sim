@@ -6,7 +6,7 @@ import { Section } from '../SectionList';
 export function MailApp() {
   return (
     <AppShell title="메일" largeTitle>
-      <Section header="받은 편지함">
+      <Section header="받은 편지함" delay={0.05}>
         <EmptyState
           icon={Mail}
           title="받은 메일이 없습니다"

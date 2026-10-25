@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { EVENT_LOSS_CASH, EVENT_TIP_CASH } from '@/content/economy';
 import type { Rng } from './customers';
 import { clamp } from './pricing';
 
@@ -22,7 +23,7 @@ const TABLE: Omit<GameEvent, 'id'>[] = [
     title: '단골의 팁',
     description: '만족한 단골이 웃돈을 얹어 갔다.',
     heatDelta: 0,
-    cashDelta: 120,
+    cashDelta: EVENT_TIP_CASH,
   },
   {
     title: '순찰차 정박',
@@ -34,7 +35,7 @@ const TABLE: Omit<GameEvent, 'id'>[] = [
     title: '재고 손실',
     description: '보관하던 물건 일부가 습기로 못 쓰게 됐다.',
     heatDelta: 0,
-    cashDelta: -60,
+    cashDelta: EVENT_LOSS_CASH,
   },
 ];
 

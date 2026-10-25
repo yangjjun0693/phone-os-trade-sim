@@ -10,11 +10,12 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
+import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { getApp } from '@/apps/registry';
 import { useOSStore } from '@/store/osStore';
-import { cn } from '@/utils/cn';
 import { haptic } from '@/utils/haptics';
+import { SPRING_BOUNCY, SPRING_SNAPPY } from '@/utils/motion';
 import { Dock } from './Dock';
 import { SortableAppIcon } from './SortableAppIcon';
 import { ClockWidget } from './widgets/ClockWidget';
@@ -48,6 +49,7 @@ function Page({
               app={app}
               editable={editable}
               jiggleDelay={(index * 43) % 180}
+              entranceDelay={index * 30}
               onOpen={() => onOpen(app.id)}
               onLongPress={() => onLongPress(app.id)}
             />
@@ -137,10 +139,15 @@ export function HomeScreen() {
       >
         <div className="shrink-0 pt-[var(--ios-statusbar-h)]" />
 
-        <div className="grid shrink-0 grid-cols-2 gap-3 px-4 pb-1 pt-2">
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...SPRING_SNAPPY, delay: 0.04 }}
+          className="grid shrink-0 grid-cols-2 gap-3 px-4 pb-1 pt-2"
+        >
           <ClockWidget />
           <SummaryWidget />
-        </div>
+        </motion.div>
 
         <div className="relative min-h-0 flex-1 overflow-hidden" {...bindPager()}>
           <div
@@ -160,17 +167,23 @@ export function HomeScreen() {
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-center gap-2 pb-1 pt-2 mix-blend-difference">
-          {Array.from({ length: pageCount }).map((_, index) => (
-            <span
-              key={`dot-${index}`}
-              className={cn(
-                'size-[7px] rounded-full bg-white transition-opacity',
-                index === page ? 'opacity-100' : 'opacity-35',
-              )}
-            />
-          ))}
-        </div>
+        {pageCount > 1 ? (
+          <div className="flex shrink-0 items-center justify-center gap-2 pb-1 pt-2 mix-blend-difference">
+            {Array.from({ length: pageCount }).map((_, index) => (
+              <motion.span
+                key={`dot-${index}`}
+                animate={{
+                  width: index === page ? 18 : 7,
+                  opacity: index === page ? 1 : 0.35,
+                }}
+                transition={SPRING_BOUNCY}
+                className="h-[7px] rounded-full bg-white"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="shrink-0 pt-2" aria-hidden />
+        )}
 
         <Dock
           appIds={layout.dock}
@@ -180,14 +193,17 @@ export function HomeScreen() {
         />
 
         {editing ? (
-          <button
+          <motion.button
             type="button"
             onClick={() => setEditing(false)}
+            initial={{ opacity: 0, scale: 0.8, y: -8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={SPRING_BOUNCY}
             className="glass-strong absolute right-4 top-[var(--ios-statusbar-h)] z-50 flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[15px] font-semibold text-ios-text shadow-lg"
           >
             <Check className="size-4" aria-hidden />
             완료
-          </button>
+          </motion.button>
         ) : null}
       </div>
     </DndContext>

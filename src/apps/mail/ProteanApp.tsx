@@ -10,7 +10,9 @@ import { useGameStore } from '@/store/gameStore';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { PROTEAN_MESSAGES, PROTEAN_FOLDERS, type MailMessage, type MailFolder } from './MailTypes';
+import { Pill } from '@/components';
 import { AppShell } from '../AppShell';
+import { HamburgerButton, SideDrawer } from '../SideDrawer';
 import { SPRING_SNAPPY, SPRING_SOFT, prefersReducedMotion } from '@/utils/motion';
 import { cn } from '@/utils/cn';
 
@@ -26,6 +28,7 @@ export function ProteanApp() {
   const [selectedFolder, setSelectedFolder] = useState<string>('inbox');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'comfortable'>('list');
   const [openMessage, setOpenMessage] = useState<MailMessage | null>(null);
   const gameDateTime = useGameStore(s => s.gameDateTime);
@@ -130,6 +133,7 @@ export function ProteanApp() {
               key={f.id}
               onClick={() => {
                 setSelectedFolder(f.id);
+                setDrawerOpen(false);
                 setSelectedIds(new Set());
                 setOpenMessage(null);
               }}
@@ -137,7 +141,7 @@ export function ProteanApp() {
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-colors',
                 isActive
                   ? 'bg-ios-purple/15 text-ios-purple'
-                  : 'text-ios-muted hover:text-ios-text hover:bg-ios-separator/10'
+                  : 'text-ios-muted'
               )}
               aria-current={isActive ? 'page' : undefined}
             >
@@ -206,35 +210,35 @@ export function ProteanApp() {
           <>
             <button
               onClick={() => markAsRead(true)}
-              className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15"
+              className="p-2 rounded-xl text-ios-muted"
               aria-label="읽음으로 표시"
             >
               <ToggleLeft className="size-4" />
             </button>
             <button
               onClick={() => markAsRead(false)}
-              className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15"
+              className="p-2 rounded-xl text-ios-muted"
               aria-label="안 읽음으로 표시"
             >
               <ToggleRight className="size-4" />
             </button>
             <button
               onClick={() => { /* Archive */ }}
-              className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15"
+              className="p-2 rounded-xl text-ios-muted"
               aria-label="보관"
             >
               <Archive className="size-4" />
             </button>
             <button
               onClick={() => { /* Delete */ }}
-              className="p-2 rounded-xl text-ios-muted hover:text-ios-red hover:bg-ios-red/10"
+              className="p-2 rounded-xl text-ios-muted"
               aria-label="삭제"
             >
               <Trash className="size-4" />
             </button>
             <button
               onClick={() => { /* More */ }}
-              className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15"
+              className="p-2 rounded-xl text-ios-muted"
               aria-label="더보기"
             >
               <MoreVertical className="size-4" />
@@ -248,13 +252,14 @@ export function ProteanApp() {
   return (
     <AppShell
       title="Protean"
-      largeTitle={!openMessage && selectedIds.size === 0}
+      largeTitle={false}
+      leading={<HamburgerButton onClick={() => setDrawerOpen(true)} open={drawerOpen} label="메일함 열기" />}
       className="flex flex-col"
       trailing={
         <div className="flex items-center gap-1">
           <button
             onClick={() => setViewMode(v => v === 'list' ? 'comfortable' : 'list')}
-            className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15"
+            className="p-2 rounded-xl text-ios-muted"
             aria-label={viewMode === 'list' ? '편안한 보기' : '목록 보기'}
           >
             {viewMode === 'list' ? (
@@ -271,7 +276,7 @@ export function ProteanApp() {
             )}
           </button>
           <button
-            className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15"
+            className="p-2 rounded-xl text-ios-muted"
             aria-label="새 메일 작성 (PGP 암호화)"
             disabled
           >
@@ -286,12 +291,13 @@ export function ProteanApp() {
         </div>
       }
     >
-      <div className="flex h-full">
-        {/* Sidebar */}
-        <aside className="w-64 shrink-0">{sidebar}</aside>
+      <div className="relative flex h-full min-h-0 overflow-hidden">
+        <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} label="메일함">
+          {sidebar}
+        </SideDrawer>
 
         {/* Main */}
-        <main className="flex-1 flex flex-col min-w-0">
+        <main className="flex min-w-0 flex-1 flex-col">
           {selectedIds.size > 0 ? toolbar : null}
 
           <AnimatePresence mode="wait">
@@ -386,7 +392,7 @@ function ProteanMessageRow({
       className={cn(
         'relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors',
         selected ? 'bg-ios-purple/15 ring-1 ring-ios-purple/30' :
-        msg.read ? 'hover:bg-ios-separator/10' : 'bg-ios-surface/50 hover:bg-ios-separator/10'
+        msg.read ? '' : 'bg-ios-surface/50'
       )}
     >
       <input
@@ -397,54 +403,48 @@ function ProteanMessageRow({
         className="size-4 accent-ios-purple shrink-0"
         aria-label="선택"
       />
-      <button
+      <motion.button
         onClick={e => onStar(msg.id, e)}
-        className="p-1 rounded text-ios-muted hover:text-ios-yellow hover:bg-ios-yellow/10 shrink-0"
+        whileTap={{ scale: 0.8 }}
+        className="p-1 rounded text-ios-muted shrink-0"
         aria-label={msg.starred ? '별표 제거' : '별표 추가'}
         aria-pressed={msg.starred}
       >
-        <StarIcon className={cn('size-4', msg.starred ? 'fill-current text-ios-yellow' : '')} />
-      </button>
-      <div className="flex-1 min-w-0">
+        <motion.span
+          animate={msg.starred ? { scale: [1, 1.4, 1], rotate: [0, 18, 0] } : { scale: 1, rotate: 0 }}
+          transition={SPRING_SNAPPY}
+          className="flex"
+        >
+          <StarIcon className={cn('size-4', msg.starred ? 'fill-current text-ios-yellow' : '')} />
+        </motion.span>
+      </motion.button>
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className={cn('font-medium truncate', msg.read ? 'text-ios-text' : 'text-ios-text font-semibold')}>
+          <span className={cn('flex-1 truncate text-[15px]', msg.read ? 'font-medium text-ios-text' : 'font-semibold text-ios-text')}>
             {msg.from}
           </span>
           {msg.attachments > 0 && (
-            <span className="text-[11px] text-ios-muted flex items-center gap-1">
-              📎 {msg.attachments}
-            </span>
+            <span className="shrink-0 text-[11px] text-ios-muted">📎 {msg.attachments}</span>
           )}
-          {/* PGP verified badge */}
-          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-ios-green/20 text-ios-green flex items-center gap-1">
-            <Lock className="size-2.5" />
-            검증됨
-          </span>
-        </div>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className={cn('truncate flex-1 text-[13px]', msg.read ? 'text-ios-muted' : 'text-ios-text font-medium')}>
-            {msg.subject}
-          </span>
-          <span className={cn('shrink-0 text-[12px] tabular-nums', msg.read ? 'text-ios-muted' : 'text-ios-text font-medium')}>
+          <span className={cn('shrink-0 text-[12px] tabular-nums', msg.read ? 'text-ios-muted' : 'font-medium text-ios-text')}>
             {formatDate(msg.date)}
           </span>
         </div>
+        <p className={cn('mt-0.5 truncate text-[13px]', msg.read ? 'text-ios-muted' : 'font-medium text-ios-text')}>
+          {msg.subject}
+        </p>
         <p className="mt-0.5 truncate text-[12px] text-ios-muted">{msg.preview}</p>
-      </div>
-      {msg.labels.length > 0 && (
-        <div className="flex flex-wrap gap-1 shrink-0">
-          {msg.labels.slice(0, 2).map(label => (
-            <span key={label} className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-ios-separator/20 text-ios-muted">
+        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          <Pill tone="green" icon={<Lock className="size-2.5" />} className="text-[10px]">
+            검증됨
+          </Pill>
+          {msg.labels.slice(0, 3).map(label => (
+            <Pill key={label} tone="neutral" className="text-[10px]">
               {label}
-            </span>
+            </Pill>
           ))}
-          {msg.labels.length > 2 && (
-            <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-ios-separator/20 text-ios-muted">
-              +{msg.labels.length - 2}
-            </span>
-          )}
         </div>
-      )}
+      </div>
     </motion.div>
   );
 }
@@ -473,7 +473,7 @@ function ProteanMessageView({
       {/* Message header */}
       <div className="glass-strong sticky top-0 z-10 flex flex-col gap-3 border-b border-ios-separator/20 px-4 py-3">
         <div className="flex items-center justify-between">
-          <button onClick={onClose} className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="뒤로">
+          <button onClick={onClose} className="p-2 rounded-xl text-ios-muted" aria-label="뒤로">
             <ChevronRight className="size-5" style={{ transform: 'rotate(180deg)' }} />
           </button>
           <div className="flex-1 text-center">
@@ -492,13 +492,13 @@ function ProteanMessageView({
             <p className="text-ios-muted">{new Date(msg.date).toLocaleString('ko-KR', { dateStyle: 'long', timeStyle: 'short' })}</p>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={onReply} className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="답장 (PGP 암호화)" disabled>
+            <button onClick={onReply} className="p-2 rounded-xl text-ios-muted" aria-label="답장 (PGP 암호화)" disabled>
               <Reply className="size-4" />
             </button>
-            <button onClick={onForward} className="p-2 rounded-xl text-ios-muted hover:text-ios-text hover:bg-ios-separator/15" aria-label="전달 (PGP 암호화)" disabled>
+            <button onClick={onForward} className="p-2 rounded-xl text-ios-muted" aria-label="전달 (PGP 암호화)" disabled>
               <Forward className="size-4" />
             </button>
-            <button onClick={() => { /* Star */ }} className="p-2 rounded-xl text-ios-muted hover:text-ios-yellow hover:bg-ios-yellow/10" aria-label={msg.starred ? '별표 제거' : '별표 추가'} aria-pressed={msg.starred}>
+            <button onClick={() => { /* Star */ }} className="p-2 rounded-xl text-ios-muted" aria-label={msg.starred ? '별표 제거' : '별표 추가'} aria-pressed={msg.starred}>
               <StarIcon className={cn('size-4', msg.starred ? 'fill-current text-ios-yellow' : '')} />
             </button>
           </div>
@@ -517,9 +517,9 @@ function ProteanMessageView({
         {msg.labels.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {msg.labels.map(label => (
-              <span key={label} className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-ios-purple/15 text-ios-purple">
+              <Pill key={label} tone="purple">
                 {label}
-              </span>
+              </Pill>
             ))}
           </div>
         )}

@@ -34,6 +34,7 @@ export function Dock({ appIds, editable, onOpen, onLongPress }: DockProps) {
                 app={app}
                 editable={editable}
                 jiggleDelay={90}
+                showLabel={false}
                 onOpen={() => onOpen(app.id)}
                 onLongPress={() => onLongPress(app.id)}
               />

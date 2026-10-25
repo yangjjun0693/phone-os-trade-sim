@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
+import { SPRING_BOUNCY } from '@/utils/motion';
 import {
   Bluetooth,
   Flashlight,
@@ -27,19 +28,28 @@ function ControlToggle({
   onClick: () => void;
 }) {
   return (
-    <button
+    <motion.button
       type="button"
       aria-pressed={active}
       aria-label={label}
       onClick={onClick}
+      whileTap={{ scale: 0.9 }}
+      transition={SPRING_BOUNCY}
       className={cn(
-        'flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl transition-colors active:scale-95',
-        active ? 'bg-ios-accent text-white' : 'bg-black/10 text-ios-text dark:bg-white/10',
+        'relative flex aspect-square flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl transition-colors',
+        active ? 'bg-ios-accent text-white glow-accent' : 'bg-black/10 text-ios-text dark:bg-white/10',
       )}
     >
-      <Icon className="size-5" aria-hidden />
+      <motion.span
+        key={active ? 'on' : 'off'}
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={SPRING_BOUNCY}
+      >
+        <Icon className="size-5" aria-hidden />
+      </motion.span>
       <span className="text-[10px] font-medium">{label}</span>
-    </button>
+    </motion.button>
   );
 }
 
@@ -146,14 +156,16 @@ export function ControlCenter() {
               />
             </div>
 
-            <button
+            <motion.button
               type="button"
               onClick={lock}
-              className="col-span-4 flex h-12 items-center justify-center gap-2 rounded-2xl bg-black/10 text-[15px] font-semibold text-ios-text active:scale-[0.99] dark:bg-white/10"
+              whileTap={{ scale: 0.97 }}
+              transition={SPRING_BOUNCY}
+              className="col-span-4 flex h-12 items-center justify-center gap-2 rounded-2xl bg-black/10 text-[15px] font-semibold text-ios-text dark:bg-white/10"
             >
               <Lock className="size-4" aria-hidden />
               잠금 화면으로
-            </button>
+            </motion.button>
           </div>
 
           <p className="mt-4 text-center text-[11px] text-ios-muted">

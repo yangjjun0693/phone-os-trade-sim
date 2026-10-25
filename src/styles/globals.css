@@ -105,6 +105,39 @@
   .pt-safe {
     padding-top: env(safe-area-inset-top, 0px);
   }
+
+  /* ---- motion & effects ---------------------------------------------- */
+
+  /* Soft coloured glows reused by pills, toggles and hero cards. */
+  .glow-accent {
+    box-shadow:
+      0 0 0 1px rgb(var(--ios-accent) / 0.3),
+      0 12px 34px -12px rgb(var(--ios-accent) / 0.75);
+  }
+  .glow-green {
+    box-shadow:
+      0 0 0 1px rgb(var(--ios-green) / 0.3),
+      0 12px 34px -12px rgb(var(--ios-green) / 0.75);
+  }
+  .glow-red {
+    box-shadow:
+      0 0 0 1px rgb(var(--ios-red) / 0.3),
+      0 12px 34px -12px rgb(var(--ios-red) / 0.75);
+  }
+
+}
+
+/* Every enabled button gets a crisp, smooth press. Framer's inline transforms
+   take precedence, so buttons that already animate are unaffected. */
+button:not(:disabled) {
+  transition:
+    transform 0.18s cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 0.18s ease,
+    color 0.18s ease,
+    opacity 0.18s ease;
+}
+button:not(:disabled):active {
+  transform: scale(0.965);
 }
 
 /* Reduced motion: keep layout, drop the movement. */

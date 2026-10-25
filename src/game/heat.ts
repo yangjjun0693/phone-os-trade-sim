@@ -1,4 +1,5 @@
 import type { RiskTier } from '@/types';
+import { HEAT_CASH_MAX, HEAT_CASH_PER_STEP, HEAT_CASH_SAFE } from '@/content/economy';
 import { clamp, round2 } from './pricing';
 
 /** Soft cap for the heat gauge. */
@@ -17,9 +18,10 @@ export function heatTier(heat: number): RiskTier {
  * Returns extra heat points contributed purely by the current wallet.
  */
 export function heatFromCash(cash: number): number {
-  const safeAmount = 500;
-  if (cash <= safeAmount) return 0;
-  return Math.floor(clamp((cash - safeAmount) / 250, 0, 20));
+  if (cash <= HEAT_CASH_SAFE) return 0;
+  return Math.floor(
+    clamp((cash - HEAT_CASH_SAFE) / HEAT_CASH_PER_STEP, 0, HEAT_CASH_MAX),
+  );
 }
 
 /** Heat naturally cools while the player keeps a low profile. */

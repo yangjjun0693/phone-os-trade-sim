@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { AppMeta } from '@/types';
+import { cn } from '@/utils/cn';
 import { AppIcon } from './AppIcon';
 
 interface SortableAppIconProps {
@@ -9,6 +10,9 @@ interface SortableAppIconProps {
   onOpen?: () => void;
   onLongPress?: () => void;
   jiggleDelay?: number;
+  /** When set, the icon springs in from below on mount (staggered). */
+  entranceDelay?: number;
+  showLabel?: boolean;
 }
 
 /**
@@ -21,6 +25,8 @@ export function SortableAppIcon({
   onOpen,
   onLongPress,
   jiggleDelay,
+  entranceDelay,
+  showLabel = true,
 }: SortableAppIconProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: app.id,
@@ -34,8 +40,9 @@ export function SortableAppIcon({
         transition,
         opacity: isDragging ? 0.75 : 1,
         zIndex: isDragging ? 30 : undefined,
+        animationDelay: entranceDelay !== undefined ? `${entranceDelay}ms` : undefined,
       }}
-      className="touch-none"
+      className={cn('touch-none', entranceDelay !== undefined && 'animate-rise-in')}
       {...(editable ? attributes : {})}
       {...(editable ? listeners : {})}
     >
@@ -43,6 +50,7 @@ export function SortableAppIcon({
         app={app}
         editable={editable}
         jiggleDelay={jiggleDelay}
+        showLabel={showLabel}
         shared={!editable && !isDragging}
         onOpen={onOpen}
         onLongPress={onLongPress}

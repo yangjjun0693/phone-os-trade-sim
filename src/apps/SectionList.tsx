@@ -1,17 +1,29 @@
 import type { ReactNode } from 'react';
+import { motion } from 'framer-motion';
 import { cn } from '@/utils/cn';
+import { SPRING_SOFT } from '@/utils/motion';
 
 export function Section({
   header,
   footer,
   children,
+  delay = 0,
+  className,
 }: {
   header?: string;
   footer?: string;
   children: ReactNode;
+  /** Stagger sibling sections by passing an increasing delay. */
+  delay?: number;
+  className?: string;
 }) {
   return (
-    <section className="mb-6">
+    <motion.section
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ ...SPRING_SOFT, delay: Math.min(delay, 0.4) }}
+      className={cn('mb-6', className)}
+    >
       {header ? (
         <h2 className="px-4 pb-1.5 pt-2 text-[13px] font-medium uppercase tracking-wide text-ios-muted">
           {header}
@@ -21,7 +33,7 @@ export function Section({
         {children}
       </div>
       {footer ? <p className="px-4 pt-1.5 text-[12px] text-ios-muted">{footer}</p> : null}
-    </section>
+    </motion.section>
   );
 }
 
@@ -33,6 +45,7 @@ export function Row({
   trailing,
   onClick,
   className,
+  animateIn,
 }: {
   icon?: ReactNode;
   title: string;
@@ -41,6 +54,8 @@ export function Row({
   trailing?: ReactNode;
   onClick?: () => void;
   className?: string;
+  /** Row index for a soft staggered slide-in. Omit to render statically. */
+  animateIn?: number;
 }) {
   const interactive = Boolean(onClick);
   const content = (
@@ -63,12 +78,25 @@ export function Row({
     className,
   );
 
+  const motionProps =
+    animateIn === undefined
+      ? {}
+      : {
+          initial: { opacity: 0, x: -16 },
+          animate: { opacity: 1, x: 0 },
+          transition: { ...SPRING_SOFT, delay: 0.05 + animateIn * 0.04 },
+        };
+
   if (interactive) {
     return (
-      <button type="button" className={classes} onClick={onClick}>
+      <motion.button type="button" className={classes} onClick={onClick} {...motionProps}>
         {content}
-      </button>
+      </motion.button>
     );
   }
-  return <div className={classes}>{content}</div>;
+  return (
+    <motion.div className={classes} {...motionProps}>
+      {content}
+    </motion.div>
+  );
 }

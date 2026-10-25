@@ -504,3 +504,223 @@ export function BrowserIcon({ size = 24, className }: AppIconProps) {
     </svg>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* Daily-life apps (page 2)                                            */
+/* Parody takes on familiar Korean/Apple services, redrawn as vectors: */
+/* KakaoBank → 초콜렛뱅크 (B→C), Coupang → 구팡,                        */
+/* Chosun Ilbo → 초선일보, Apple Maps → Maps.                          */
+/* ------------------------------------------------------------------ */
+
+/** 초콜렛뱅크 — KakaoBank-style yellow tile with the B swapped for a C. */
+export function BankIcon({ size = 24, className }: AppIconProps) {
+  return (
+    <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="bank-tile" x1="0" y1="0" x2="0.2" y2="1">
+          <stop offset="0" stopColor="#ffe81c" />
+          <stop offset="0.55" stopColor="#ffe300" />
+          <stop offset="1" stopColor="#ffd600" />
+        </linearGradient>
+        <linearGradient id="bank-gloss" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.18" />
+          <stop offset="0.3" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="url(#bank-tile)" />
+      <rect width="64" height="20" rx="14" fill="url(#bank-gloss)" />
+      <path
+        d="M44.06 19.16A14.2 17.85 0 1 0 44.06 44.84L37.26 37.25A4.4 7.3 0 1 1 37.26 26.75Z"
+        fill="#1b1b1b"
+      />
+    </svg>
+  );
+}
+
+/** 초선일보 — Chosun Ilbo-style red C ribbon on white. */
+export function NewsIcon({ size = 24, className }: AppIconProps) {
+  return (
+    <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="news-tile" x1="0" y1="0" x2="0.35" y2="1">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#f4f4f5" />
+        </linearGradient>
+        <linearGradient id="news-ribbon" x1="0.1" y1="0" x2="0.55" y2="1">
+          <stop offset="0" stopColor="#f02a30" />
+          <stop offset="0.5" stopColor="#e01f27" />
+          <stop offset="1" stopColor="#a8111b" />
+        </linearGradient>
+        <linearGradient id="news-sheen" x1="0" y1="0" x2="0.2" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#ffffff" stopOpacity="0.65" />
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
+        <clipPath id="news-clip">
+          <path d="M35.2 9.4C25.4 10.2 15.2 16.4 9.4 25.2 4.2 33.2 5.6 42.2 11.8 47.8 18.6 54.6 29.6 56.6 39.8 52.8 49 49.4 55.4 41.8 58.8 33L44.6 32.4C42.2 37.2 36.4 39.6 30.6 38.2 22.6 36.4 17.4 30.8 19.2 24.4 21 18 28 14.4 33.6 14.6Z" />
+        </clipPath>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="url(#news-tile)" />
+      <path
+        d="M35.2 9.4C25.4 10.2 15.2 16.4 9.4 25.2 4.2 33.2 5.6 42.2 11.8 47.8 18.6 54.6 29.6 56.6 39.8 52.8 49 49.4 55.4 41.8 58.8 33L44.6 32.4C42.2 37.2 36.4 39.6 30.6 38.2 22.6 36.4 17.4 30.8 19.2 24.4 21 18 28 14.4 33.6 14.6Z"
+        fill="url(#news-ribbon)"
+      />
+      <g clipPath="url(#news-clip)">
+        <path
+          d="M45.5 31.5C43 38.6 35.3 41.6 28 39.6 19.6 37.3 15.6 31.2 18.2 24.6 19.6 21.2 22.4 18.2 26.2 16.2"
+          fill="none"
+          stroke="url(#news-sheen)"
+          strokeWidth="8"
+          opacity="0.42"
+        />
+      </g>
+    </svg>
+  );
+}
+
+/** 구팡 — Coupang-style 22-point red burst with the wordmark. */
+export function DeliveryIcon({ size = 24, className }: AppIconProps) {
+  const burst = Array.from({ length: 44 }, (_, i) => {
+    const [x, y] = polar(32, 32, i % 2 === 0 ? 29 : 25.7, 8 + (i * 360) / 44);
+    return `${r2(x)},${r2(y)}`;
+  }).join(' ');
+
+  return (
+    <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="delivery-tile" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0" stopColor="#fdfdfd" />
+          <stop offset="1" stopColor="#ededee" />
+        </linearGradient>
+        <linearGradient id="delivery-burst" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0" stopColor="#e8241b" />
+          <stop offset="1" stopColor="#d21a10" />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="url(#delivery-tile)" />
+      <polygon points={burst} fill="url(#delivery-burst)" />
+      <text
+        x="32"
+        y="35.9"
+        textAnchor="middle"
+        fill="#ffffff"
+        fontFamily="'Inter Variable', Inter, -apple-system, 'Helvetica Neue', Arial, sans-serif"
+        fontSize="11.4"
+        fontWeight="600"
+        letterSpacing="-0.5"
+      >
+        goupang
+      </text>
+    </svg>
+  );
+}
+
+/** Maps — Apple Maps-style map tile with the blue location arrow. */
+export function MapIcon({ size = 24, className }: AppIconProps) {
+  return (
+    <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="map-tile" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#f7f7f8" />
+          <stop offset="1" stopColor="#eeeeef" />
+        </linearGradient>
+        <linearGradient id="map-pin" x1="0.3" y1="0" x2="0.7" y2="1">
+          <stop offset="0" stopColor="#3b8bf7" />
+          <stop offset="1" stopColor="#2369e8" />
+        </linearGradient>
+        <clipPath id="map-clip">
+          <rect width="64" height="64" rx="14" />
+        </clipPath>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="url(#map-tile)" />
+      <g clipPath="url(#map-clip)">
+        {/* green parks */}
+        <path d="M12 0h52v46L34 28 20 11Z" fill="#55d06a" />
+        <path d="M0 0h15L8 10 0 13Z" fill="#55d06a" />
+
+        {/* pink block (bottom-left) */}
+        <path d="M0 21.5 26 35.5 21 51 0 44Z" fill="#f18fbe" />
+        {/* yellow block (bottom-right) */}
+        <path d="M38.5 45 64 52v12H39Z" fill="#ffcc00" />
+
+        {/* wide diagonal avenue */}
+        <path d="M-6 15 64 46v10L-6 24Z" fill="#ffffff" />
+        <path d="M-6 20.5 64 51.5V54L-6 23Z" fill="#e7e7e8" opacity="0.9" />
+        {/* bottom centre street */}
+        <path d="M27 44h9v22h-9Z" fill="#ffffff" />
+        {/* top-left curve joining the avenue */}
+        <path d="M-4 14C4 8 12 4 18 0h8C18 6 8 12 2 20Z" fill="#ffffff" />
+
+        {/* winding grey road on the green */}
+        <path d="M39-2c2 9 9 15 27 17" fill="none" stroke="#c9c9ca" strokeWidth="7" strokeLinecap="round" />
+        <path d="M39-2c2 9 9 15 27 17" fill="none" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round" />
+
+        {/* blue road down to the badge */}
+        <path d="M20.5 0h10v34h-10Z" fill="#2f7ff0" />
+        <path d="M24.2 0h2.6v34h-2.6Z" fill="#4e95f6" />
+      </g>
+
+      {/* location badge */}
+      <circle cx="32" cy="33" r="16.4" fill="#000000" opacity="0.12" />
+      <circle cx="32" cy="32.4" r="16" fill="#ffffff" />
+      <circle cx="32" cy="32.4" r="15.1" fill="url(#map-pin)" stroke="#121418" strokeWidth="1.7" />
+      <path
+        d="M32 23.6 38.9 40.7 32 37.5 25.1 40.7Z"
+        fill="#191a1f"
+        stroke="#191a1f"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* steak — fictional crypto-casino parody                              */
+/* ------------------------------------------------------------------ */
+
+/** steak — navy casino tile with a neon green S mark. */
+export function SteakIcon({ size = 24, className }: AppIconProps) {
+  return (
+    <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="steak-tile" x1="0" y1="0" x2="0.4" y2="1">
+          <stop offset="0" stopColor="#16394d" />
+          <stop offset="0.55" stopColor="#0f2b3c" />
+          <stop offset="1" stopColor="#081923" />
+        </linearGradient>
+        <radialGradient id="steak-glow" cx="0.5" cy="0.42" r="0.58">
+          <stop offset="0" stopColor="#00e701" stopOpacity="0.3" />
+          <stop offset="1" stopColor="#00e701" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="steak-neon" x1="0" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor="#8dff8a" />
+          <stop offset="0.5" stopColor="#00e701" />
+          <stop offset="1" stopColor="#00b800" />
+        </linearGradient>
+        <filter id="steak-neon-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2.2" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="url(#steak-tile)" />
+      <rect width="64" height="64" rx="14" fill="url(#steak-glow)" />
+      <g stroke="#ffffff" strokeWidth="0.6" opacity="0.06">
+        <path d="M8 20h48M8 32h48M8 44h48" />
+      </g>
+      <path
+        d="M45 20.5c-3 -3.8 -7.4 -5.8 -12.3 -5.8 -7.2 0 -12.2 4 -12.2 9.6 0 5.2 4 7.9 11.2 9.4l3.2 0.7c4.3 0.9 6.2 2.3 6.2 4.8 0 3 -3 5 -7.5 5 -4.7 0 -8.4 -1.9 -11.1 -5.4"
+        fill="none"
+        stroke="url(#steak-neon)"
+        strokeWidth="6.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        filter="url(#steak-neon-glow)"
+      />
+      <circle cx="48.5" cy="16.5" r="2.4" fill="#00e701" />
+    </svg>
+  );
+}
