@@ -19,6 +19,13 @@ import {
 } from '@/game/steak';
 import { START_BANK, START_CASH, START_CHIPS } from '@/content/economy';
 import {
+  expireInbox,
+  resolveAnswer,
+  rollArrival,
+  type AnswerResult,
+  type InboxMessage,
+} from '@/game/messenger';
+import {
   RETIRE_GOAL,
   addToInventory,
   removeFromInventory,
@@ -142,6 +149,12 @@ export interface GameState {
   purchases: Record<string, number>;
   /** Onion market ids the player has learned about (usually via social apps). */
   discoveredMarkets: string[];
+  /** Messenger threads, shared by both channels. */
+  inbox: InboxMessage[];
+  /** Customer trust 0–100. Rises with good answers, falls when ignored. */
+  trust: number;
+  /** Game time of the last arrival roll. */
+  messengerLastAt: string | null;
   stats: GameStats;
   /** The most recent day-end report, shown in the Trade app. */
   lastReport: DayReport | null;
@@ -174,6 +187,12 @@ export interface GameState {
   buyMarketOffer: (offer: MarketOffer, status: MarketStatus) => BuyResult;
   /** Learn an onion address (no-op if it is already known). */
   discoverMarket: (marketId: string) => void;
+  /** Roll for new messenger arrivals (safe to call often). */
+  tickMessenger: () => void;
+  /** Answer a thread. Returns the applied effects for the UI to show. */
+  answerInbox: (messageId: string, choiceId: string) => AnswerResult;
+  /** Mark a thread as opened. */
+  openInbox: (messageId: string) => void;
   sellToCustomer: (offer: CustomerOffer, action: CustomerAction) => SellResult;
   endDay: () => DayEndResult;
   restartGame: () => void;
@@ -247,6 +266,27 @@ function createInitialState() {
     statusReason: '',
     purchases: {} as Record<string, number>,
     discoveredMarkets: ['market-nightbazaar'],
+    // Two opening threads so both messengers matter from the first minute.
+    inbox: [
+      {
+        id: 'msg-seed-1',
+        scriptId: 'msg-dal-ask',
+        npcId: 'npc-dal',
+        channel: 'telegraph',
+        arrivedAt: GAME_EPOCH,
+        status: 'unread',
+      },
+      {
+        id: 'msg-seed-2',
+        scriptId: 'msg-jjin-haggle',
+        npcId: 'npc-jjin',
+        channel: 'phone',
+        arrivedAt: GAME_EPOCH,
+        status: 'unread',
+      },
+    ] satisfies InboxMessage[],
+    trust: 20,
+    messengerLastAt: GAME_EPOCH,
     stats: {
       sales: 0,
       revenue: 0,
@@ -279,6 +319,9 @@ type PersistedGame = Pick<
   | 'stats'
   | 'lastReport'
   | 'discoveredMarkets'
+  | 'inbox'
+  | 'trust'
+  | 'messengerLastAt'
 >;
 
 export const useGameStore = create<GameState>()(
@@ -493,6 +536,68 @@ export const useGameStore = create<GameState>()(
         });
         return result;
       },
+      tickMessenger: () =>
+        set((s) => {
+          if (s.status !== 'playing') return;
+          const expired = expireInbox(s.inbox, s.gameDateTime);
+          const arrival = rollArrival({
+            now: s.gameDateTime,
+            lastAt: s.messengerLastAt,
+            heat: s.heat,
+            inbox: expired,
+          });
+          s.inbox = arrival ? [arrival, ...expired].slice(0, 40) : expired;
+          if (arrival) s.messengerLastAt = s.gameDateTime;
+        }),
+      openInbox: (messageId) =>
+        set((s) => {
+          const message = s.inbox.find((entry) => entry.id === messageId);
+          if (message && message.status === 'unread') message.status = 'open';
+        }),
+      answerInbox: (messageId, choiceId) => {
+        let result: AnswerResult = {
+          ok: false,
+          error: '대화를 찾을 수 없습니다.',
+          effects: { heat: 0, trust: 0, cash: 0 },
+          reply: '',
+          outcome: '',
+          channel: 'telegraph',
+          moved: false,
+        };
+        set((s) => {
+          const message = s.inbox.find((entry) => entry.id === messageId);
+          if (!message) return;
+          if (message.status === 'answered') {
+            result = { ...result, error: '이미 답장했습니다.' };
+            return;
+          }
+          const answer = resolveAnswer(message, choiceId);
+          if (!answer.ok) {
+            result = answer;
+            return;
+          }
+
+          message.status = 'answered';
+          message.choiceId = choiceId;
+          message.reply = answer.reply;
+          message.outcome = answer.outcome;
+          message.moved = answer.moved;
+          message.channel = answer.channel;
+
+          s.heat = Math.min(100, Math.max(0, Math.round(s.heat + answer.effects.heat)));
+          s.trust = Math.min(100, Math.max(0, Math.round(s.trust + answer.effects.trust)));
+          if (answer.effects.cash !== 0) {
+            s.cash = Math.max(0, Math.round(s.cash + answer.effects.cash));
+          }
+
+          if (s.heat >= 100) {
+            s.status = 'busted';
+            s.statusReason = '메신저에서 남긴 기록이 추적망에 걸렸다.';
+          }
+          result = answer;
+        });
+        return result;
+      },
       discoverMarket: (marketId) =>
         set((s) => {
           if (!s.discoveredMarkets.includes(marketId)) {
@@ -688,6 +793,9 @@ export const useGameStore = create<GameState>()(
         stats: state.stats,
         lastReport: state.lastReport,
         discoveredMarkets: state.discoveredMarkets,
+        inbox: state.inbox,
+        trust: state.trust,
+        messengerLastAt: state.messengerLastAt,
       }),
       migrate: (persisted) => {
         const previous = (persisted ?? {}) as Partial<PersistedGame>;
@@ -705,6 +813,9 @@ export const useGameStore = create<GameState>()(
           stats: { ...base.stats, ...previous.stats },
           lastReport: previous.lastReport ?? null,
           discoveredMarkets: previous.discoveredMarkets ?? base.discoveredMarkets,
+          inbox: previous.inbox ?? base.inbox,
+          trust: previous.trust ?? base.trust,
+          messengerLastAt: previous.messengerLastAt ?? base.messengerLastAt,
         };
       },
     },

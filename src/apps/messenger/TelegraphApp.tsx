@@ -6,6 +6,7 @@ import {
   Paperclip, Smile, Settings, Shield, AlertTriangle
 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
+import { MessengerInbox } from './MessengerInbox';
 import { TELEGRAPH_CONTACTS, TELEGRAPH_CONVERSATIONS, type Conversation, type MessengerMessage, type MessengerContact } from './MessengerTypes';
 import { AppShell } from '../AppShell';
 import { SPRING_SNAPPY, SPRING_SOFT, SPRING_BOUNCY, prefersReducedMotion } from '@/utils/motion';
@@ -177,6 +178,11 @@ export function TelegraphApp() {
                 className="w-full pl-10 pr-4 py-2 rounded-xl bg-ios-surface text-[14px] text-ios-text placeholder:text-ios-muted focus:outline-none focus:ring-2 focus:ring-ios-accent/20"
               />
             </div>
+          </div>
+
+          {/* 게임 메시지 (익명 채널) */}
+          <div className="border-b border-ios-separator/20">
+            <MessengerInbox channel="telegraph" />
           </div>
 
           {/* Conversations */}

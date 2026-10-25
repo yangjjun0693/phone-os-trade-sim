@@ -6,6 +6,7 @@ import {
   Contact, Voicemail, Hash, UserPlus, MessageCircle, Clock
 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
+import { MessengerInbox } from './MessengerInbox';
 import { MESSAGES_CALL_CONTACTS, MESSAGES_CALL_CONVERSATIONS, type Conversation, type MessengerMessage, type MessengerContact } from './MessengerTypes';
 import { AppShell } from '../AppShell';
 import { SPRING_SNAPPY, SPRING_SOFT, SPRING_BOUNCY, prefersReducedMotion } from '@/utils/motion';
@@ -182,6 +183,12 @@ export function MessagesCallApp() {
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
+            {viewMode === 'chats' && (
+              <div className="border-b border-ios-separator/20">
+                <MessengerInbox channel="phone" />
+              </div>
+            )}
+
             {viewMode === 'chats' && (
               <div className="p-2 space-y-1">
                 {filteredConversations.length === 0 ? (

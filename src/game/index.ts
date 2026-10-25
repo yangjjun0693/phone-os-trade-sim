@@ -16,3 +16,4 @@ export * from './parcels';
 export * from './news';
 export * from './steak';
 export * from './trade';
+export * from './messenger';

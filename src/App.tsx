@@ -16,7 +16,10 @@ export function App() {
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      useGameStore.getState().advanceGameTime(1);
+      const store = useGameStore.getState();
+      store.advanceGameTime(1);
+      // Customers write in over time; the clock is what drives the inbox.
+      store.tickMessenger();
     }, GAME_CLOCK_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, []);

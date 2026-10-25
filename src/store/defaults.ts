@@ -17,6 +17,6 @@ export const DEFAULT_LAYOUT: HomeLayout = {
   dock: DEFAULT_DOCK,
 };
 
-export const PERSIST_VERSION = 7;
+export const PERSIST_VERSION = 8;
 /** Home layout schema version; bumped separately so game saves are not wiped. */
 export const OS_PERSIST_VERSION = 7;

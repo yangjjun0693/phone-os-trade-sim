@@ -16,5 +16,35 @@
     "name": "박 씨",
     "kind": "undercover",
     "bio": "말투가 지나치게 정중하다. 질문이 많다."
+  },
+  {
+    "id": "npc-yuna",
+    "name": "유나",
+    "kind": "regular",
+    "bio": "약속 시간을 정확히 지킨다. 현금만 쓴다."
+  },
+  {
+    "id": "npc-hyun",
+    "name": "현이",
+    "kind": "difficult",
+    "bio": "수량을 자주 바꾸고 늦게 온다."
+  },
+  {
+    "id": "npc-seo",
+    "name": "서 씨",
+    "kind": "regular",
+    "bio": "새벽에만 연락이 온다. 조용한 편."
+  },
+  {
+    "id": "npc-boss",
+    "name": "중간상",
+    "kind": "regular",
+    "bio": "물량을 통째로 넘겨받는 상인. 값은 짜다."
+  },
+  {
+    "id": "npc-gray",
+    "name": "회색 코트",
+    "kind": "undercover",
+    "bio": "시세를 지나치게 잘 안다. 접근이 빠르다."
   }
 ]
