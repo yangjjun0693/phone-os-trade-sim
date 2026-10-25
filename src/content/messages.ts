@@ -58,7 +58,7 @@ export const MESSAGE_SCRIPTS: MessageScript[] = [
         reply: '있어. 3개 잡아둘게. 6시까지 오면 돼.',
         outcome: '약속이 잡혔다. 거래 앱의 "약속"에서 물량을 넘기면 된다.',
         effect: { trust: 4, heat: 1 },
-        booking: { productId: 'product-pill', qty: 3, dueMinutes: 360 },
+        booking: { productId: 'product-pill', qty: 3, dueMinutes: 600 },
       },
       {
         id: 'move-phone',
@@ -96,7 +96,7 @@ export const MESSAGE_SCRIPTS: MessageScript[] = [
         reply: '10%만 빼줄게. 2개 잡아둘 테니 오늘 안에 와.',
         outcome: '약속이 잡혔다. 단가가 조금 낮다.',
         effect: { trust: 5 },
-        booking: { productId: 'product-capsule', qty: 2, dueMinutes: 300, priceFactor: 0.9 },
+        booking: { productId: 'product-capsule', qty: 2, dueMinutes: 480, priceFactor: 0.9 },
       },
       {
         id: 'move-telegraph',
@@ -120,7 +120,7 @@ export const MESSAGE_SCRIPTS: MessageScript[] = [
         reply: '좋아. 4개 준비해둘게. 열한 시까지 와.',
         outcome: '약속이 잡혔다. 거래 앱에서 확인할 수 있다.',
         effect: { trust: 5, heat: 1 },
-        booking: { productId: 'product-jelly', qty: 4, dueMinutes: 420 },
+        booking: { productId: 'product-jelly', qty: 4, dueMinutes: 720 },
       },
       {
         id: 'move-phone',
@@ -180,7 +180,7 @@ export const MESSAGE_SCRIPTS: MessageScript[] = [
         reply: '8개 잡아둘게. 값은 시세에서 15% 빼준다.',
         outcome: '큰 약속이 잡혔다. 기한이 짧으니 서둘러야 한다.',
         effect: { trust: 3 },
-        booking: { productId: 'product-powder', qty: 8, dueMinutes: 240, priceFactor: 0.85 },
+        booking: { productId: 'product-powder', qty: 8, dueMinutes: 420, priceFactor: 0.85 },
       },
       {
         id: 'small',
@@ -203,7 +203,7 @@ export const MESSAGE_SCRIPTS: MessageScript[] = [
         reply: '3시에 보자. 2개 준비해둘게.',
         outcome: '새벽 약속이 잡혔다. 순찰은 줄지만 몸이 힘들다.',
         effect: { trust: 4, heat: 2 },
-        booking: { productId: 'product-pill', qty: 2, dueMinutes: 480 },
+        booking: { productId: 'product-pill', qty: 2, dueMinutes: 720 },
       },
       {
         id: 'move-phone',

@@ -31,7 +31,7 @@ export const ADDRESSES: AddressOption[] = [
     heat: 4,
     seizeChance: 0.05,
     loseChance: 0,
-    hours: 8,
+    hours: 3,
   },
   {
     id: 'storage',
@@ -41,7 +41,7 @@ export const ADDRESSES: AddressOption[] = [
     heat: 1,
     seizeChance: 0.02,
     loseChance: 0,
-    hours: 12,
+    hours: 5,
   },
   {
     id: 'drop',
@@ -51,7 +51,7 @@ export const ADDRESSES: AddressOption[] = [
     heat: 0,
     seizeChance: 0.03,
     loseChance: 0.15,
-    hours: 10,
+    hours: 4,
   },
 ];
 

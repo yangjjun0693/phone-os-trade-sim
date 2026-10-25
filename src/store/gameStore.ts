@@ -249,24 +249,7 @@ function createInitialState() {
     heat: 12,
     day: 1,
     gameDateTime: GAME_EPOCH,
-    inventory: [
-      {
-        id: 'item-1',
-        productId: 'product-pill',
-        name: '미상의 알약',
-        qty: 6,
-        unitCost: 4_000,
-        marketPrice: 11_000,
-      },
-      {
-        id: 'item-2',
-        productId: 'product-card',
-        name: '무표정 카드',
-        qty: 2,
-        unitCost: 26_000,
-        marketPrice: 72_000,
-      },
-    ] satisfies InventoryItem[],
+    inventory: [] satisfies InventoryItem[],
     browserHistory: [],
     identities: {},
     bank: {

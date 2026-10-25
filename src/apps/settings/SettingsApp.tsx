@@ -8,6 +8,7 @@ import { computeTotalExposure, getExposureTier, getExposureTierColor, getIdentit
 import type { InventoryItem, ThemeMode, IdentityState, AppIdentityMap } from '@/types';
 import { cn } from '@/utils/cn';
 import { AnimatedNumber, Pill, Segmented } from '@/components';
+import { CLOCK_PRESETS, MINUTES_PER_TICK } from '@/content/time';
 import { AppShell } from '../AppShell';
 import { Row, Section } from '../SectionList';
 import { getApp } from '../registry';
@@ -168,6 +169,8 @@ export function SettingsApp() {
 
   const theme = useOSStore((s) => s.theme);
   const setTheme = useOSStore((s) => s.setTheme);
+  const clockSpeed = useOSStore((s) => s.clockSpeed);
+  const setClockSpeed = useOSStore((s) => s.setClockSpeed);
   const resetLayout = useOSStore((s) => s.resetLayout);
 
   const playerName = useGameStore((s) => s.playerName);
@@ -361,6 +364,23 @@ export function SettingsApp() {
       </Section>
 
       <Section header="화면" delay={0.1}>
+        <div className="px-4 py-3">
+          <p className="mb-2 text-[13px] text-ios-muted">게임 시계</p>
+          <Segmented
+            options={CLOCK_PRESETS.map((preset) => ({
+              value: preset.id,
+              label: `${preset.label} · ${preset.realMinutesPerDay}분`,
+            }))}
+            value={clockSpeed}
+            onChange={setClockSpeed}
+            tone="surface"
+            className="rounded-xl p-0.5"
+          />
+          <p className="mt-2 text-[12px] text-ios-muted">
+            하루(24시간)가 걸리는 실시간 시간입니다. 시계는 {MINUTES_PER_TICK}분 단위로 움직입니다.
+          </p>
+        </div>
+
         <div className="px-4 py-3">
           <p className="mb-2 text-[13px] text-ios-muted">테마</p>
           <Segmented

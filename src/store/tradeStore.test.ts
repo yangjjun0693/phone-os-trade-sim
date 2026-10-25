@@ -238,7 +238,9 @@ describe('closing the day', () => {
     expect(state.statusReason).toBe('');
     expect(state.day).toBe(1);
     expect(state.cash).toBe(1_500_000);
-    expect(state.inventory).toHaveLength(2);
+    // A fresh run starts with no stock on hand — everything is bought.
+    expect(state.inventory).toHaveLength(0);
+    expect(state.shipments).toHaveLength(0);
     expect(state.stats.sales).toBe(0);
   });
 });

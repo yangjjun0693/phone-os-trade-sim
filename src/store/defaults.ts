@@ -6,10 +6,17 @@ import type { HomeLayout } from '@/types';
  */
 export const DEFAULT_DOCK = ['trade', 'messagesCall', 'chroma', 'settings'];
 
-/** Page 1: core phone apps. Page 2: daily-life apps + the steak casino. */
+/**
+ * Every app lives on a single home page, so nothing needs swiping: the dock
+ * holds the four most-used apps and the grid below holds the rest (4 × 4).
+ */
 export const DEFAULT_PAGES: string[][] = [
-  ['wallet', 'notes', 'gmall', 'protean', 'telegraph', 'ex', 'sailor', 'shade', 'forum', 'contacts'],
-  ['bank', 'news', 'delivery', 'map', 'steak'],
+  [
+    'wallet', 'notes', 'gmall', 'protean',
+    'telegraph', 'ex', 'messages', 'forum',
+    'sailor', 'shade', 'contacts', 'map',
+    'bank', 'news', 'delivery', 'steak',
+  ],
 ];
 
 export const DEFAULT_LAYOUT: HomeLayout = {
@@ -19,4 +26,4 @@ export const DEFAULT_LAYOUT: HomeLayout = {
 
 export const PERSIST_VERSION = 8;
 /** Home layout schema version; bumped separately so game saves are not wiped. */
-export const OS_PERSIST_VERSION = 7;
+export const OS_PERSIST_VERSION = 9;

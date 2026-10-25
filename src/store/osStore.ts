@@ -8,6 +8,7 @@ import type {
   PhoneStatus,
   ThemeMode,
 } from '@/types';
+import { DEFAULT_CLOCK_SPEED, type ClockSpeed } from '@/content/time';
 import { DEFAULT_LAYOUT, OS_PERSIST_VERSION } from './defaults';
 
 const RECENTS_LIMIT = 8;
@@ -24,6 +25,8 @@ export interface OSState {
   /** Lock screen visible? */
   locked: boolean;
   theme: ThemeMode;
+  /** How fast in-game time runs (see src/content/time.ts). */
+  clockSpeed: ClockSpeed;
   status: PhoneStatus;
   controls: OSControls;
   layout: HomeLayout;
@@ -39,6 +42,7 @@ export interface OSState {
   unlock: () => void;
   toggleLock: () => void;
   setTheme: (theme: ThemeMode) => void;
+  setClockSpeed: (speed: ClockSpeed) => void;
   setStatus: (patch: Partial<PhoneStatus>) => void;
   setControl: <K extends keyof OSControls>(key: K, value: OSControls[K]) => void;
   setLayout: (layout: HomeLayout) => void;
@@ -93,13 +97,17 @@ function insertAt(layout: HomeLayout, ref: ContainerRef, id: string): void {
   }
 }
 
-type PersistedOS = Pick<OSState, 'theme' | 'status' | 'controls' | 'layout' | 'recents'>;
+type PersistedOS = Pick<
+  OSState,
+  'theme' | 'clockSpeed' | 'status' | 'controls' | 'layout' | 'recents'
+>;
 
 export const useOSStore = create<OSState>()(
   persist(
     immer((set) => ({
       locked: true,
       theme: 'system',
+      clockSpeed: DEFAULT_CLOCK_SPEED,
       status: { battery: 82, charging: false, signal: 4, wifi: true },
       controls: {
         brightness: 0.72,
@@ -146,6 +154,10 @@ export const useOSStore = create<OSState>()(
       setTheme: (theme) =>
         set((s) => {
           s.theme = theme;
+        }),
+      setClockSpeed: (speed) =>
+        set((s) => {
+          s.clockSpeed = speed;
         }),
       setStatus: (patch) =>
         set((s) => {
@@ -226,6 +238,7 @@ export const useOSStore = create<OSState>()(
       // Persist only durable OS preferences, never transient UI state.
       partialize: (state): PersistedOS => ({
         theme: state.theme,
+        clockSpeed: state.clockSpeed,
         status: state.status,
         controls: state.controls,
         layout: state.layout,
@@ -235,6 +248,15 @@ export const useOSStore = create<OSState>()(
         const previous = (persisted ?? {}) as Partial<PersistedOS>;
         if (version < 1) return { ...previous, layout: DEFAULT_LAYOUT } as PersistedOS;
         if (version < 7) return { ...previous, layout: DEFAULT_LAYOUT } as PersistedOS;
+        if (version < 8) return { ...previous, clockSpeed: DEFAULT_CLOCK_SPEED } as PersistedOS;
+        // v9: the home screen became a single page holding every app.
+        if (version < 9) {
+          return {
+            ...previous,
+            clockSpeed: previous.clockSpeed ?? DEFAULT_CLOCK_SPEED,
+            layout: DEFAULT_LAYOUT,
+          } as PersistedOS;
+        }
         return previous as PersistedOS;
       },
     },

@@ -8,28 +8,28 @@
   },
   {
     "id": "product-jelly",
-    "name": "녹색 젤리",
-    "category": "젤리",
+    "name": "엑스터시 젤리",
+    "category": "GHB",
     "wholesale": 6000,
     "street": 16000
   },
   {
     "id": "product-capsule",
-    "name": "파란 캡슐",
-    "category": "캡슐",
+    "name": "엑스터시 사탕 10정",
+    "category": "메틸렌디옥시메탐페타민",
     "wholesale": 9000,
     "street": 25000
   },
   {
     "id": "product-powder",
-    "name": "글리터 파우더",
-    "category": "분말",
+    "name": "코카인 2g",
+    "category": "알칼로이드",
     "wholesale": 15000,
     "street": 42000
   },
   {
     "id": "product-card",
-    "name": "무표정 카드",
+    "name": "LSD 카드",
     "category": "카드",
     "wholesale": 26000,
     "street": 72000
