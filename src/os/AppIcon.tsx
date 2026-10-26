@@ -4,14 +4,12 @@ import type { AppMeta } from '@/types';
 import { useLongPress } from '@/hooks/useLongPress';
 import { cn } from '@/utils/cn';
 import { haptic } from '@/utils/haptics';
-import { APP_ICON_SIZE, ICON_RADIUS_RATIO, appTileId } from './metrics';
+import { APP_ICON_SIZE, ICON_RADIUS_RATIO } from './metrics';
 
 export interface AppIconProps {
   app: AppMeta;
   size?: number;
-  /** Draw a shared-layout target so the open/close animation can morph into it. */
-  shared?: boolean;
-  /** Jiggle + disable the open animation target while arranging icons. */
+  /** Jiggle while arranging icons. */
   editable?: boolean;
   jiggleDelay?: number;
   /** Dock icons render without a text label, like iOS. */
@@ -27,7 +25,6 @@ export interface AppIconProps {
 export const AppIcon = memo(function AppIcon({
   app,
   size = APP_ICON_SIZE,
-  shared = true,
   editable = false,
   jiggleDelay = 0,
   showLabel = true,
@@ -57,7 +54,6 @@ export const AppIcon = memo(function AppIcon({
       <motion.button
         type="button"
         aria-label={app.name}
-        layoutId={shared ? appTileId(app.id) : undefined}
         whileTap={{ scale: 0.88 }}
         transition={{ type: 'spring', stiffness: 520, damping: 34 }}
         style={{

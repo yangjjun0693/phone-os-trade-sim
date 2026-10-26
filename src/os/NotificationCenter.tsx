@@ -31,8 +31,18 @@ export function NotificationCenter() {
       className="absolute inset-0 z-[45]"
       style={{ background: 'var(--os-wallpaper)' }}
     >
-      <div className="glass-strong flex h-full w-full flex-col overflow-hidden" {...bind()}>
-        <div className="flex items-start justify-between px-6 pt-[calc(var(--ios-statusbar-h)+10px)]">
+      <div
+        className="glass-strong relative flex h-full w-full flex-col overflow-hidden"
+        {...bind()}
+      >
+        {/* Tapping the background always dismisses, whatever the gesture does. */}
+        <button
+          type="button"
+          aria-label="알림 닫기"
+          onClick={() => setOverlay('none')}
+          className="absolute inset-0 z-0"
+        />
+        <div className="relative z-10 flex items-start justify-between px-6 pt-[calc(var(--ios-statusbar-h)+10px)]">
           <div className="text-ios-text">
             <p className="text-[13px] font-medium opacity-70">{date}</p>
             <p className="text-[52px] font-bold leading-none tabular-nums">{time}</p>
@@ -49,7 +59,7 @@ export function NotificationCenter() {
           </motion.button>
         </div>
 
-        <div className="scroll-area no-scrollbar mt-5 flex-1 px-4 pb-10">
+        <div className="scroll-area no-scrollbar relative z-10 mt-5 flex-1 px-4 pb-10">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center gap-2 pt-16 text-ios-muted">
               <BellOff className="size-6" aria-hidden />

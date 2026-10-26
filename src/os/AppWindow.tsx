@@ -1,15 +1,16 @@
 import { motion } from 'framer-motion';
 import { getApp } from '@/apps/registry';
 import { hexToRgbTriplet } from '@/utils/color';
-import { SPRING_SNAPPY } from '@/utils/motion';
-import { appTileId } from './metrics';
+import { EASE_IOS, SPRING_SOFT } from '@/utils/motion';
 
 /**
  * The single full-screen app surface.
  *
- * Shares a `layoutId` with the home-screen icon so opening/closing morphs the
- * icon tile into the window (and back). The app content is layered on top and
- * fades in, mimicking iOS's expanding snapshot.
+ * NOTE: this deliberately does NOT use a shared `layoutId` with the home icon.
+ * A shared-layout morph between the icon and the window can be interrupted when
+ * the player opens another app mid-animation, which used to leave a stale window
+ * mounted (the previous app reappearing with no way home). A self-contained
+ * zoom + fade looks the same and always unmounts.
  */
 export function AppWindow({ appId }: { appId: string }) {
   const app = getApp(appId);
@@ -19,11 +20,13 @@ export function AppWindow({ appId }: { appId: string }) {
 
   return (
     <motion.div
-      layoutId={appTileId(app.id)}
-      transition={SPRING_SNAPPY}
+      key={app.id}
+      initial={{ opacity: 0, scale: 0.92, y: 12 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.94, y: 8, transition: { duration: 0.18, ease: EASE_IOS } }}
+      transition={SPRING_SOFT}
       style={
         {
-          borderRadius: 0,
           backgroundColor: app.gradient[1],
           // Every app paints itself with its own accent.
           '--app-accent': hexToRgbTriplet(app.accent),
@@ -34,7 +37,7 @@ export function AppWindow({ appId }: { appId: string }) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.18, delay: 0.04 }}
+        transition={{ duration: 0.16, delay: 0.03 }}
         className="h-full w-full bg-ios-bg"
       >
         <Component />

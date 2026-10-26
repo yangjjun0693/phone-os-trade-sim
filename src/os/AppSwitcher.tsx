@@ -41,7 +41,7 @@ function AppCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.85 }}
       transition={{ ...SPRING_SNAPPY, delay: Math.min(index, 5) * 0.05 }}
-      className="w-[70%] shrink-0 snap-center"
+      className="pointer-events-auto w-[70%] shrink-0 snap-center"
     >
       <div {...bind()}>
         <div className="relative overflow-hidden rounded-[26px] bg-ios-surface shadow-2xl ring-1 ring-white/10">
@@ -78,7 +78,12 @@ export function AppSwitcher() {
 
   const bind = useDrag(
     ({ last, tap, movement: [, my], direction: [, dy], velocity: [, vy] }) => {
-      if (!last || tap) return;
+      if (!last) return;
+      // Tapping the background closes the switcher (swiping down still works).
+      if (tap) {
+        setOverlay('none');
+        return;
+      }
       if (my > 60 || (vy > 0.5 && dy > 0)) setOverlay('none');
     },
     { axis: 'y', filterTaps: true, touchAction: 'pan-x' },
@@ -93,8 +98,15 @@ export function AppSwitcher() {
       className="absolute inset-0 z-[45]"
       style={{ background: 'rgba(0,0,0,0.55)' }}
     >
-      <div className="flex h-full w-full flex-col" {...bind()}>
-        <div className="flex flex-1 items-center">
+      <div className="relative flex h-full w-full flex-col" {...bind()}>
+        {/* Real close button behind the cards: tapping empty space always dismisses. */}
+        <button
+          type="button"
+          aria-label="앱 전환기 닫기"
+          onClick={() => setOverlay('none')}
+          className="absolute inset-0 z-0"
+        />
+        <div className="pointer-events-none relative z-10 flex flex-1 items-center">
           {apps.length === 0 ? (
             <p className="w-full text-center text-[13px] text-white/70">최근 앱이 없습니다</p>
           ) : (
@@ -113,7 +125,7 @@ export function AppSwitcher() {
             </div>
           )}
         </div>
-        <p className="pb-[max(env(safe-area-inset-bottom,0px),28px)] text-center text-[12px] text-white/70">
+        <p className="pointer-events-none relative z-10 pb-[max(env(safe-area-inset-bottom,0px),28px)] text-center text-[12px] text-white/70">
           카드를 쓸어올리면 앱이 종료됩니다 · 배경을 쓸어내리면 닫힙니다
         </p>
       </div>

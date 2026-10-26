@@ -51,7 +51,6 @@ export function SortableAppIcon({
         editable={editable}
         jiggleDelay={jiggleDelay}
         showLabel={showLabel}
-        shared={!editable && !isDragging}
         onOpen={onOpen}
         onLongPress={onLongPress}
       />

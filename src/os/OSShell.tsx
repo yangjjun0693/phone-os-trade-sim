@@ -34,7 +34,8 @@ export function OSShell() {
   const goHome = useOSStore((s) => s.goHome);
   const setOverlay = useOSStore((s) => s.setOverlay);
 
-  const edgesEnabled = !locked && overlay === 'none';
+  /** Edges drive overlays and the home gesture; only the lock screen disables them. */
+  const edgesEnabled = !locked;
 
   const bindTopLeft = useDrag(
     ({ last, tap, movement: [, my], velocity: [, vy] }) => {
@@ -54,9 +55,24 @@ export function OSShell() {
 
   const bindBottom = useDrag(
     ({ last, tap, movement: [, my], direction: [, dy], velocity: [, vy] }) => {
-      if (!last || tap) return;
+      if (!last) return;
+
+      // A tap on the bottom edge is always an escape hatch back home, so the
+      // player can never get stuck inside an app or an overlay.
+      if (tap) {
+        if (overlay !== 'none') setOverlay('none');
+        if (openAppId) goHome();
+        return;
+      }
+
       const swipedUp = my < -40 || (vy > 0.5 && dy < 0);
       if (!swipedUp) return;
+
+      // Swiping up anywhere always gets rid of an overlay first.
+      if (overlay !== 'none') {
+        setOverlay('none');
+        return;
+      }
 
       if (openAppId) {
         if (my < -SWITCHER_DRAG) setOverlay('appSwitcher');

@@ -110,8 +110,18 @@ export function ControlCenter() {
       className="absolute inset-0 z-[45]"
       style={{ background: 'var(--os-wallpaper)' }}
     >
-      <div className="glass-strong flex h-full w-full flex-col overflow-hidden" {...bind()}>
-        <div className="scroll-area no-scrollbar flex-1 px-4 pb-10 pt-[calc(var(--ios-statusbar-h)+10px)]">
+      <div
+        className="glass-strong relative flex h-full w-full flex-col overflow-hidden"
+        {...bind()}
+      >
+        {/* Tapping the background always dismisses the panel. */}
+        <button
+          type="button"
+          aria-label="컨트롤 센터 닫기"
+          onClick={() => setOverlay('none')}
+          className="absolute inset-0 z-0"
+        />
+        <div className="scroll-area no-scrollbar relative z-10 flex-1 px-4 pb-10 pt-[calc(var(--ios-statusbar-h)+10px)]">
           <div className="mx-auto grid max-w-sm grid-cols-4 gap-2.5">
             <ControlToggle
               label="비행기"
