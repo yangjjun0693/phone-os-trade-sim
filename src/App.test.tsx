@@ -1,12 +1,22 @@
 import { act } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from './App';
 import { DEFAULT_LAYOUT } from './store/defaults';
 import { useOSStore } from './store/osStore';
+import { useTutorialStore } from './store/tutorialStore';
 
 beforeEach(() => {
+  // These tests start on the lock screen of an already-set-up device.
+  useTutorialStore.setState({
+    introSeen: true,
+    setupDone: true,
+    active: false,
+    stepIndex: 0,
+    done: [],
+    openedApps: [],
+  });
   useOSStore.setState({
     locked: true,
     editing: false,
@@ -51,5 +61,48 @@ describe('<App />', () => {
       useOSStore.getState().goHome();
     });
     expect(useOSStore.getState().openAppId).toBeNull();
+  });
+
+  it('shows the greeting intro on a fresh device, before the lock screen', () => {
+    useTutorialStore.setState({
+      introSeen: false,
+      setupDone: false,
+      active: false,
+      stepIndex: 0,
+      done: [],
+      openedApps: [],
+    });
+    render(<App />);
+
+    expect(screen.getByText('hello')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '건너뛰기' })).toBeInTheDocument();
+  });
+
+  it('highlights the guide app on home and hides the guide inside an app', async () => {
+    useTutorialStore.setState({
+      introSeen: true,
+      setupDone: true,
+      active: true,
+      stepIndex: 0,
+      done: [],
+      openedApps: [],
+      defaultIdentity: 'alias',
+    });
+    useOSStore.setState({ locked: false });
+    render(<App />);
+
+    expect(await screen.findByLabelText('가이드 펼치기')).toBeInTheDocument();
+    expect(
+      (await screen.findByLabelText('초선일보')).querySelector('[data-tutorial-highlight]'),
+    ).not.toBeNull();
+
+    // jsdom cannot replay userEvent's pointer sequence through the home pager,
+    // so click the icon directly (real taps are covered by Playwright).
+    fireEvent.click(screen.getByLabelText('초선일보'));
+
+    expect(useOSStore.getState().openAppId).toBe('news');
+    expect(useTutorialStore.getState().openedApps).toContain('news');
+    // The card never covers an app's nav bar.
+    expect(screen.queryByLabelText('가이드 펼치기')).not.toBeInTheDocument();
   });
 });

@@ -4,13 +4,17 @@ import { BellOff, X } from 'lucide-react';
 import { getApp } from '@/apps/registry';
 import { useGameClock } from '@/hooks/useGameClock';
 import { useOSStore } from '@/store/osStore';
+import { useTutorialStore } from '@/store/tutorialStore';
 import { SPRING_BOUNCY, SPRING_SOFT, listItem, staggerContainer } from '@/utils/motion';
 
 /** Pull-down shade: game clock plus the notification feed. */
 export function NotificationCenter() {
   const notifications = useOSStore((s) => s.notifications);
+  const notificationsOn = useTutorialStore((s) => s.notifications);
   const clearNotifications = useOSStore((s) => s.clearNotifications);
   const setOverlay = useOSStore((s) => s.setOverlay);
+
+  const list = notificationsOn ? notifications : [];
 
   const { time, date } = useGameClock();
 
@@ -60,7 +64,7 @@ export function NotificationCenter() {
         </div>
 
         <div className="scroll-area no-scrollbar relative z-10 mt-5 flex-1 px-4 pb-10">
-          {notifications.length === 0 ? (
+          {list.length === 0 ? (
             <div className="flex flex-col items-center gap-2 pt-16 text-ios-muted">
               <BellOff className="size-6" aria-hidden />
               <p className="text-[14px]">알림이 없습니다</p>
@@ -73,7 +77,7 @@ export function NotificationCenter() {
               className="flex flex-col gap-2"
             >
               <AnimatePresence initial={false}>
-                {notifications.map((item) => (
+                {list.map((item) => (
                   <motion.div
                     key={item.id}
                     layout

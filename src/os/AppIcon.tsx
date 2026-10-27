@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { motion } from 'framer-motion';
 import type { AppMeta } from '@/types';
 import { useLongPress } from '@/hooks/useLongPress';
+import { useTutorialTargetApp } from '@/hooks/useTutorialTarget';
 import { cn } from '@/utils/cn';
 import { haptic } from '@/utils/haptics';
 import { APP_ICON_SIZE, ICON_RADIUS_RATIO } from './metrics';
@@ -32,6 +33,8 @@ export const AppIcon = memo(function AppIcon({
   onLongPress,
 }: AppIconProps) {
   const Icon = app.icon;
+  const targetApp = useTutorialTargetApp();
+  const highlighted = !editable && targetApp === app.id;
 
   const handlers = useLongPress({
     delay: 450,
@@ -66,6 +69,15 @@ export const AppIcon = memo(function AppIcon({
       >
         <Icon size={size} className="block" aria-hidden />
         <span className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-b from-white/25 via-transparent to-black/10" aria-hidden />
+        {highlighted ? (
+          <motion.span
+            aria-hidden
+            data-tutorial-highlight
+            className="pointer-events-none absolute inset-0 rounded-[inherit] ring-2 ring-inset ring-white"
+            animate={{ opacity: [0.35, 1, 0.35] }}
+            transition={{ duration: 1.9, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        ) : null}
       </motion.button>
       {showLabel && (
         <span className="label-shadow max-w-full truncate text-[11px] font-medium leading-tight text-white">

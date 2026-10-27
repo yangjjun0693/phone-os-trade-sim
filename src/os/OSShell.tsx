@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { AnimatePresence, useIsPresent } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
 import { useOSStore } from '@/store/osStore';
+import { useTutorialStore } from '@/store/tutorialStore';
 import { AppSwitcher } from './AppSwitcher';
 import { AppWindow } from './AppWindow';
 import { ControlCenter } from './ControlCenter';
@@ -10,7 +11,9 @@ import { HomeIndicator } from './HomeIndicator';
 import { HomeScreen } from './HomeScreen';
 import { LockScreen } from './LockScreen';
 import { NotificationCenter } from './NotificationCenter';
+import { Onboarding } from './Onboarding';
 import { StatusBar } from './StatusBar';
+import { TutorialGuide } from './TutorialGuide';
 
 /**
  * How far up from the bottom edge a swipe may start and still count as the
@@ -70,8 +73,11 @@ export function OSShell() {
   const overlay = useOSStore((s) => s.overlay);
   const recents = useOSStore((s) => s.recents);
   const brightness = useOSStore((s) => s.controls.brightness);
+  const editing = useOSStore((s) => s.editing);
   const goHome = useOSStore((s) => s.goHome);
   const setOverlay = useOSStore((s) => s.setOverlay);
+  const setupDone = useTutorialStore((s) => s.setupDone);
+  const guideActive = useTutorialStore((s) => s.active);
 
   /** Edges drive overlays and the home gesture; only the lock screen disables them. */
   const edgesEnabled = !locked;
@@ -201,6 +207,13 @@ export function OSShell() {
       <StatusBar />
       <HomeIndicator />
 
+      {/* The play guide floats over the *home screen only*: it never covers an
+          app's nav bar or the dock, and it is not a gate — the player can keep
+          playing anywhere and the guide just watches the save. */}
+      {setupDone && !locked && !openAppId && overlay === 'none' && !editing && guideActive ? (
+        <TutorialGuide />
+      ) : null}
+
       {/* brightness dimmer driven by the control centre */}
       <div
         className="pointer-events-none absolute inset-0 z-[60] bg-black transition-opacity duration-300 ease-ios"
@@ -209,6 +222,10 @@ export function OSShell() {
       />
 
       {locked ? null : <GameStatusOverlay />}
+
+      {/* First boot: greeting sequence + setup. Sits above the lock screen, so
+          the device is configured before the player ever sees the home screen. */}
+      <AnimatePresence>{setupDone ? null : <Onboarding key="onboarding" />}</AnimatePresence>
     </div>
   );
 }

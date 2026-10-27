@@ -1,11 +1,14 @@
 import { useRef, useState, useMemo } from 'react';
-import { Cloud, Download, Info, Moon, RotateCcw, Sun, Upload, User, UserCheck, Shield, AlertTriangle, LogOut, Key, Eye, EyeOff, ChevronRight } from 'lucide-react';
+import { Bell, BookOpen, Cloud, Download, Info, Moon, Play, RotateCcw, Smartphone, Sun, Upload, Shield, LogOut, ChevronRight, Volume2 } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { SAVE_VERSION, SaveDataSchema, localSaveService, type SaveData } from '@/lib/saveService';
+import { sound } from '@/lib/sound';
+import { TUTORIAL_STEPS } from '@/content/tutorial';
 import { useGameStore, type SteakState } from '@/store/gameStore';
 import { useOSStore } from '@/store/osStore';
-import { computeTotalExposure, getExposureTier, getExposureTierColor, getIdentityLabel, getIdentityDescription, getSupportedIdentities, switchIdentity, logoutIdentity, getAppIdentity, type IdentityKind } from '@/game';
-import type { InventoryItem, ThemeMode, IdentityState, AppIdentityMap } from '@/types';
+import { useTutorialStore } from '@/store/tutorialStore';
+import { computeTotalExposure, getExposureTier, getExposureTierColor, getIdentityLabel, getSupportedIdentities, getAppIdentity, type IdentityKind } from '@/game';
+import type { InventoryItem, ThemeMode, IdentityState } from '@/types';
 import { cn } from '@/utils/cn';
 import { AnimatedNumber, Pill, Segmented } from '@/components';
 import { CLOCK_PRESETS, MINUTES_PER_TICK } from '@/content/time';
@@ -166,17 +169,33 @@ export function SettingsApp() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [showIdentities, setShowIdentities] = useState(false);
+  const [editingDevice, setEditingDevice] = useState(false);
+  const [deviceDraft, setDeviceDraft] = useState('');
 
   const theme = useOSStore((s) => s.theme);
   const setTheme = useOSStore((s) => s.setTheme);
   const clockSpeed = useOSStore((s) => s.clockSpeed);
   const setClockSpeed = useOSStore((s) => s.setClockSpeed);
   const resetLayout = useOSStore((s) => s.resetLayout);
+  const goHome = useOSStore((s) => s.goHome);
+
+  const guideActive = useTutorialStore((s) => s.active);
+  const guideDone = useTutorialStore((s) => s.done);
+  const deviceName = useTutorialStore((s) => s.deviceName);
+  const defaultIdentity = useTutorialStore((s) => s.defaultIdentity);
+  const notificationsOn = useTutorialStore((s) => s.notifications);
+  const soundOn = useTutorialStore((s) => s.sound);
+  const startGuide = useTutorialStore((s) => s.startGuide);
+  const restartGuide = useTutorialStore((s) => s.restartGuide);
+  const stopGuide = useTutorialStore((s) => s.stopGuide);
+  const setDeviceName = useTutorialStore((s) => s.setDeviceName);
+  const setDefaultIdentity = useTutorialStore((s) => s.setDefaultIdentity);
+  const setNotifications = useTutorialStore((s) => s.setNotifications);
+  const setSound = useTutorialStore((s) => s.setSound);
 
   const playerName = useGameStore((s) => s.playerName);
   const day = useGameStore((s) => s.day);
   const identities = useGameStore(s => s.identities);
-  const gameDateTime = useGameStore(s => s.gameDateTime);
   const switchIdentityStore = useGameStore(s => s.switchIdentity);
   const logoutIdentityStore = useGameStore(s => s.logoutIdentity);
 
@@ -277,6 +296,120 @@ export function SettingsApp() {
           </div>
           <Pill tone="green">플레이어</Pill>
         </div>
+      </Section>
+
+      <Section
+        header="가이드"
+        footer="가이드는 게임을 막지 않습니다. 홈 화면에서만 뜨고, 앱을 열면 잠시 사라집니다."
+        delay={0.03}
+      >
+        <Row
+          icon={<BookOpen className="size-4 text-ios-accent" aria-hidden />}
+          title="플레이 가이드 다시 보기"
+          subtitle={`${guideDone.length} / ${TUTORIAL_STEPS.length} 단계 완료`}
+          value={guideActive ? '표시 중' : '꺼짐'}
+          onClick={() => {
+            restartGuide();
+            goHome();
+          }}
+        />
+        {guideActive ? (
+          <Row
+            icon={<Play className="size-4 text-ios-muted" aria-hidden />}
+            title="가이드 끄기"
+            subtitle="홈 화면의 안내 카드를 숨깁니다."
+            onClick={stopGuide}
+          />
+        ) : (
+          <Row
+            icon={<Play className="size-4 text-ios-green" aria-hidden />}
+            title="가이드 켜기"
+            subtitle="이어서 진행합니다."
+            onClick={() => {
+              startGuide();
+              goHome();
+            }}
+          />
+        )}
+        {editingDevice ? (
+          <div className="flex items-center gap-2 border-b border-ios-separator/15 px-4 py-2.5 last:border-b-0">
+            <input
+              aria-label="기기 이름 입력"
+              value={deviceDraft}
+              autoFocus
+              maxLength={32}
+              onChange={(event) => setDeviceDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  setDeviceName(deviceDraft);
+                  setEditingDevice(false);
+                }
+                if (event.key === 'Escape') setEditingDevice(false);
+              }}
+              className="min-w-0 flex-1 rounded-xl bg-ios-bg px-3 py-2 text-[15px] ring-1 ring-ios-separator/30 focus:outline-none focus:ring-app"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setDeviceName(deviceDraft);
+                setEditingDevice(false);
+              }}
+              className="shrink-0 rounded-xl bg-app px-3 py-2 text-[13px] font-semibold text-white"
+            >
+              저장
+            </button>
+          </div>
+        ) : (
+          <Row
+            icon={<Smartphone className="size-4 text-ios-blue" aria-hidden />}
+            title="기기 이름"
+            value={deviceName}
+            onClick={() => {
+              setDeviceDraft(deviceName);
+              setEditingDevice(true);
+            }}
+          />
+        )}
+        <div className="border-b border-ios-separator/15 px-4 py-3 last:border-b-0">
+          <p className="mb-2 text-[13px] text-ios-muted">가이드가 추천하는 주 신원</p>
+          <Segmented
+            options={[
+              { value: 'alias' as IdentityKind, label: '별명' },
+              { value: 'realname' as IdentityKind, label: '실명' },
+            ]}
+            value={defaultIdentity}
+            onChange={setDefaultIdentity}
+            tone="surface"
+            className="rounded-xl p-0.5"
+          />
+        </div>
+        <Row
+          icon={<Bell className="size-4 text-ios-orange" aria-hidden />}
+          title="알림"
+          subtitle="잠금 화면과 알림 센터에 표시합니다."
+          trailing={
+            <Toggle
+              label="알림"
+              checked={notificationsOn}
+              onChange={setNotifications}
+            />
+          }
+        />
+        <Row
+          icon={<Volume2 className="size-4 text-ios-purple" aria-hidden />}
+          title="소리"
+          subtitle="탭·성공·실패 효과음을 켭니다."
+          trailing={
+            <Toggle
+              label="소리"
+              checked={soundOn}
+              onChange={(next) => {
+                setSound(next);
+                sound.setEnabled(next);
+              }}
+            />
+          }
+        />
       </Section>
 
       <Section header="신원 관리" footer="각 앱별로 사용할 신원(실명/별명)을 선택하세요. 노출도는 게임 내 가상 수치입니다." delay={0.05}>

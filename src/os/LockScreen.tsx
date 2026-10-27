@@ -4,6 +4,7 @@ import { Camera, Flashlight, Lock } from 'lucide-react';
 import { getApp } from '@/apps/registry';
 import { useGameClock } from '@/hooks/useGameClock';
 import { useOSStore } from '@/store/osStore';
+import { useTutorialStore } from '@/store/tutorialStore';
 import { haptic } from '@/utils/haptics';
 import { EASE_IOS, SPRING_BOUNCY, SPRING_SOFT } from '@/utils/motion';
 
@@ -30,6 +31,7 @@ function CornerButton({ label, icon: Icon }: { label: string; icon: typeof Camer
 export function LockScreen() {
   const unlock = useOSStore((s) => s.unlock);
   const notifications = useOSStore((s) => s.notifications);
+  const notificationsOn = useTutorialStore((s) => s.notifications);
   const openApp = useOSStore((s) => s.openApp);
   const { time, date } = useGameClock();
 
@@ -85,7 +87,7 @@ export function LockScreen() {
             transition={{ ...SPRING_SOFT, delay: 0.05 }}
             className="mt-8 flex flex-col gap-2 overflow-hidden"
           >
-            {notifications.slice(0, 4).map((item, index) => (
+            {(notificationsOn ? notifications : []).slice(0, 4).map((item, index) => (
               <motion.button
                 key={item.id}
                 type="button"

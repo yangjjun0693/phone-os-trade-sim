@@ -9,6 +9,7 @@ import type {
   ThemeMode,
 } from '@/types';
 import { DEFAULT_CLOCK_SPEED, type ClockSpeed } from '@/content/time';
+import { useTutorialStore } from './tutorialStore';
 import { DEFAULT_LAYOUT, OS_PERSIST_VERSION } from './defaults';
 
 const RECENTS_LIMIT = 8;
@@ -204,14 +205,18 @@ export const useOSStore = create<OSState>()(
         set((s) => {
           s.editing = editing;
         }),
-      openApp: (appId) =>
+      openApp: (appId) => {
+        // Tell the guide an app was visited. Steps keyed on "open this app"
+        // are detected from this list, so the guide never has to wrap the app.
+        useTutorialStore.getState().noteOpenedApp(appId);
         set((s) => {
           s.openAppId = appId;
           s.appSession += 1;
           s.overlay = 'none';
           s.editing = false;
           s.recents = [appId, ...s.recents.filter((id) => id !== appId)].slice(0, RECENTS_LIMIT);
-        }),
+        });
+      },
       closeApp: () =>
         set((s) => {
           s.openAppId = null;
@@ -238,6 +243,9 @@ export const useOSStore = create<OSState>()(
         }),
       pushNotification: (notification) =>
         set((s) => {
+          // The onboarding consent is a real preference: with notifications
+          // off, apps still work but nothing lands in the shade.
+          if (!useTutorialStore.getState().notifications) return;
           s.notifications = [notification, ...s.notifications].slice(0, 20);
         }),
       clearNotifications: () =>
