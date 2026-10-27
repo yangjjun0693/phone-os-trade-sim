@@ -7,6 +7,7 @@ function resetStore() {
     locked: true,
     editing: false,
     openAppId: null,
+    appSession: 0,
     recents: [],
     overlay: 'none',
     layout: {
@@ -50,6 +51,26 @@ describe('osStore / app stack', () => {
 
     expect(useOSStore.getState().overlay).toBe('none');
     expect(useOSStore.getState().openAppId).toBe('wallet');
+  });
+
+  it('keeps the running app mounted behind system overlays', () => {
+    useOSStore.getState().openApp('trade');
+    useOSStore.getState().setOverlay('appSwitcher');
+
+    expect(useOSStore.getState().overlay).toBe('appSwitcher');
+    expect(useOSStore.getState().openAppId).toBe('trade');
+
+    useOSStore.getState().setOverlay('none');
+    expect(useOSStore.getState().openAppId).toBe('trade');
+  });
+
+  it('gives every app open its own session id', () => {
+    const store = useOSStore.getState();
+    store.openApp('notes');
+    const first = useOSStore.getState().appSession;
+    store.openApp('notes');
+
+    expect(useOSStore.getState().appSession).toBeGreaterThan(first);
   });
 
   it('locking resets transient UI state', () => {

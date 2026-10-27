@@ -34,6 +34,13 @@ export interface OSState {
   editing: boolean;
   /** Currently open app, or null when the home screen is showing. */
   openAppId: string | null;
+  /**
+   * Incremented on every `openApp`. Used as the window's React key so that
+   * reopening an app can never collide with a window that is still animating
+   * out (a duplicate key made Framer reuse the exiting node, which could leave
+   * an invisible, tap-eating window behind).
+   */
+  appSession: number;
   recents: string[];
   overlay: OverlayKind;
   notifications: GameNotification[];
@@ -119,6 +126,7 @@ export const useOSStore = create<OSState>()(
       layout: DEFAULT_LAYOUT,
       editing: false,
       openAppId: null,
+      appSession: 0,
       recents: [],
       overlay: 'none',
       notifications: [
@@ -199,6 +207,7 @@ export const useOSStore = create<OSState>()(
       openApp: (appId) =>
         set((s) => {
           s.openAppId = appId;
+          s.appSession += 1;
           s.overlay = 'none';
           s.editing = false;
           s.recents = [appId, ...s.recents.filter((id) => id !== appId)].slice(0, RECENTS_LIMIT);
@@ -220,7 +229,12 @@ export const useOSStore = create<OSState>()(
       setOverlay: (overlay) =>
         set((s) => {
           s.overlay = overlay;
-          if (overlay !== 'none') s.openAppId = null;
+          // NOTE: deliberately keeps `openAppId`. Like iOS, notification /
+          // control centre and the app switcher are layers *over* the running
+          // app: dismissing them returns you to it. Closing the app here used to
+          // unmount the window mid-gesture, and reopening the same app from the
+          // switcher then raced its exit animation — which could leave an
+          // invisible, unresponsive window on top of the new one.
         }),
       pushNotification: (notification) =>
         set((s) => {

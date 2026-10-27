@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { AnimatePresence, useIsPresent } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
 import { useOSStore } from '@/store/osStore';
 import { AppSwitcher } from './AppSwitcher';
@@ -27,6 +27,25 @@ const HOME_MAX_MS = 520;
 const SWITCHER_TRAVEL = 240;
 
 /**
+ * Invisible wrapper that makes a system overlay inert as soon as it starts
+ * animating out. Exiting overlays stay mounted for ~200 ms and, because Framer
+ * renders outgoing children after incoming ones, would otherwise sit on top of
+ * whatever replaced them and swallow taps.
+ */
+function OverlayFrame({ children }: { children: ReactNode }) {
+  const isPresent = useIsPresent();
+  return (
+    <div
+      className="contents"
+      aria-hidden={!isPresent}
+      style={isPresent ? undefined : { pointerEvents: 'none' }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
  * Root of the fake OS. Owns the layering (home → app → overlays → chrome) and
  * the system-wide edge gestures.
  *
@@ -47,6 +66,7 @@ const SWITCHER_TRAVEL = 240;
 export function OSShell() {
   const locked = useOSStore((s) => s.locked);
   const openAppId = useOSStore((s) => s.openAppId);
+  const appSession = useOSStore((s) => s.appSession);
   const overlay = useOSStore((s) => s.overlay);
   const recents = useOSStore((s) => s.recents);
   const brightness = useOSStore((s) => s.controls.brightness);
@@ -135,11 +155,11 @@ export function OSShell() {
     <div className="relative h-full w-full overflow-hidden bg-ios-bg">
       <HomeScreen />
 
-      {/* App layer. Disabled unless an app is actually open, so an exiting
-          window can never block taps on the home screen. */}
-      <div className={openAppId ? undefined : 'pointer-events-none'}>
+      {/* App layer. Disabled unless an app is actually the active layer, so an
+          exiting window (or one hidden behind an overlay) can never eat taps. */}
+      <div className={openAppId && overlay === 'none' ? undefined : 'pointer-events-none'}>
         <AnimatePresence>
-          {openAppId ? <AppWindow key={openAppId} appId={openAppId} /> : null}
+          {openAppId ? <AppWindow key={appSession} appId={openAppId} /> : null}
         </AnimatePresence>
       </div>
 
@@ -150,14 +170,32 @@ export function OSShell() {
       {/* Overlays. Also disabled when none is active. */}
       <div className={overlay === 'none' ? 'pointer-events-none' : undefined}>
         <AnimatePresence>
-          {overlay === 'notification' ? <NotificationCenter key="notification" /> : null}
-          {overlay === 'control' ? <ControlCenter key="control" /> : null}
-          {overlay === 'appSwitcher' ? <AppSwitcher key="appSwitcher" /> : null}
+          {overlay === 'notification' ? (
+            <OverlayFrame key="notification">
+              <NotificationCenter />
+            </OverlayFrame>
+          ) : null}
+          {overlay === 'control' ? (
+            <OverlayFrame key="control">
+              <ControlCenter />
+            </OverlayFrame>
+          ) : null}
+          {overlay === 'appSwitcher' ? (
+            <OverlayFrame key="appSwitcher">
+              <AppSwitcher />
+            </OverlayFrame>
+          ) : null}
         </AnimatePresence>
       </div>
 
       <div className={locked ? undefined : 'pointer-events-none'}>
-        <AnimatePresence>{locked ? <LockScreen key="lock" /> : null}</AnimatePresence>
+        <AnimatePresence>
+          {locked ? (
+            <OverlayFrame key="lock">
+              <LockScreen />
+            </OverlayFrame>
+          ) : null}
+        </AnimatePresence>
       </div>
 
       <StatusBar />

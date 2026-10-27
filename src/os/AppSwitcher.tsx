@@ -75,7 +75,9 @@ function AppCard({
 /** Recent-apps carousel. Tap a card to reopen, swipe it up to quit that app. */
 export function AppSwitcher() {
   const recents = useOSStore((s) => s.recents);
+  const openAppId = useOSStore((s) => s.openAppId);
   const openApp = useOSStore((s) => s.openApp);
+  const closeApp = useOSStore((s) => s.closeApp);
   const removeRecent = useOSStore((s) => s.removeRecent);
   const setOverlay = useOSStore((s) => s.setOverlay);
 
@@ -131,7 +133,12 @@ export function AppSwitcher() {
                     app={app}
                     index={index}
                     onOpen={() => openApp(app.id)}
-                    onClose={() => removeRecent(app.id)}
+                    onClose={() => {
+                      // Quitting a card also quits the app if it is the running
+                      // one (the app now stays mounted behind the switcher).
+                      if (openAppId === app.id) closeApp();
+                      removeRecent(app.id);
+                    }}
                   />
                 ))}
               </AnimatePresence>

@@ -11,6 +11,7 @@ beforeEach(() => {
     locked: true,
     editing: false,
     openAppId: null,
+    appSession: 0,
     recents: [],
     overlay: 'none',
     layout: {
