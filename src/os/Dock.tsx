@@ -22,7 +22,7 @@ export function Dock({ appIds, editable, onOpen, onLongPress }: DockProps) {
       <div
         ref={setNodeRef}
         className={cn(
-          'glass mx-auto rounded-[30px] px-2 py-2.5 shadow-lg ring-1 ring-inset ring-white/15',
+          'glass mx-auto rounded-[32px] px-2 py-2.5 shadow-[0_20px_45px_-22px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/40 dark:ring-white/10',
           editable && 'ring-ios-accent/40',
         )}
       >

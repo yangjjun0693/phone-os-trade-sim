@@ -7,6 +7,7 @@ import { useOSStore } from '@/store/osStore';
 import { useTutorialStore } from '@/store/tutorialStore';
 import { haptic } from '@/utils/haptics';
 import { EASE_IOS, SPRING_BOUNCY, SPRING_SOFT } from '@/utils/motion';
+import { Wallpaper } from './Wallpaper';
 
 /** Round glass shortcut at the bottom of the lock screen (cosmetic for now). */
 function CornerButton({ label, icon: Icon }: { label: string; icon: typeof Camera }) {
@@ -16,7 +17,7 @@ function CornerButton({ label, icon: Icon }: { label: string; icon: typeof Camer
       aria-label={label}
       whileTap={{ scale: 0.86 }}
       transition={SPRING_BOUNCY}
-      className="glass-strong flex size-[46px] items-center justify-center rounded-full text-ios-text shadow-lg ring-1 ring-inset ring-white/15"
+      className="glass-strong flex size-[46px] items-center justify-center rounded-full text-ios-text shadow-lg ring-1 ring-inset ring-white/40 dark:ring-white/10"
     >
       <Icon className="size-5" aria-hidden />
     </motion.button>
@@ -53,16 +54,16 @@ export function LockScreen() {
       animate={{ opacity: 1 }}
       exit={{ y: '-100%', opacity: 0.4 }}
       transition={{ duration: 0.3, ease: EASE_IOS }}
-      className="absolute inset-0 z-[45]"
-      style={{ background: 'var(--os-wallpaper)' }}
+      className="absolute inset-0 z-[45] isolate"
     >
+      <Wallpaper />
       <div className="relative flex h-full w-full flex-col overflow-hidden" {...bind()}>
         <div className="flex flex-1 flex-col px-6 pt-[calc(var(--ios-statusbar-h)+18px)]">
           <motion.div
             initial={{ opacity: 0, y: -14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={SPRING_SOFT}
-            className="flex flex-col items-center text-white mix-blend-difference"
+            className="wallpaper-ink flex flex-col items-center"
           >
             <p className="text-[15px] font-medium">{date}</p>
             <div className="relative mt-1 h-[76px] w-full overflow-hidden">
@@ -97,11 +98,12 @@ export function LockScreen() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   if (item.appId) {
+                    getApp(item.appId)?.preload?.();
                     unlock();
                     openApp(item.appId);
                   }
                 }}
-                className="glass-strong flex items-start gap-2.5 rounded-2xl p-3 text-left text-ios-text shadow-lg ring-1 ring-inset ring-white/15"
+                className="glass-strong flex items-start gap-2.5 rounded-2xl p-3 text-left text-ios-text shadow-lg ring-1 ring-inset ring-white/40 dark:ring-white/10"
               >
                 <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-white/20 text-[11px]">
                   {getApp(item.appId)?.name.slice(0, 1) ?? '!'}
@@ -129,7 +131,7 @@ export function LockScreen() {
               haptic(12);
               unlock();
             }}
-            className="mx-auto mt-5 flex items-center gap-1.5 text-[13px] font-medium text-white/80 mix-blend-difference"
+            className="wallpaper-ink-soft mx-auto mt-5 flex items-center gap-1.5 text-[13px] font-medium"
           >
             <Lock className="size-3.5" aria-hidden />
             위로 밀어 잠금 해제

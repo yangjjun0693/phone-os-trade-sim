@@ -18,6 +18,7 @@ import { haptic } from '@/utils/haptics';
 import { SPRING_BOUNCY, SPRING_SNAPPY } from '@/utils/motion';
 import { Dock } from './Dock';
 import { SortableAppIcon } from './SortableAppIcon';
+import { Wallpaper } from './Wallpaper';
 import { ClockWidget } from './widgets/ClockWidget';
 import { SummaryWidget } from './widgets/SummaryWidget';
 
@@ -133,10 +134,8 @@ export function HomeScreen() {
       onDragEnd={handleDragEnd}
       autoScroll={false}
     >
-      <div
-        className="relative flex h-full flex-col"
-        style={{ background: 'var(--os-wallpaper)' }}
-      >
+      <div className="relative isolate flex h-full flex-col">
+        <Wallpaper />
         <div className="shrink-0 pt-[var(--ios-statusbar-h)]" />
 
         <motion.div
@@ -168,16 +167,16 @@ export function HomeScreen() {
         </div>
 
         {pageCount > 1 ? (
-          <div className="flex shrink-0 items-center justify-center gap-2 pb-1 pt-2 mix-blend-difference">
+          <div className="flex shrink-0 items-center justify-center gap-2 pb-1 pt-2">
             {Array.from({ length: pageCount }).map((_, index) => (
               <motion.span
                 key={`dot-${index}`}
                 animate={{
                   width: index === page ? 18 : 7,
-                  opacity: index === page ? 1 : 0.35,
+                  opacity: index === page ? 1 : 0.4,
                 }}
                 transition={SPRING_BOUNCY}
-                className="h-[7px] rounded-full bg-white"
+                className="h-[7px] rounded-full bg-chrome shadow-sm"
               />
             ))}
           </div>

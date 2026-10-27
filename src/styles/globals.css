@@ -73,6 +73,40 @@
     display: none;
   }
 
+  /* ---- wallpaper ----------------------------------------------------- */
+  .os-wallpaper {
+    background-color: rgb(var(--ios-bg));
+    background-image: var(--os-wallpaper);
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  .wallpaper-glow {
+    background-image: var(--os-wallpaper-glow);
+  }
+
+  /* Fine film grain: hides gradient banding on OLED phones without an image. */
+  .wallpaper-grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+    mix-blend-mode: overlay;
+    opacity: 0.07;
+  }
+  .dark .wallpaper-grain {
+    opacity: 0.045;
+  }
+
+  /* Text painted straight onto the wallpaper (icon labels, status bar). */
+  .wallpaper-ink {
+    color: rgb(var(--os-chrome));
+    text-shadow: var(--os-ink-shadow);
+  }
+  .wallpaper-ink-soft {
+    color: rgb(var(--os-chrome) / 0.82);
+    text-shadow: var(--os-ink-shadow);
+  }
+
+  /* ---- materials ----------------------------------------------------- */
   .glass {
     background: var(--ios-glass);
     -webkit-backdrop-filter: var(--ios-glass-filter);
@@ -83,6 +117,28 @@
     background: var(--ios-glass-strong);
     -webkit-backdrop-filter: var(--ios-glass-filter);
     backdrop-filter: var(--ios-glass-filter);
+  }
+
+  /* Full-screen shade (notification / control centre). Lighter than a card so
+     the wallpaper stays visible under the frost instead of turning flat white. */
+  .overlay-veil {
+    background: rgb(var(--ios-bg) / 0.42);
+    -webkit-backdrop-filter: saturate(165%) blur(28px);
+    backdrop-filter: saturate(165%) blur(28px);
+  }
+  .dark .overlay-veil {
+    background: rgb(var(--ios-bg) / 0.55);
+  }
+
+  /* Dense cards that must remain legible over the wallpaper (guide, menus). */
+  .surface-card {
+    background: var(--ios-card);
+    border: 1px solid var(--ios-card-border);
+    -webkit-backdrop-filter: saturate(160%) blur(22px);
+    backdrop-filter: saturate(160%) blur(22px);
+    box-shadow:
+      0 24px 60px -28px rgb(var(--ios-shadow) / 0.65),
+      0 1px 0 rgb(255 255 255 / 0.28) inset;
   }
 
   .squircle {
@@ -96,7 +152,7 @@
   }
 
   .label-shadow {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    text-shadow: var(--os-ink-shadow);
   }
 
   .pb-safe {
@@ -124,7 +180,6 @@
       0 0 0 1px rgb(var(--ios-red) / 0.3),
       0 12px 34px -12px rgb(var(--ios-red) / 0.75);
   }
-
 }
 
 /* Every enabled button gets a crisp, smooth press. Framer's inline transforms
@@ -138,6 +193,23 @@ button:not(:disabled) {
 }
 button:not(:disabled):active {
   transform: scale(0.965);
+}
+
+/* Safari / iOS can be asked to reduce transparency. Respect it by replacing
+   the blur with a near-opaque surface (cheaper and easier to read). */
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-strong,
+  .overlay-veil {
+    background: rgb(var(--ios-surface) / 0.96);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .surface-card {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgb(var(--ios-surface) / 0.98);
+  }
 }
 
 /* Reduced motion: keep layout, drop the movement. */

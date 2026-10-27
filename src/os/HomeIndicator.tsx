@@ -35,7 +35,10 @@ export function HomeIndicator({ className }: { className?: string }) {
           initial={{ opacity: 0, scaleX: 0.4 }}
           animate={{ opacity: 1, scaleX: 1 }}
           transition={{ delay: 0.25, type: 'spring', stiffness: 220, damping: 24 }}
-          className="block h-[5px] w-[140px] rounded-full bg-white/90 mix-blend-difference"
+          className={cn(
+            'block h-[5px] w-[140px] rounded-full shadow-sm',
+            overlay === 'appSwitcher' ? 'bg-white/80' : 'bg-chrome opacity-80',
+          )}
         />
       </button>
     </div>

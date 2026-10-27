@@ -62,7 +62,10 @@ export interface AppMeta {
    * dividers inside the app pick it up automatically.
    */
   accent: string;
+  /** Lazily loaded app surface. Rendered through <Suspense> in AppWindow. */
   Component: ComponentType;
+  /** Warm the app's chunk on hover/press, so tapping still feels instant. */
+  preload?: () => void;
 }
 
 export interface HomeLayout {

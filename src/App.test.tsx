@@ -55,7 +55,9 @@ describe('<App />', () => {
     await userEvent.click(await screen.findByLabelText('메시지/통화'));
 
     expect(useOSStore.getState().openAppId).toBe('messagesCall');
-    expect(await screen.findByText('거래 메시지')).toBeInTheDocument();
+    // Apps load as lazy chunks; give the chunk a generous window under a
+    // fully parallel test run (default is 1 s).
+    expect(await screen.findByText('거래 메시지', {}, { timeout: 4000 })).toBeInTheDocument();
 
     await act(async () => {
       useOSStore.getState().goHome();

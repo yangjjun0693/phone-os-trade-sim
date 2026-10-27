@@ -449,7 +449,7 @@ export function TradeApp() {
                             </span>
                           ) : null}
                         </div>
-                        <div className="no-scrollbar mt-1.5 flex gap-1.5 overflow-x-auto">
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
                           {spotsToShow.map((option) => {
                             const active = option.placeId === deal.placeId;
                             return (

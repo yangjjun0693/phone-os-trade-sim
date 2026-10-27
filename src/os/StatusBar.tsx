@@ -30,9 +30,14 @@ function BatteryIcon({ level, charging }: { level: number; charging: boolean }) 
     <span className="flex items-center gap-[1.5px]" aria-hidden>
       <span
         className={cn(
-          'relative flex h-[11.5px] w-[23px] items-center rounded-[3.5px] border border-current/35 p-[1.5px]',
+          'relative flex h-[11.5px] w-[23px] items-center rounded-[3.5px] border p-[1.5px]',
           charging && 'border-ios-green/60',
         )}
+        style={
+          charging
+            ? undefined
+            : { borderColor: 'color-mix(in srgb, currentColor 35%, transparent)' }
+        }
       >
         <motion.span
           animate={{ width: `${pct}%` }}
@@ -40,7 +45,7 @@ function BatteryIcon({ level, charging }: { level: number; charging: boolean }) 
           className={cn('h-full rounded-[2px] bg-current', charging && 'bg-ios-green')}
         />
       </span>
-      <span className="h-[4px] w-[1.5px] rounded-r-sm bg-current/35" />
+      <span className="h-[4px] w-[1.5px] rounded-r-sm bg-current opacity-40" />
     </span>
   );
 }
@@ -49,24 +54,46 @@ function BatteryIcon({ level, charging }: { level: number; charging: boolean }) 
  * Persistent status bar. Rendered once by the shell and always visible, so app
  * content only needs top padding, never its own copy.
  *
- * `mix-blend-difference` keeps the glyphs legible on any wallpaper without
- * having to know the screen's brightness.
+ * The glyphs use the wallpaper chrome token: near-black ink on the light
+ * wallpaper, white on the dark one. A real colour token beats
+ * `mix-blend-difference`, which produced muddy, unreadable chrome over the
+ * pastel light wallpaper.
  */
-export function StatusBar() {
+export function StatusBar({
+  /** Sit above a pull-down overlay so the clock/battery stay visible. */
+  elevated = false,
+  /** White chrome, for the always-dark app switcher. */
+  inverted = false,
+}: {
+  elevated?: boolean;
+  inverted?: boolean;
+} = {}) {
   const { time } = useGameClock();
   const status = useOSStore((s) => s.status);
   const airplane = useOSStore((s) => s.controls.airplane);
   const setOverlay = useOSStore((s) => s.setOverlay);
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-40 h-[var(--ios-statusbar-h)]">
+    <div
+      className={cn(
+        'pointer-events-none absolute inset-x-0 top-0 h-[var(--ios-statusbar-h)]',
+        elevated ? 'z-[46]' : 'z-40',
+      )}
+    >
       <DynamicIsland
         onClick={() => setOverlay('notification')}
         className="absolute left-1/2 top-[var(--ios-island-top)] z-10 -translate-x-1/2"
       />
 
-      <div className="flex h-full items-center justify-between px-7 text-white mix-blend-difference">
-        <span className="min-w-14 text-[15px] font-semibold tabular-nums">{time}</span>
+      <div
+        className={cn(
+          'flex h-full items-center justify-between px-7',
+          inverted ? 'text-white' : 'wallpaper-ink',
+        )}
+      >
+        <span className="min-w-14 text-[15px] font-semibold tracking-tight tabular-nums">
+          {time}
+        </span>
         <span className="flex items-center gap-1.5">
           {airplane ? (
             <span className="text-[11px] font-semibold">✈</span>

@@ -6,6 +6,7 @@ import { useGameClock } from '@/hooks/useGameClock';
 import { useOSStore } from '@/store/osStore';
 import { useTutorialStore } from '@/store/tutorialStore';
 import { SPRING_BOUNCY, SPRING_SOFT, listItem, staggerContainer } from '@/utils/motion';
+import { Wallpaper } from './Wallpaper';
 
 /** Pull-down shade: game clock plus the notification feed. */
 export function NotificationCenter() {
@@ -32,11 +33,11 @@ export function NotificationCenter() {
       animate={{ y: 0 }}
       exit={{ y: '-100%' }}
       transition={SPRING_SOFT}
-      className="absolute inset-0 z-[45]"
-      style={{ background: 'var(--os-wallpaper)' }}
+      className="absolute inset-0 z-[45] isolate"
     >
+      <Wallpaper />
       <div
-        className="glass-strong relative flex h-full w-full flex-col overflow-hidden"
+        className="overlay-veil relative flex h-full w-full flex-col overflow-hidden"
         {...bind()}
       >
         {/* Tapping the background always dismisses, whatever the gesture does. */}

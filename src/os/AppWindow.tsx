@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { motion, useIsPresent } from 'framer-motion';
 import { getApp } from '@/apps/registry';
 import { hexToRgbTriplet } from '@/utils/color';
@@ -17,6 +18,24 @@ import { EASE_IOS, SPRING_SOFT } from '@/utils/motion';
  * instant it starts leaving, so it can never sit invisibly on top of the next
  * app and eat every tap (the "app opens but nothing responds" bug).
  */
+/** First-paint placeholder while an app chunk downloads (usually <100 ms). */
+function AppLoading({ label }: { label: string }) {
+  return (
+    <div className="flex h-full flex-col bg-ios-bg text-ios-text">
+      <div className="h-[var(--ios-statusbar-h)]" />
+      <div className="flex h-[var(--ios-navbar-h)] items-center justify-center border-b border-ios-separator/15">
+        <span className="text-[17px] font-semibold tracking-tight">{label}</span>
+      </div>
+      <div className="flex flex-1 flex-col gap-3 p-4" aria-hidden>
+        <div className="h-24 animate-pulse rounded-3xl bg-ios-surface2" />
+        <div className="h-3.5 w-2/3 animate-pulse rounded-full bg-ios-surface2" />
+        <div className="h-3.5 w-1/2 animate-pulse rounded-full bg-ios-surface2" />
+        <div className="h-32 animate-pulse rounded-3xl bg-ios-surface2" />
+      </div>
+    </div>
+  );
+}
+
 export function AppWindow({ appId }: { appId: string }) {
   const app = getApp(appId);
   // Hooks must run before the early return below.
@@ -49,7 +68,9 @@ export function AppWindow({ appId }: { appId: string }) {
         transition={{ duration: 0.16, delay: 0.03 }}
         className="h-full w-full bg-ios-bg"
       >
-        <Component />
+        <Suspense fallback={<AppLoading label={app.name} />}>
+          <Component />
+        </Suspense>
       </motion.div>
     </motion.div>
   );

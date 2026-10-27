@@ -36,7 +36,7 @@ export const AppIcon = memo(function AppIcon({
   const targetApp = useTutorialTargetApp();
   const highlighted = !editable && targetApp === app.id;
 
-  const handlers = useLongPress({
+  const longPress = useLongPress({
     delay: 450,
     onLongPress: () => {
       if (editable) return;
@@ -49,6 +49,16 @@ export const AppIcon = memo(function AppIcon({
     },
   });
 
+  // Start the app chunk while the finger is still down. The long-press handler
+  // keeps owning pointerdown, so wrap it rather than replacing it.
+  const handlers = {
+    ...longPress,
+    onPointerDown: () => {
+      app.preload?.();
+      longPress.onPointerDown();
+    },
+  };
+
   return (
     <div
       className={cn('flex w-[70px] flex-col items-center gap-1.5', editable && 'animate-jiggle')}
@@ -59,28 +69,33 @@ export const AppIcon = memo(function AppIcon({
         aria-label={app.name}
         whileTap={{ scale: 0.88 }}
         transition={{ type: 'spring', stiffness: 520, damping: 34 }}
+        onPointerEnter={() => app.preload?.()}
+        onFocus={() => app.preload?.()}
         style={{
           width: size,
           height: size,
           borderRadius: size * ICON_RADIUS_RATIO,
         }}
-        className="relative flex items-center justify-center overflow-hidden shadow-[0_6px_14px_-4px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/15"
+        className="relative flex items-center justify-center overflow-hidden shadow-[0_8px_18px_-6px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/25 dark:ring-white/20"
         {...handlers}
       >
         <Icon size={size} className="block" aria-hidden />
-        <span className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-b from-white/25 via-transparent to-black/10" aria-hidden />
+        <span
+          className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-b from-white/30 via-transparent to-black/10"
+          aria-hidden
+        />
         {highlighted ? (
           <motion.span
             aria-hidden
             data-tutorial-highlight
-            className="pointer-events-none absolute inset-0 rounded-[inherit] ring-2 ring-inset ring-white"
-            animate={{ opacity: [0.35, 1, 0.35] }}
+            className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[0_0_0_2px_rgb(var(--ios-accent))] ring-2 ring-inset ring-white"
+            animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ duration: 1.9, repeat: Infinity, ease: 'easeInOut' }}
           />
         ) : null}
       </motion.button>
       {showLabel && (
-        <span className="label-shadow max-w-full truncate text-[11px] font-medium leading-tight text-white">
+        <span className="wallpaper-ink max-w-full truncate text-[11px] font-semibold leading-tight">
           {app.name}
         </span>
       )}

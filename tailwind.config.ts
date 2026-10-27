@@ -10,9 +10,12 @@ const config: Config = {
         // dark/light theme can swap without re-rendering Tailwind classes.
         // Per-app colour identity, set by AppWindow from the app registry.
         app: 'rgb(var(--app-accent) / <alpha-value>)',
+        // Chrome that sits directly on the wallpaper (labels, status bar).
+        chrome: 'rgb(var(--os-chrome) / <alpha-value>)',
         ios: {
           bg: 'rgb(var(--ios-bg) / <alpha-value>)',
           surface: 'rgb(var(--ios-surface) / <alpha-value>)',
+          surface2: 'rgb(var(--ios-surface2) / <alpha-value>)',
           elevated: 'rgb(var(--ios-elevated) / <alpha-value>)',
           text: 'rgb(var(--ios-text) / <alpha-value>)',
           muted: 'rgb(var(--ios-muted) / <alpha-value>)',

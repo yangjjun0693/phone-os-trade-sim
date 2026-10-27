@@ -115,6 +115,7 @@ export function TutorialGuide() {
     if (!targetAppId) return;
     haptic(8);
     setOpen(false);
+    targetApp?.preload?.();
     openApp(targetAppId);
   };
 
@@ -154,7 +155,7 @@ export function TutorialGuide() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduced ? undefined : { opacity: 0, y: 14, scale: 0.98 }}
             transition={reduced ? { duration: 0.01 } : SPRING_SOFT}
-            className="glass-strong pointer-events-auto max-h-[52vh] w-full max-w-[360px] overflow-y-auto rounded-[26px] p-4 text-ios-text shadow-2xl ring-1 ring-inset ring-white/25"
+            className="surface-card pointer-events-auto max-h-[52vh] w-full max-w-[360px] overflow-y-auto rounded-[26px] p-4 text-ios-text"
             role="dialog"
             aria-label="플레이 가이드"
           >
@@ -173,14 +174,14 @@ export function TutorialGuide() {
                     haptic(4);
                     setOpen(false);
                   }}
-                  className="flex size-7 items-center justify-center rounded-full bg-black/10 text-ios-text"
+                  className="flex size-7 items-center justify-center rounded-full bg-ios-separator/15 text-ios-text"
                 >
                   <ChevronDown className="size-4" aria-hidden />
                 </button>
               </div>
             </div>
 
-            <div className="mt-2 h-1 overflow-hidden rounded-full bg-black/10" aria-hidden>
+            <div className="mt-2 h-1 overflow-hidden rounded-full bg-ios-separator/15" aria-hidden>
               <motion.div
                 className="h-full rounded-full bg-app"
                 animate={{ width: `${allDone ? 100 : progress.percent}%` }}
@@ -219,7 +220,7 @@ export function TutorialGuide() {
                       stopGuide();
                       setOpen(false);
                     }}
-                    className="flex h-10 flex-1 items-center justify-center rounded-xl bg-black/10 text-[14px] font-semibold text-ios-text"
+                    className="flex h-10 flex-1 items-center justify-center rounded-xl bg-ios-separator/15 text-[14px] font-semibold text-ios-text"
                   >
                     닫기
                   </button>
@@ -232,7 +233,7 @@ export function TutorialGuide() {
 
                 <div className="mt-3 flex items-center gap-2 text-[12px] text-ios-muted">
                   {targetApp ? (
-                    <span className="flex items-center gap-1.5 rounded-full bg-black/10 px-2 py-1 font-medium">
+                    <span className="flex items-center gap-1.5 rounded-full bg-ios-separator/15 px-2 py-1 font-medium">
                       <targetApp.icon className="size-3.5" aria-hidden />
                       {targetApp.name}
                     </span>
@@ -258,7 +259,7 @@ export function TutorialGuide() {
                       goToStep(stepIndex - 1);
                     }}
                     disabled={stepIndex === 0}
-                    className="flex size-10 items-center justify-center rounded-xl bg-black/10 text-ios-text disabled:opacity-30"
+                    className="flex size-10 items-center justify-center rounded-xl bg-ios-separator/15 text-ios-text disabled:opacity-30"
                   >
                     <ArrowLeft className="size-4" aria-hidden />
                   </button>
@@ -266,7 +267,7 @@ export function TutorialGuide() {
                     type="button"
                     aria-label="이 단계 건너뛰기"
                     onClick={handleSkipStep}
-                    className="flex size-10 items-center justify-center rounded-xl bg-black/10 text-ios-text"
+                    className="flex size-10 items-center justify-center rounded-xl bg-ios-separator/15 text-ios-text"
                   >
                     <SkipForward className="size-4" aria-hidden />
                   </button>
@@ -301,7 +302,7 @@ export function TutorialGuide() {
         }}
         aria-expanded={open}
         aria-label={open ? '가이드 접기' : '가이드 펼치기'}
-        className="glass-strong pointer-events-auto flex h-10 max-w-[86%] items-center gap-2 rounded-full pl-1.5 pr-3 text-ios-text shadow-lg ring-1 ring-inset ring-white/25"
+        className="glass-strong pointer-events-auto flex h-10 max-w-[86%] items-center gap-2 rounded-full pl-1.5 pr-3 text-ios-text shadow-[0_16px_36px_-20px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/40 dark:ring-white/10"
       >
         <span
           className={cn(
@@ -337,7 +338,7 @@ export function TutorialGuide() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: EASE_IOS }}
-            className="flex items-center gap-1 text-[11px] font-medium text-white/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]"
+            className="wallpaper-ink flex items-center gap-1 text-[11px] font-semibold"
           >
             <Sparkles className="size-3" aria-hidden />
             여기를 눌러 가이드를 펼치세요

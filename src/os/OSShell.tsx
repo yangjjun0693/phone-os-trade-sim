@@ -204,7 +204,10 @@ export function OSShell() {
         </AnimatePresence>
       </div>
 
-      <StatusBar />
+      <StatusBar
+        elevated={overlay !== 'none' || locked}
+        inverted={overlay === 'appSwitcher'}
+      />
       <HomeIndicator />
 
       {/* The play guide floats over the *home screen only*: it never covers an

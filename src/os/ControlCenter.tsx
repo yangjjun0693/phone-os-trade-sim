@@ -15,6 +15,7 @@ import { sound } from '@/lib/sound';
 import { useOSStore } from '@/store/osStore';
 import { cn } from '@/utils/cn';
 import { SPRING_SOFT } from '@/utils/motion';
+import { Wallpaper } from './Wallpaper';
 
 function ControlToggle({
   label,
@@ -107,11 +108,11 @@ export function ControlCenter() {
       animate={{ y: 0 }}
       exit={{ y: '-100%' }}
       transition={SPRING_SOFT}
-      className="absolute inset-0 z-[45]"
-      style={{ background: 'var(--os-wallpaper)' }}
+      className="absolute inset-0 z-[45] isolate"
     >
+      <Wallpaper />
       <div
-        className="glass-strong relative flex h-full w-full flex-col overflow-hidden"
+        className="overlay-veil relative flex h-full w-full flex-col overflow-hidden"
         {...bind()}
       >
         {/* Tapping the background always dismisses the panel. */}

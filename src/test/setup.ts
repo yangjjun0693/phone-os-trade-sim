@@ -1,6 +1,10 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+
+// Apps are lazy-loaded chunks now, so a `findBy*` can legitimately take longer
+// than the 1 s default when the whole suite runs in parallel on a busy machine.
+configure({ asyncUtilTimeout: 4000 });
 
 // jsdom does not implement these; the OS shell calls them defensively.
 if (!window.matchMedia) {

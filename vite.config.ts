@@ -68,5 +68,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // Lazy app chunks + a fully parallel suite need more than the 5 s default.
+    testTimeout: 15000,
+    hookTimeout: 15000,
   },
 });

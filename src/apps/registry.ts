@@ -1,3 +1,4 @@
+import { lazy, type ComponentType } from 'react';
 import {
   BankIcon,
   ChromaIcon,
@@ -8,7 +9,6 @@ import {
   GmallIcon,
   MapIcon,
   MessagesCallIcon,
-  MessagesIcon,
   NewsIcon,
   NotesIcon,
   ProteanIcon,
@@ -21,26 +21,29 @@ import {
   WalletIcon,
 } from './icons';
 import type { AppMeta } from '@/types';
-import { BankApp } from './bank/BankApp';
-import { ChromaApp } from './browser/ChromaApp';
-import { ContactsApp } from './contacts/ContactsApp';
-import { DeliveryApp } from './delivery/DeliveryApp';
-import { ExApp } from './messenger/ExApp';
-import { ForumApp } from './forum/ForumApp';
-import { GmailApp } from './mail/GmailApp';
-import { MapApp } from './map/MapApp';
 
-import { MessagesCallApp } from './messenger/MessagesCallApp';
-import { NewsApp } from './news/NewsApp';
-import { NotesApp } from './notes/NotesApp';
-import { ProteanApp } from './mail/ProteanApp';
-import { SailorApp } from './browser/SailorApp';
-import { SettingsApp } from './settings/SettingsApp';
-import { ShadeApp } from './browser/ShadeApp';
-import { SteakApp } from './steak/SteakApp';
-import { TelegraphApp } from './messenger/TelegraphApp';
-import { TradeApp } from './trade/TradeApp';
-import { WalletApp } from './wallet/WalletApp';
+type AppModule = Record<string, unknown>;
+
+/**
+ * Split an app into its own chunk while keeping the registry synchronous.
+ *
+ * The home screen only needs an app's metadata (name, icon, colours), so
+ * importing the 19 app implementations eagerly made the first paint pay for
+ * every screen in the OS. `preload` is called on pointer-down/hover so the
+ * chunk is usually ready before the open animation finishes.
+ */
+function lazyApp(loadModule: () => Promise<AppModule>, exportName: string) {
+  const load = () =>
+    loadModule().then((module) => ({ default: module[exportName] as ComponentType }));
+  return {
+    Component: lazy(load) as unknown as ComponentType,
+    preload: () => {
+      void load().catch(() => {
+        /* A failed preload is harmless: AppWindow will retry when opened. */
+      });
+    },
+  };
+}
 
 /**
  * App registry.
@@ -56,7 +59,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#22d3ee',
     icon: TradeIcon,
     gradient: ['#22d3ee', '#2563eb'],
-    Component: TradeApp,
+    ...lazyApp(() => import('./trade/TradeApp'), 'TradeApp'),
   },
   messagesCall: {
     id: 'messagesCall',
@@ -64,7 +67,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#059669',
     icon: MessagesCallIcon,
     gradient: ['#34d399', '#059669'],
-    Component: MessagesCallApp,
+    ...lazyApp(() => import('./messenger/MessagesCallApp'), 'MessagesCallApp'),
   },
   chroma: {
     id: 'chroma',
@@ -72,7 +75,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#4285f4',
     icon: ChromaIcon,
     gradient: ['#f472b6', '#a855f7'],
-    Component: ChromaApp,
+    ...lazyApp(() => import('./browser/ChromaApp'), 'ChromaApp'),
   },
   sailor: {
     id: 'sailor',
@@ -80,7 +83,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#0ea5e9',
     icon: SailorIcon,
     gradient: ['#0ea5e9', '#0369a1'],
-    Component: SailorApp,
+    ...lazyApp(() => import('./browser/SailorApp'), 'SailorApp'),
   },
   shade: {
     id: 'shade',
@@ -88,7 +91,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#7d4698',
     icon: ShadeIcon,
     gradient: ['#64748b', '#1e293b'],
-    Component: ShadeApp,
+    ...lazyApp(() => import('./browser/ShadeApp'), 'ShadeApp'),
   },
   wallet: {
     id: 'wallet',
@@ -96,7 +99,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#6b7280',
     icon: WalletIcon,
     gradient: ['#3a3a3c', '#1c1c1e'],
-    Component: WalletApp,
+    ...lazyApp(() => import('./wallet/WalletApp'), 'WalletApp'),
   },
   notes: {
     id: 'notes',
@@ -104,7 +107,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#f59e0b',
     icon: NotesIcon,
     gradient: ['#fde047', '#f59e0b'],
-    Component: NotesApp,
+    ...lazyApp(() => import('./notes/NotesApp'), 'NotesApp'),
   },
   settings: {
     id: 'settings',
@@ -112,7 +115,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#6b7280',
     icon: SettingsIcon,
     gradient: ['#b6bcc6', '#4b5563'],
-    Component: SettingsApp,
+    ...lazyApp(() => import('./settings/SettingsApp'), 'SettingsApp'),
   },
   gmall: {
     id: 'gmall',
@@ -120,7 +123,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#2563eb',
     icon: GmallIcon,
     gradient: ['#60a5fa', '#2563eb'],
-    Component: GmailApp,
+    ...lazyApp(() => import('./mail/GmailApp'), 'GmailApp'),
   },
   protean: {
     id: 'protean',
@@ -128,7 +131,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#7c3aed',
     icon: ProteanIcon,
     gradient: ['#a78bfa', '#7c3aed'],
-    Component: ProteanApp,
+    ...lazyApp(() => import('./mail/ProteanApp'), 'ProteanApp'),
   },
   telegraph: {
     id: 'telegraph',
@@ -136,7 +139,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#06b6d4',
     icon: TelegraphIcon,
     gradient: ['#22d3ee', '#06b6d4'],
-    Component: TelegraphApp,
+    ...lazyApp(() => import('./messenger/TelegraphApp'), 'TelegraphApp'),
   },
   ex: {
     id: 'ex',
@@ -144,7 +147,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#ec4899',
     icon: ExIcon,
     gradient: ['#f472b6', '#ec4899'],
-    Component: ExApp,
+    ...lazyApp(() => import('./messenger/ExApp'), 'ExApp'),
   },
   forum: {
     id: 'forum',
@@ -152,7 +155,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#8b5cf6',
     icon: ForumIcon,
     gradient: ['#a78bfa', '#7c3aed'],
-    Component: ForumApp,
+    ...lazyApp(() => import('./forum/ForumApp'), 'ForumApp'),
   },
   contacts: {
     id: 'contacts',
@@ -160,7 +163,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#db2777',
     icon: ContactsIcon,
     gradient: ['#f472b6', '#db2777'],
-    Component: ContactsApp,
+    ...lazyApp(() => import('./contacts/ContactsApp'), 'ContactsApp'),
   },
   bank: {
     id: 'bank',
@@ -168,7 +171,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#ca8a04',
     icon: BankIcon,
     gradient: ['#ffe300', '#ffd600'],
-    Component: BankApp,
+    ...lazyApp(() => import('./bank/BankApp'), 'BankApp'),
   },
   news: {
     id: 'news',
@@ -176,7 +179,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#dc2626',
     icon: NewsIcon,
     gradient: ['#ffffff', '#f4f4f5'],
-    Component: NewsApp,
+    ...lazyApp(() => import('./news/NewsApp'), 'NewsApp'),
   },
   delivery: {
     id: 'delivery',
@@ -184,7 +187,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#f97316',
     icon: DeliveryIcon,
     gradient: ['#fdfdfd', '#ededee'],
-    Component: DeliveryApp,
+    ...lazyApp(() => import('./delivery/DeliveryApp'), 'DeliveryApp'),
   },
   map: {
     id: 'map',
@@ -192,7 +195,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#16a34a',
     icon: MapIcon,
     gradient: ['#55d06a', '#2f7ff0'],
-    Component: MapApp,
+    ...lazyApp(() => import('./map/MapApp'), 'MapApp'),
   },
   steak: {
     id: 'steak',
@@ -200,7 +203,7 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#00e701',
     icon: SteakIcon,
     gradient: ['#16394d', '#081923'],
-    Component: SteakApp,
+    ...lazyApp(() => import('./steak/SteakApp'), 'SteakApp'),
   },
 };
 

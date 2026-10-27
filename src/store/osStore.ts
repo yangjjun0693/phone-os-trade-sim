@@ -118,7 +118,9 @@ export const useOSStore = create<OSState>()(
       clockSpeed: DEFAULT_CLOCK_SPEED,
       status: { battery: 82, charging: false, signal: 4, wifi: true },
       controls: {
-        brightness: 0.72,
+        // Full brightness by default: the dimmer is a player-controlled effect,
+        // not a permanent grey wash over the whole OS.
+        brightness: 1,
         volume: 0.45,
         airplane: false,
         bluetooth: true,
@@ -277,6 +279,24 @@ export const useOSStore = create<OSState>()(
             ...previous,
             clockSpeed: previous.clockSpeed ?? DEFAULT_CLOCK_SPEED,
             layout: DEFAULT_LAYOUT,
+          } as PersistedOS;
+        }
+        // v10: the old default brightness (0.72) greyed out every screen.
+        // Only bump saves that still carry that exact default.
+        if (version < 10) {
+          const controls = previous.controls ?? {
+            brightness: 1,
+            volume: 0.45,
+            airplane: false,
+            bluetooth: true,
+            flashlight: false,
+          };
+          return {
+            ...previous,
+            controls: {
+              ...controls,
+              brightness: controls.brightness === 0.72 ? 1 : controls.brightness,
+            },
           } as PersistedOS;
         }
         return previous as PersistedOS;

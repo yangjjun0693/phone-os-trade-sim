@@ -58,8 +58,16 @@ function AppCard({
               background: `linear-gradient(150deg, ${app.gradient[0]}, ${app.gradient[1]})`,
             }}
           >
-            <Icon className="size-6" aria-hidden />
-            <span className="text-[15px] font-semibold">{app.name}</span>
+            {/* Flat scrim: some app gradients (news, delivery) are near-white,
+                and white chrome on white would disappear. */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 bg-black/55"
+            />
+            <Icon className="relative size-6" aria-hidden />
+            <span className="relative text-[15px] font-semibold [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
+              {app.name}
+            </span>
           </span>
           <span className="flex h-[300px] flex-col items-center justify-center gap-2 bg-ios-bg px-6 text-center">
             <Icon className="size-7 text-ios-muted" aria-hidden />
@@ -99,8 +107,7 @@ export function AppSwitcher() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="absolute inset-0 z-[45]"
-      style={{ background: 'rgba(0,0,0,0.55)' }}
+      className="absolute inset-0 z-[45] isolate bg-black/75 backdrop-blur-2xl"
     >
       <div className="relative flex h-full w-full flex-col" {...bind()}>
         {/* Real close button behind the cards: tapping empty space always dismisses. */}
@@ -132,7 +139,10 @@ export function AppSwitcher() {
                     key={app.id}
                     app={app}
                     index={index}
-                    onOpen={() => openApp(app.id)}
+                    onOpen={() => {
+                      app.preload?.();
+                      openApp(app.id);
+                    }}
                     onClose={() => {
                       // Quitting a card also quits the app if it is the running
                       // one (the app now stays mounted behind the switcher).
