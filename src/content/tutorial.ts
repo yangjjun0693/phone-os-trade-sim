@@ -21,20 +21,26 @@
  */
 import type { IdentityKind } from '@/types';
 
+export type IntroScript = 'latin' | 'korean' | 'japanese' | 'chinese' | 'arabic';
+
 export interface IntroGreeting {
   text: string;
   lang: string;
-  /** 이 문구가 머무는 시간(ms). */
+  /** BCP-47 tag for `lang=`, so the browser shapes the script correctly. */
+  langTag: string;
+  /** Which hand-lettered face (see `styles/fonts.css`) draws this greeting. */
+  script: IntroScript;
+  /** 완전히 그려진 뒤 머무는 시간(ms). 전환 시간은 화면이 더합니다. */
   hold: number;
 }
 
 export const INTRO_GREETINGS: IntroGreeting[] = [
-  { text: 'hello', lang: 'English', hold: 900 },
-  { text: '안녕하세요', lang: '한국어', hold: 900 },
-  { text: 'こんにちは', lang: '日本語', hold: 900 },
-  { text: '你好', lang: '中文', hold: 900 },
-  { text: 'hola', lang: 'Español', hold: 900 },
-  { text: 'مرحبا', lang: 'العربية', hold: 900 },
+  { text: 'hello', lang: 'English', langTag: 'en', script: 'latin', hold: 650 },
+  { text: '안녕하세요', lang: '한국어', langTag: 'ko', script: 'korean', hold: 650 },
+  { text: 'こんにちは', lang: '日本語', langTag: 'ja', script: 'japanese', hold: 650 },
+  { text: '你好', lang: '中文', langTag: 'zh-Hans', script: 'chinese', hold: 650 },
+  { text: 'hola', lang: 'Español', langTag: 'es', script: 'latin', hold: 650 },
+  { text: 'مرحبا', lang: 'العربية', langTag: 'ar', script: 'arabic', hold: 650 },
 ];
 
 /** 인사말이 끝난 뒤 남는 문구. `{name}` 은 플레이어 이름으로 치환됩니다. */

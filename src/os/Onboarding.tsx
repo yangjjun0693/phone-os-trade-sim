@@ -19,6 +19,10 @@ import { EASE_IOS, SPRING_SOFT, prefersReducedMotion } from '@/utils/motion';
 type Screen = 'intro' | 'name' | 'identity' | 'device' | 'consent';
 const SCREENS: Exclude<Screen, 'intro'>[] = ['name', 'identity', 'device', 'consent'];
 
+/** Must stay in sync with the greeting transition below (handwriting wipe). */
+const GREETING_ENTER_MS = 600;
+const GREETING_EXIT_MS = 260;
+
 /** 밝은 버튼 하나로 끝나는 설정 마법사. 값은 마지막에 한 번에 커밋합니다. */
 export function Onboarding() {
   const reduced = prefersReducedMotion();
@@ -45,10 +49,15 @@ export function Onboarding() {
       return;
     }
     const isFinal = greetIndex === INTRO_GREETINGS.length;
-    const hold = isFinal ? 1200 : INTRO_GREETINGS[greetIndex].hold;
-    const timer = window.setTimeout(() => setGreetIndex((index) => index + 1), hold);
+    const visibleFor = isFinal ? 1200 : INTRO_GREETINGS[greetIndex].hold;
+    // `AnimatePresence mode="wait"` first plays the outgoing word for EXIT_MS,
+    // then mounts the next one and draws it during ENTER_MS. Content's `hold`
+    // therefore measures the fully-drawn pause; add the transition overhead so
+    // every language (not just the first) gets the same reading time.
+    const wait = reduced ? visibleFor : visibleFor + GREETING_ENTER_MS + GREETING_EXIT_MS;
+    const timer = window.setTimeout(() => setGreetIndex((index) => index + 1), wait);
     return () => window.clearTimeout(timer);
-  }, [screen, greetIndex]);
+  }, [screen, greetIndex, reduced]);
 
   const trimmed = name.trim();
   const stepNumber = screen === 'intro' ? 0 : SCREENS.indexOf(screen);
@@ -146,23 +155,62 @@ export function Onboarding() {
             <AnimatePresence mode="wait">
               <motion.div
                 key={greetIndex}
-                initial={reduced ? undefined : { opacity: 0, y: 14, filter: 'blur(6px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                exit={reduced ? undefined : { opacity: 0, y: -14, filter: 'blur(6px)' }}
-                transition={{ duration: reduced ? 0.01 : 0.4, ease: EASE_IOS }}
+                initial={
+                  reduced
+                    ? undefined
+                    : greeting
+                      ? {
+                          opacity: 0,
+                          y: 10,
+                          clipPath:
+                            greeting.script === 'arabic'
+                              ? 'inset(0 0 0 100%)'
+                              : 'inset(0 100% 0 0)',
+                        }
+                      : { opacity: 0, y: 10 }
+                }
+                animate={{ opacity: 1, y: 0, ...(greeting ? { clipPath: 'inset(0 0% 0 0)' } : {}) }}
+                exit={
+                  reduced
+                    ? undefined
+                    : {
+                        opacity: 0,
+                        y: -12,
+                        filter: 'blur(6px)',
+                        transition: { duration: GREETING_EXIT_MS / 1000, ease: EASE_IOS },
+                      }
+                }
+                transition={{ duration: reduced ? 0.01 : GREETING_ENTER_MS / 1000, ease: EASE_IOS }}
                 className="text-center"
               >
-                <p
-                  className={cn(
-                    'font-semibold leading-none tracking-tight',
-                    greeting ? 'text-[46px]' : 'text-[34px]',
-                  )}
-                >
-                  {greeting ? greeting.text : introFinalLine(INTRO_FINAL, trimmed || playerName)}
-                </p>
-                <p className="mt-4 h-4 text-[12px] uppercase tracking-[0.4em] text-white/35">
-                  {greeting?.lang ?? ''}
-                </p>
+                {greeting ? (
+                  <>
+                    {/* Apple draws each hello by hand; these OFL faces keep that
+                        written feel instead of falling back to the UI sans. */}
+                    <p
+                      className="hello-word"
+                      data-script={greeting.script}
+                      lang={greeting.langTag}
+                      dir={greeting.script === 'arabic' ? 'rtl' : 'ltr'}
+                    >
+                      {greeting.text}
+                    </p>
+                    <p
+                      className="hello-lang mt-5 h-4 text-[11px] text-white/35"
+                      data-script={greeting.script}
+                      lang={greeting.langTag}
+                    >
+                      {greeting.lang}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[34px] font-semibold leading-tight tracking-tight">
+                      {introFinalLine(INTRO_FINAL, trimmed || playerName)}
+                    </p>
+                    <p className="mt-4 h-4" />
+                  </>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>

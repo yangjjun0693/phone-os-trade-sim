@@ -43,6 +43,15 @@ function resetStores() {
 beforeEach(resetStores);
 
 describe('onboarding', () => {
+  it('draws the boot greeting with the matching hand-lettered face', () => {
+    render(<Onboarding />);
+
+    const hello = screen.getByText('hello');
+    expect(hello).toHaveClass('hello-word');
+    expect(hello).toHaveAttribute('data-script', 'latin');
+    expect(hello).toHaveAttribute('lang', 'en');
+  });
+
   it('walks name → identity → device → consent and commits the setup', async () => {
     render(<Onboarding />);
 

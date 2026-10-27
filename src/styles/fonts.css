@@ -14,3 +14,94 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
     U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
+/*
+ * The boot greeting is not SF Pro. Apple hand-letters "hello" separately for
+ * every language (see the SF-Hello artwork shipped with macOS), so a UI sans
+ * makes it look like a settings label instead of a welcome.
+ *
+ * These five faces are open-source (SIL OFL) stand-ins with the same monoline
+ * pen feel. Each file is subset with Google Fonts' `text=` API to the twelve
+ * glyphs the intro actually uses, which keeps the whole set under 30 kB.
+ * Licences live next to the files in `src/assets/fonts/OFL-*.txt`.
+ */
+@font-face {
+  font-family: 'Caveat Hello';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('../assets/fonts/hello-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nanum Pen Hello';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../assets/fonts/hello-korean.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Zen Kurenaido Hello';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../assets/fonts/hello-japanese.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Long Cang Hello';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../assets/fonts/hello-chinese.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lateef Hello';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('../assets/fonts/hello-arabic.woff2') format('woff2');
+}
+
+/*
+ * Sizes are tuned per script because a Hangul syllable is a full em wide while
+ * "hello" is not. `clamp()` keeps the longest greeting inside a 320 px phone.
+ */
+.hello-word {
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.hello-word[data-script='latin'] {
+  font-family: 'Caveat Hello', 'Segoe Script', 'Bradley Hand', cursive;
+  font-size: clamp(56px, 19vw, 86px);
+  font-weight: 500;
+}
+.hello-word[data-script='korean'] {
+  font-family: 'Nanum Pen Hello', 'Apple SD Gothic Neo', 'Malgun Gothic', cursive;
+  font-size: clamp(42px, 14.6vw, 64px);
+}
+.hello-word[data-script='japanese'] {
+  font-family: 'Zen Kurenaido Hello', 'Hiragino Maru Gothic ProN', 'Yu Gothic', cursive;
+  font-size: clamp(42px, 14.6vw, 64px);
+}
+.hello-word[data-script='chinese'] {
+  font-family: 'Long Cang Hello', 'PingFang SC', 'Microsoft YaHei', cursive;
+  font-size: clamp(78px, 26vw, 112px);
+}
+.hello-word[data-script='arabic'] {
+  font-family: 'Lateef Hello', 'Geeza Pro', 'Segoe UI', serif;
+  font-size: clamp(58px, 21vw, 90px);
+}
+
+/* Latin labels love wide tracking; CJK/Arabic script names do not. */
+.hello-lang {
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+}
+.hello-lang[data-script='korean'],
+.hello-lang[data-script='japanese'],
+.hello-lang[data-script='chinese'],
+.hello-lang[data-script='arabic'] {
+  letter-spacing: 0.12em;
+  text-transform: none;
+}
