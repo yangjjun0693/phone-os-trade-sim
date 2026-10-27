@@ -8,6 +8,8 @@ const config: Config = {
       colors: {
         // Values are backed by CSS variables in styles/tokens.css so that the
         // dark/light theme can swap without re-rendering Tailwind classes.
+        // Per-app colour identity, set by AppWindow from the app registry.
+        app: 'rgb(var(--app-accent) / <alpha-value>)',
         ios: {
           bg: 'rgb(var(--ios-bg) / <alpha-value>)',
           surface: 'rgb(var(--ios-surface) / <alpha-value>)',

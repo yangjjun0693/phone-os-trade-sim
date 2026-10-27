@@ -21,11 +21,8 @@ function AppCard({
 
   const bind = useDrag(
     ({ last, tap, movement: [, my], velocity: [, vy] }) => {
-      if (!last) return;
-      if (tap) {
-        onOpen();
-        return;
-      }
+      if (!last || tap) return;
+      // Swipe a card up to quit that app.
       if (my < -90 || vy > 0.6) {
         haptic(14);
         onClose();
@@ -41,11 +38,21 @@ function AppCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.85 }}
       transition={{ ...SPRING_SNAPPY, delay: Math.min(index, 5) * 0.05 }}
-      className="pointer-events-auto w-[70%] shrink-0 snap-center"
+      className="w-[70%] shrink-0 snap-center"
     >
       <div {...bind()}>
-        <div className="relative overflow-hidden rounded-[26px] bg-ios-surface shadow-2xl ring-1 ring-white/10">
-          <div
+        {/*
+          A real button, not a gesture. The gesture library's tap flag turned out
+          to be unreliable here, so tapping a card did nothing — which stranded
+          the player in the switcher with every tap ignored.
+        */}
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-label={`${app.name} 열기`}
+          className="block w-full overflow-hidden rounded-[26px] bg-ios-surface text-left shadow-2xl ring-1 ring-white/10 active:opacity-90"
+        >
+          <span
             className="relative flex h-[92px] items-center gap-2.5 overflow-hidden px-4 text-white"
             style={{
               background: `linear-gradient(150deg, ${app.gradient[0]}, ${app.gradient[1]})`,
@@ -53,19 +60,19 @@ function AppCard({
           >
             <Icon className="size-6" aria-hidden />
             <span className="text-[15px] font-semibold">{app.name}</span>
-          </div>
-          <div className="flex h-[300px] flex-col items-center justify-center gap-2 bg-ios-bg px-6 text-center">
+          </span>
+          <span className="flex h-[300px] flex-col items-center justify-center gap-2 bg-ios-bg px-6 text-center">
             <Icon className="size-7 text-ios-muted" aria-hidden />
-            <p className="text-[13px] font-medium text-ios-text">{app.name}</p>
-            <p className="text-[11px] text-ios-muted">미리보기는 다음 단계에서 붙습니다</p>
-          </div>
-        </div>
+            <span className="text-[13px] font-medium text-ios-text">{app.name}</span>
+            <span className="text-[11px] text-ios-muted">미리보기는 다음 단계에서 붙습니다</span>
+          </span>
+        </button>
       </div>
     </motion.div>
   );
 }
 
-/** Recent-apps carousel. Swipe a card up to close that app. */
+/** Recent-apps carousel. Tap a card to reopen, swipe it up to quit that app. */
 export function AppSwitcher() {
   const recents = useOSStore((s) => s.recents);
   const openApp = useOSStore((s) => s.openApp);
@@ -78,12 +85,7 @@ export function AppSwitcher() {
 
   const bind = useDrag(
     ({ last, tap, movement: [, my], direction: [, dy], velocity: [, vy] }) => {
-      if (!last) return;
-      // Tapping the background closes the switcher (swiping down still works).
-      if (tap) {
-        setOverlay('none');
-        return;
-      }
+      if (!last || tap) return;
       if (my > 60 || (vy > 0.5 && dy > 0)) setOverlay('none');
     },
     { axis: 'y', filterTaps: true, touchAction: 'pan-x' },
@@ -106,7 +108,18 @@ export function AppSwitcher() {
           onClick={() => setOverlay('none')}
           className="absolute inset-0 z-0"
         />
-        <div className="pointer-events-none relative z-10 flex flex-1 items-center">
+        {/*
+          Everything below is interactive only while the switcher is the active
+          overlay: the OSShell wrapper sets pointer-events: none when it is not,
+          and nothing in here overrides that (an override used to leave
+          invisible cards eating every tap on the screen below).
+        */}
+        <div
+          className="relative z-10 flex flex-1 items-center"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setOverlay('none');
+          }}
+        >
           {apps.length === 0 ? (
             <p className="w-full text-center text-[13px] text-white/70">최근 앱이 없습니다</p>
           ) : (
