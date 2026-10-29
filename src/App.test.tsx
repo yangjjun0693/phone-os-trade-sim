@@ -93,7 +93,8 @@ describe('<App />', () => {
     useOSStore.setState({ locked: false });
     render(<App />);
 
-    expect(await screen.findByLabelText('가이드 펼치기')).toBeInTheDocument();
+    // A brand-new save gets the first step already open.
+    expect(await screen.findByRole('dialog', { name: '플레이 가이드' })).toBeInTheDocument();
     expect(
       (await screen.findByLabelText('초선일보')).querySelector('[data-tutorial-highlight]'),
     ).not.toBeNull();
@@ -104,7 +105,7 @@ describe('<App />', () => {
 
     expect(useOSStore.getState().openAppId).toBe('news');
     expect(useTutorialStore.getState().openedApps).toContain('news');
-    // The card never covers an app's nav bar.
-    expect(screen.queryByLabelText('가이드 펼치기')).not.toBeInTheDocument();
+    // The card never covers an app's nav bar: the guide is home-screen only.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

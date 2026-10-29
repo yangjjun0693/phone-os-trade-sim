@@ -106,6 +106,37 @@
     text-shadow: var(--os-ink-shadow);
   }
 
+  /*
+   * Home indicator, two flavours.
+   *
+   * On the OS' own surfaces (wallpaper, lock screen, pull-down veils) the theme
+   * token is already the right ink — and it is a *neutral* black or white,
+   * which is what iOS looks like.
+   *
+   * Inside an app the bottom edge is app content and can be anything: the
+   * dark-net browser's chrome is black while the market page it loads is a
+   * light sheet. There is no token for that, so the capsule inverts its
+   * backdrop with `difference` and is legible on light and dark alike, with no
+   * per-app list to keep in sync.
+   *
+   * For the blend to work the capsule must be a direct child of the OS box: a
+   * wrapper with `transform` or `z-index` stacks in between and becomes its
+   * blend backdrop, leaving `difference` nothing to invert (the capsule then
+   * renders plain white and disappears on a light app). Hence the `mx-auto`
+   * centring and the separate hit-target button in `HomeIndicator.tsx`. A blend
+   * is also far too cheap to need a reduced-transparency fallback.
+   */
+  .home-indicator {
+    background-color: #fff;
+    mix-blend-mode: difference;
+  }
+  .home-indicator-ink {
+    background-color: rgb(var(--os-chrome) / 0.8);
+  }
+  .home-indicator-ink[data-light] {
+    background-color: rgb(255 255 255 / 0.85);
+  }
+
   /* ---- materials ----------------------------------------------------- */
   .glass {
     background: var(--ios-glass);

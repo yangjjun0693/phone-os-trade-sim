@@ -91,6 +91,8 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#7d4698',
     icon: ShadeIcon,
     gradient: ['#64748b', '#1e293b'],
+    // The dark-net browser is dark in every theme (see `alwaysDark`).
+    alwaysDark: true,
     ...lazyApp(() => import('./browser/ShadeApp'), 'ShadeApp'),
   },
   wallet: {
@@ -203,6 +205,8 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     accent: '#00e701',
     icon: SteakIcon,
     gradient: ['#16394d', '#081923'],
+    // The casino is dark in every theme (see `alwaysDark`).
+    alwaysDark: true,
     ...lazyApp(() => import('./steak/SteakApp'), 'SteakApp'),
   },
 };

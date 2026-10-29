@@ -86,6 +86,7 @@ export function StatusBar({
       />
 
       <div
+        data-status-ink
         className={cn(
           'flex h-full items-center justify-between px-7',
           inverted ? 'text-white' : 'wallpaper-ink',

@@ -67,6 +67,9 @@ export const AppIcon = memo(function AppIcon({
       <motion.button
         type="button"
         aria-label={app.name}
+        // Stable hook for the play guide's spotlight, which needs the icon's
+        // on-screen box (grid and dock icons share one entry per app id).
+        data-app-id={app.id}
         whileTap={{ scale: 0.88 }}
         transition={{ type: 'spring', stiffness: 520, damping: 34 }}
         onPointerEnter={() => app.preload?.()}

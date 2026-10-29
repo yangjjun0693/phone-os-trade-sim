@@ -66,6 +66,12 @@ export interface AppMeta {
   Component: ComponentType;
   /** Warm the app's chunk on hover/press, so tapping still feels instant. */
   preload?: () => void;
+  /**
+   * The app paints its own dark UI in *both* themes (a casino, a dark-net
+   * browser). The status bar and home bar must flip to light ink over it,
+   * otherwise they vanish on the dark surface in light mode.
+   */
+  alwaysDark?: boolean;
 }
 
 export interface HomeLayout {

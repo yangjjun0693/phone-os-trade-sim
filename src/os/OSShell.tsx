@@ -5,6 +5,7 @@ import { useOSStore } from '@/store/osStore';
 import { useTutorialStore } from '@/store/tutorialStore';
 import { AppSwitcher } from './AppSwitcher';
 import { AppWindow } from './AppWindow';
+import { chromeInverted } from './chrome';
 import { ControlCenter } from './ControlCenter';
 import { GameStatusOverlay } from './GameStatusOverlay';
 import { HomeIndicator } from './HomeIndicator';
@@ -156,9 +157,13 @@ export function OSShell() {
   }, [goHome, setOverlay]);
 
   const dim = Math.min(0.6, Math.max(0, (1 - brightness) * 0.6));
+  /** Light chrome ink for the few surfaces that are dark in every theme. */
+  const inverted = chromeInverted(overlay, openAppId);
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-ios-bg">
+    // `data-os-root` is the reference frame for anything that has to line up
+    // with the OS box rather than the browser viewport (the guide spotlight).
+    <div data-os-root className="relative h-full w-full overflow-hidden bg-ios-bg">
       <HomeScreen />
 
       {/* App layer. Disabled unless an app is actually the active layer, so an
@@ -204,11 +209,8 @@ export function OSShell() {
         </AnimatePresence>
       </div>
 
-      <StatusBar
-        elevated={overlay !== 'none' || locked}
-        inverted={overlay === 'appSwitcher'}
-      />
-      <HomeIndicator />
+      <StatusBar elevated={overlay !== 'none' || locked} inverted={inverted} />
+      <HomeIndicator light={inverted} />
 
       {/* The play guide floats over the *home screen only*: it never covers an
           app's nav bar or the dock, and it is not a gate — the player can keep
