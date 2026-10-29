@@ -105,7 +105,7 @@ describe('tutorial guide', () => {
 
     const dialog = screen.getByRole('dialog', { name: '플레이 가이드' });
     expect(dialog).toHaveTextContent(TUTORIAL_STEPS[0].title);
-    expect(dialog).toHaveTextContent('앱을 열면 완료');
+    expect(dialog).toHaveTextContent('택배 0 / 1');
     // The card replaces the pill while it is open, and carries its own way out.
     expect(screen.getByRole('button', { name: '가이드 카드 접기' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '가이드 펼치기' })).not.toBeInTheDocument();
@@ -114,11 +114,11 @@ describe('tutorial guide', () => {
   it('opens the app it points at, and gets out of the way', async () => {
     render(<TutorialGuide />);
 
-    await userEvent.click(screen.getByRole('button', { name: /초선일보 열기/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Chroma 열기/ }));
 
-    expect(useOSStore.getState().openAppId).toBe('news');
+    expect(useOSStore.getState().openAppId).toBe('chroma');
     // Opening through the OS also feeds the "visited apps" list.
-    expect(useTutorialStore.getState().openedApps).toContain('news');
+    expect(useTutorialStore.getState().openedApps).toContain('chroma');
     // The card leaves the way clear while its exit animation plays out.
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
@@ -138,32 +138,34 @@ describe('tutorial guide', () => {
   });
 
   it('shows what the current step is waiting for', async () => {
-    useTutorialStore.setState({ stepIndex: 1, done: ['news'] });
+    // Step two is the "open the dark-net browser" step.
+    useTutorialStore.setState({ stepIndex: 1, done: ['buy'] });
     render(<TutorialGuide />);
     await userEvent.click(screen.getByRole('button', { name: '가이드 펼치기' }));
 
-    expect(screen.getByRole('dialog')).toHaveTextContent('택배 0 / 1');
+    expect(screen.getByRole('dialog')).toHaveTextContent('앱을 열면 완료');
   });
 
   it('ticks a step off automatically when the game catches up', async () => {
-    useTutorialStore.setState({ openedApps: ['news'] });
+    useTutorialStore.setState({ stepIndex: 1, done: ['buy'], openedApps: ['shade'] });
     render(<TutorialGuide />);
+    await userEvent.click(screen.getByRole('button', { name: '가이드 펼치기' }));
 
     await waitFor(
       () => {
-        expect(useTutorialStore.getState().done).toContain('news');
+        expect(useTutorialStore.getState().done).toContain('shade');
       },
       { timeout: 2500 },
     );
-    expect(useTutorialStore.getState().stepIndex).toBe(1);
-    expect(await screen.findByRole('dialog')).toHaveTextContent(TUTORIAL_STEPS[1].title);
+    expect(useTutorialStore.getState().stepIndex).toBe(2);
+    expect(await screen.findByRole('dialog')).toHaveTextContent(TUTORIAL_STEPS[2].title);
   });
 
   it('lets the player skip a step by hand', async () => {
     render(<TutorialGuide />);
     await userEvent.click(screen.getByRole('button', { name: '이 단계 건너뛰기' }));
 
-    expect(useTutorialStore.getState().done).toEqual(['news']);
+    expect(useTutorialStore.getState().done).toEqual(['buy']);
     expect(useTutorialStore.getState().stepIndex).toBe(1);
   });
 

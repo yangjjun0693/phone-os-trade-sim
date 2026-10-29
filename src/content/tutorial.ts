@@ -96,15 +96,11 @@ export const IDENTITY_OPTIONS: {
   },
 ];
 
-/** 주 신원 선택이 실제로 어떤 앱을 추천할지 바꾸는 단계에서 씁니다. */
-export type TutorialMetric =
-  | 'inventory'
-  | 'shipments'
-  | 'markets'
-  | 'replies'
-  | 'sales'
-  | 'bankTransactions'
-  | 'day';
+/**
+ * 주 신원 선택이 실제로 어떤 앱을 추천할지 바꾸는 단계에서 씁니다.
+ * 단계가 쓰는 수치만 둡니다: 재고·마켓 주소를 보던 단계(구팡 수령 / 포럼 주소)는 제거됨.
+ */
+export type TutorialMetric = 'shipments' | 'replies' | 'sales' | 'bankTransactions' | 'day';
 
 export type TutorialGoal =
   | { type: 'openApp' }
@@ -112,9 +108,7 @@ export type TutorialGoal =
 
 /** 가이드 카드의 진행 표시에 쓰는 이름. 바꾸고 싶으면 여기만 고치면 됩니다. */
 export const TUTORIAL_METRIC_LABELS: Record<TutorialMetric, string> = {
-  inventory: '재고',
   shipments: '택배',
-  markets: '마켓 주소',
   replies: '답장',
   sales: '판매',
   bankTransactions: '은행 거래',
@@ -132,35 +126,20 @@ export interface TutorialStep {
   goal: TutorialGoal;
 }
 
-/** 가이드 단계. 배열 순서 = 진행 순서. */
+/**
+ * 가이드 단계. 배열 순서 = 진행 순서.
+ *
+ * 초선일보(news)·구팡 수령(delivery)·포럼 주소(forum)·Maps 만남(map) 안내는
+ * 사용자 요청(2026-10-29)으로 제거했습니다. 그 앱들은 그대로 있고, 가이드가
+ * 시키지 않을 뿐입니다 — 다시 넣으려면 아래 배열에 객체 하나를 더하면 됩니다.
+ */
 export const TUTORIAL_STEPS: TutorialStep[] = [
-  {
-    id: 'news',
-    appId: 'news',
-    title: '오늘의 판을 읽는다',
-    text: '초선일보에서 단속 강도와 시세를 확인하세요. 안 읽으면 하루가 불리해집니다.',
-    goal: { type: 'openApp' },
-  },
   {
     id: 'buy',
     appId: 'chroma',
     title: '정상 상점에서 소량 매입',
     text: 'Chroma에서는 .onion에 접속할 수 없습니다. 회색 상점에서 소량만 사두세요.',
     goal: { type: 'stat', metric: 'shipments', target: 1 },
-  },
-  {
-    id: 'collect',
-    appId: 'delivery',
-    title: '구팡에서 수령',
-    text: '주문은 바로 재고가 되지 않습니다. 구팡 "내 주문"에서 도착한 택배를 받으세요.',
-    goal: { type: 'stat', metric: 'inventory', target: 1 },
-  },
-  {
-    id: 'onion',
-    appId: 'forum',
-    title: '다음 주소를 캔다',
-    text: '포럼·Ex·Telegraph에는 마켓 주소가 섞여 있습니다. 새 주소를 하나 확보하세요.',
-    goal: { type: 'stat', metric: 'markets', target: 2 },
   },
   {
     id: 'shade',
@@ -175,13 +154,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     title: '손님 응대',
     text: '손님은 두 메신저 중 한 곳으로 먼저 연락합니다. 답장하면 약속이 잡힙니다.',
     goal: { type: 'stat', metric: 'replies', target: 1 },
-  },
-  {
-    id: 'meet',
-    appId: 'map',
-    title: '만남 장소 정하기',
-    text: 'Maps에서 약속 장소를 고르세요. 순찰이 센 곳은 함정 확률과 heat가 높습니다.',
-    goal: { type: 'openApp' },
   },
   {
     id: 'sell',

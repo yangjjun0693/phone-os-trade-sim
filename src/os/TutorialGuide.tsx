@@ -316,7 +316,7 @@ export function TutorialGuide() {
                     <div>
                       <p className="text-[18px] font-semibold leading-tight">가이드 완료</p>
                       <p className="text-[12px] text-ios-muted">
-                        {TUTORIAL_STEPS.length}단계 · 모든 앱을 한 번씩 둘러봤습니다
+                        {TUTORIAL_STEPS.length}단계 · 기본 동선을 한 번씩 둘러봤습니다
                       </p>
                     </div>
                   </div>

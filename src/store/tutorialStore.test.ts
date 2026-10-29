@@ -56,14 +56,14 @@ describe('tutorial store', () => {
 
   it('advances to the earliest unfinished step', () => {
     const store = useTutorialStore.getState();
-    store.completeStep('buy');
+    store.completeStep('sell');
 
-    // 'buy' is step 2; the guide resumes at the earliest gap, step 1.
+    // 'sell' is step 4; the guide resumes at the earliest gap, step 1.
     expect(useTutorialStore.getState().stepIndex).toBe(0);
 
-    store.completeStep('news');
-    expect(useTutorialStore.getState().stepIndex).toBe(2);
-    expect(useTutorialStore.getState().done).toEqual(['buy', 'news']);
+    store.completeStep('buy');
+    expect(useTutorialStore.getState().stepIndex).toBe(1);
+    expect(useTutorialStore.getState().done).toEqual(['sell', 'buy']);
   });
 
   it('lands on the completion index when every step is done', () => {
@@ -76,7 +76,7 @@ describe('tutorial store', () => {
 
   it('stops and resumes without losing progress', () => {
     const store = useTutorialStore.getState();
-    store.completeStep('news');
+    store.completeStep('buy');
     store.stopGuide();
     expect(useTutorialStore.getState().active).toBe(false);
 

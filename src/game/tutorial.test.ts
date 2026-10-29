@@ -23,10 +23,10 @@ const snapshot = (patch: Partial<TutorialSnapshot> = {}): TutorialSnapshot => ({
 
 describe('tutorial rules', () => {
   it('completes an "open app" step only once that app was opened', () => {
-    const news = step('news');
-    expect(isTutorialStepComplete(news, snapshot(), 'alias')).toBe(false);
+    const shade = step('shade');
+    expect(isTutorialStepComplete(shade, snapshot(), 'alias')).toBe(false);
     expect(
-      isTutorialStepComplete(news, snapshot({ openedApps: ['wallet', 'news'] }), 'alias'),
+      isTutorialStepComplete(shade, snapshot({ openedApps: ['wallet', 'shade'] }), 'alias'),
     ).toBe(true);
   });
 
@@ -51,10 +51,10 @@ describe('tutorial rules', () => {
 
   it('finds the first unfinished step, not just the next array index', () => {
     expect(firstUnfinishedStep([], TUTORIAL_STEPS)).toBe(0);
-    expect(firstUnfinishedStep(['news'], TUTORIAL_STEPS)).toBe(1);
-    expect(firstUnfinishedStep(['news', 'buy'], TUTORIAL_STEPS)).toBe(2);
+    expect(firstUnfinishedStep(['buy'], TUTORIAL_STEPS)).toBe(1);
+    expect(firstUnfinishedStep(['buy', 'shade'], TUTORIAL_STEPS)).toBe(2);
     // Out-of-order completion still resumes at the earliest gap.
-    expect(firstUnfinishedStep(['buy'], TUTORIAL_STEPS)).toBe(0);
+    expect(firstUnfinishedStep(['shade'], TUTORIAL_STEPS)).toBe(0);
     expect(firstUnfinishedStep(TUTORIAL_STEPS.map((item) => item.id), TUTORIAL_STEPS)).toBe(
       TUTORIAL_STEPS.length,
     );

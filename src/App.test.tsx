@@ -93,18 +93,18 @@ describe('<App />', () => {
     useOSStore.setState({ locked: false });
     render(<App />);
 
-    // A brand-new save gets the first step already open.
+    // A brand-new save gets the first step already open, pointing at Chroma.
     expect(await screen.findByRole('dialog', { name: '플레이 가이드' })).toBeInTheDocument();
     expect(
-      (await screen.findByLabelText('초선일보')).querySelector('[data-tutorial-highlight]'),
+      (await screen.findByLabelText('Chroma')).querySelector('[data-tutorial-highlight]'),
     ).not.toBeNull();
 
     // jsdom cannot replay userEvent's pointer sequence through the home pager,
     // so click the icon directly (real taps are covered by Playwright).
-    fireEvent.click(screen.getByLabelText('초선일보'));
+    fireEvent.click(screen.getByLabelText('Chroma'));
 
-    expect(useOSStore.getState().openAppId).toBe('news');
-    expect(useTutorialStore.getState().openedApps).toContain('news');
+    expect(useOSStore.getState().openAppId).toBe('chroma');
+    expect(useTutorialStore.getState().openedApps).toContain('chroma');
     // The card never covers an app's nav bar: the guide is home-screen only.
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
