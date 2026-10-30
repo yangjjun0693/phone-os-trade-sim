@@ -39,6 +39,14 @@ export function HomeIndicator({ light = false }: { light?: boolean }) {
 
   return (
     <>
+      {/* The hit target comes *before* the capsule so the CSS sibling selector
+          can squash the capsule while the button is held (see globals.css). */}
+      <button
+        type="button"
+        aria-label="홈으로"
+        onClick={escape}
+        className="home-bar-hit absolute inset-x-0 bottom-0 z-50 mx-auto h-6 w-[180px]"
+      />
       <span
         data-home-indicator
         data-light={light ? '' : undefined}
@@ -47,12 +55,6 @@ export function HomeIndicator({ light = false }: { light?: boolean }) {
           'pointer-events-none absolute inset-x-0 bottom-2 z-50 mx-auto block h-[5px] w-[140px] rounded-full',
           blend ? 'home-indicator' : 'home-indicator-ink',
         )}
-      />
-      <button
-        type="button"
-        aria-label="홈으로"
-        onClick={escape}
-        className="absolute inset-x-0 bottom-0 z-50 mx-auto h-6 w-[180px]"
       />
     </>
   );

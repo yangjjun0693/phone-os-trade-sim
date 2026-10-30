@@ -680,52 +680,38 @@ export function MapIcon({ size = 24, className }: AppIconProps) {
 /* ------------------------------------------------------------------ */
 
 /**
- * Amason — the smile-arrow mark, redrawn by hand: a lowercase "a" bowl plus a
- * swoosh with an arrowhead. Same deal as the browsers above — own path data,
- * a parody name, and no brand file bundled.
+ * Amason — the artwork supplied for this project: a taped-up parcel with the
+ * smile-arrow on its face. The source file was a 90×90 mark inside a padded
+ * 256×256 box, so the paths are used as-is at their own size and the wrapper's
+ * squircle does the clipping.
+ *
+ * The base rect is painted full-bleed on purpose: the artwork's own corner
+ * radius is a touch rounder than the wrapper's, and without it the corners
+ * would show a sliver of whatever is behind the icon.
  */
 export function AmasonIcon({ size = 24, className }: AppIconProps) {
   return (
-    <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true">
-      <defs>
-        <linearGradient id="amason-tile" x1="0" y1="0" x2="0.35" y2="1">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="1" stopColor="#e6edf7" />
-        </linearGradient>
-        <radialGradient id="amason-warm" cx="0.5" cy="0.74" r="0.58">
-          <stop offset="0" stopColor="#ff9900" stopOpacity="0.24" />
-          <stop offset="1" stopColor="#ff9900" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id="amason-smile" x1="0" y1="0" x2="1" y2="0.5">
-          <stop offset="0" stopColor="#ff9900" />
-          <stop offset="1" stopColor="#ffb043" />
-        </linearGradient>
-      </defs>
-      <rect width="64" height="64" rx="14" fill="url(#amason-tile)" />
-      <rect width="64" height="64" rx="14" fill="url(#amason-warm)" />
-
-      {/* Smile-arrow first, so the letter paints over it: the swoosh sweeps out
-          from under the "a" and the arrowhead rises behind the stem, the way
-          the reference mark reads. Slid back a hair so the ink balances on
-          both sides of the tile. */}
-      <g transform="translate(-1.5 0)">
-        <path
-          d="M15.8 32.4c5.2 10.6 23.2 11.8 28.6 3"
-          fill="none"
-          stroke="url(#amason-smile)"
-          strokeWidth="5.2"
-          strokeLinecap="round"
-        />
-        <path d="M53.9 27.6 46.9 36.8 42.2 31.1Z" fill="#ff9900" />
-      </g>
-
-      {/* Lowercase "a": ring bowl + full-height stem, nudged onto the tile's
-          centre line — without that the whole mark reads left-heavy, because
-          the swoosh only reaches out to the right. */}
-      <g transform="translate(4.4 0)">
-        <circle cx="27.6" cy="28.4" r="9.6" fill="none" stroke="#232f3e" strokeWidth="5.3" />
-        <rect x="33.4" y="17.4" width="6.4" height="23.2" rx="3.2" fill="#232f3e" />
-      </g>
+    <svg viewBox="0 0 90 90" width={size} height={size} className={className} aria-hidden="true">
+      <rect width="90" height="90" fill="#d2af76" />
+      {/* smile-arrow across the parcel's face */}
+      <path
+        d="M 76.92 48.315 c -8.644 6.384 -21.202 9.773 -32 9.773 c -15.133 0 -28.768 -5.596 -39.067 -14.897 c -0.814 -0.736 -0.079 -1.734 0.893 -1.156 c 11.14 6.463 24.88 10.378 39.094 10.378 c 9.589 0 20.125 -1.997 29.819 -6.095 C 77.104 45.661 78.339 47.264 76.92 48.315 z M 80.52 44.216 c -1.103 -1.419 -7.304 -0.683 -10.115 -0.342 c -0.841 0.105 -0.972 -0.631 -0.21 -1.182 c 4.939 -3.468 13.057 -2.47 14.003 -1.314 c 0.946 1.182 -0.263 9.3 -4.887 13.189 c -0.709 0.604 -1.392 0.289 -1.077 -0.499 C 79.285 51.468 81.623 45.609 80.52 44.216 z"
+        fill="#020101"
+      />
+      {/* blue packing tape across the top */}
+      <polygon
+        points="31.8,17.94 36.1,22.25 36.29,22.25 40.6,17.94 44.9,22.25 45.1,22.25 49.4,17.94 53.71,22.25 53.9,22.25 58.2,17.94 62.01,21.74 62.01,0 27.99,0 27.99,21.74"
+        fill="#38a5de"
+      />
+      <polygon
+        points="62.51,22.95 58.2,18.65 54.1,22.75 53.5,22.75 49.4,18.65 45.3,22.75 44.7,22.75 40.6,18.65 36.5,22.75 35.9,22.75 31.8,18.65 27.49,22.95 27.49,0 28.49,0 28.49,20.54 31.8,17.24 36.2,21.64 40.6,17.24 45,21.64 49.4,17.24 53.8,21.64 58.2,17.24 61.51,20.54 61.51,0 62.51,0"
+        fill="#4a95aa"
+      />
+      {/* 1px-ish inner border of the tile */}
+      <path
+        d="M 68.588 90 H 21.412 C 9.605 90 0 80.395 0 68.588 V 21.412 C 0 9.605 9.605 0 21.412 0 h 47.176 C 80.395 0 90 9.605 90 21.412 v 47.176 C 90 80.395 80.395 90 68.588 90 z M 21.412 0.989 c -11.261 0 -20.423 9.162 -20.423 20.423 v 47.176 c 0 11.262 9.162 20.423 20.423 20.423 h 47.176 c 11.262 0 20.423 -9.162 20.423 -20.423 V 21.412 c 0 -11.261 -9.162 -20.423 -20.423 -20.423 H 21.412 z"
+        fill="#bb9b6d"
+      />
     </svg>
   );
 }

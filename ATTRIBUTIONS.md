@@ -21,11 +21,15 @@ except for npm packages listed in `package.json`, which keep their own licenses.
 
 Every app, shop and brand in the game is fictional. Where an icon nods at a
 real service (the tri-colour ring, the compass, the onion, the storefront's
-smile-arrow), it is redrawn from scratch in `src/apps/icons.tsx` with a parody
-name, own path data and altered geometry. Colours were read from public brand
-guidelines (for example Amazon Orange `#FF9900` and Squid Ink `#232F3E`); no
-logo files, wordmarks or product photos are bundled. Product art is drawn in
-code, and a listing may point at its own image URL.
+smile-arrow), it is redrawn in `src/apps/icons.tsx` with a parody name, own
+path data and altered geometry. Colours were read from public brand
+guidelines (for example Amazon Orange `#FF9900` and Squid Ink `#232F3E`).
+
+One exception, and it is deliberate: the Amason tile
+(`AmasonIcon`) is the parcel-and-smile artwork supplied for this project by the
+project owner, used as drawn. No logo files, wordmarks or product photos are
+bundled elsewhere. Product art is drawn in code, and a listing may point at its
+own image URL.
 
 ## Reference repositories (structure / metrics only)
 
