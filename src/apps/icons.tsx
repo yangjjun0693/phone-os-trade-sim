@@ -704,19 +704,28 @@ export function AmasonIcon({ size = 24, className }: AppIconProps) {
       <rect width="64" height="64" rx="14" fill="url(#amason-tile)" />
       <rect width="64" height="64" rx="14" fill="url(#amason-warm)" />
 
-      {/* lowercase "a": ring bowl + full-height stem */}
-      <circle cx="27.6" cy="28.4" r="9.6" fill="none" stroke="#232f3e" strokeWidth="5.3" />
-      <rect x="33.4" y="17.4" width="6.4" height="23.2" rx="3.2" fill="#232f3e" />
+      {/* Smile-arrow first, so the letter paints over it: the swoosh sweeps out
+          from under the "a" and the arrowhead rises behind the stem, the way
+          the reference mark reads. Slid back a hair so the ink balances on
+          both sides of the tile. */}
+      <g transform="translate(-1.5 0)">
+        <path
+          d="M15.8 32.4c5.2 10.6 23.2 11.8 28.6 3"
+          fill="none"
+          stroke="url(#amason-smile)"
+          strokeWidth="5.2"
+          strokeLinecap="round"
+        />
+        <path d="M53.9 27.6 46.9 36.8 42.2 31.1Z" fill="#ff9900" />
+      </g>
 
-      {/* smile-arrow: swoosh, with the head riding its right end */}
-      <path
-        d="M15.8 32.4c5.2 10.6 23.2 11.8 28.6 3"
-        fill="none"
-        stroke="url(#amason-smile)"
-        strokeWidth="5.2"
-        strokeLinecap="round"
-      />
-      <path d="M53.9 27.6 46.9 36.8 42.2 31.1Z" fill="#ff9900" />
+      {/* Lowercase "a": ring bowl + full-height stem, nudged onto the tile's
+          centre line — without that the whole mark reads left-heavy, because
+          the swoosh only reaches out to the right. */}
+      <g transform="translate(4.4 0)">
+        <circle cx="27.6" cy="28.4" r="9.6" fill="none" stroke="#232f3e" strokeWidth="5.3" />
+        <rect x="33.4" y="17.4" width="6.4" height="23.2" rx="3.2" fill="#232f3e" />
+      </g>
     </svg>
   );
 }
