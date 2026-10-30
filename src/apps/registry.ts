@@ -1,5 +1,6 @@
 import { lazy, type ComponentType } from 'react';
 import {
+  AmasonIcon,
   BankIcon,
   ChromaIcon,
   DeliveryIcon,
@@ -198,6 +199,16 @@ export const APP_REGISTRY: Record<string, AppMeta> = {
     icon: MapIcon,
     gradient: ['#55d06a', '#2f7ff0'],
     ...lazyApp(() => import('./map/MapApp'), 'MapApp'),
+  },
+  amason: {
+    id: 'amason',
+    name: 'Amason',
+    accent: '#ff9900',
+    icon: AmasonIcon,
+    gradient: ['#37475a', '#232f3e'],
+    // Its brand bar is navy in every theme, so the status bar needs light ink.
+    alwaysDark: true,
+    ...lazyApp(() => import('./amason/AmasonApp'), 'AmasonApp'),
   },
   steak: {
     id: 'steak',

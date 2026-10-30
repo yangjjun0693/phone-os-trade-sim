@@ -30,7 +30,8 @@ describe('chrome ink', () => {
   });
 
   it('knows which apps declare a permanently dark surface', () => {
+    // casino · dark-net browser · US storefront (navy brand bar in every theme)
     const dark = apps.filter((app) => app.alwaysDark).map((app) => app.id);
-    expect(dark.sort()).toEqual(['shade', 'steak']);
+    expect(dark.sort()).toEqual(['amason', 'shade', 'steak']);
   });
 });

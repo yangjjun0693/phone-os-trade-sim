@@ -17,6 +17,16 @@ except for npm packages listed in `package.json`, which keep their own licenses.
   back to [Inter](https://github.com/rsms/inter) (SIL OFL 1.1) via
   `@fontsource-variable/inter`.
 
+## Parody brands
+
+Every app, shop and brand in the game is fictional. Where an icon nods at a
+real service (the tri-colour ring, the compass, the onion, the storefront's
+smile-arrow), it is redrawn from scratch in `src/apps/icons.tsx` with a parody
+name, own path data and altered geometry. Colours were read from public brand
+guidelines (for example Amazon Orange `#FF9900` and Squid Ink `#232F3E`); no
+logo files, wordmarks or product photos are bundled. Product art is drawn in
+code, and a listing may point at its own image URL.
+
 ## Reference repositories (structure / metrics only)
 
 | Repository | Stars* | Last push* | License | What was referenced |

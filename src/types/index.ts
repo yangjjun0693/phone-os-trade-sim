@@ -67,9 +67,10 @@ export interface AppMeta {
   /** Warm the app's chunk on hover/press, so tapping still feels instant. */
   preload?: () => void;
   /**
-   * The app paints its own dark UI in *both* themes (a casino, a dark-net
-   * browser). The status bar and home bar must flip to light ink over it,
-   * otherwise they vanish on the dark surface in light mode.
+   * The app paints its own dark UI in *both* themes — a whole screen (a casino,
+   * a dark-net browser) or just permanent dark chrome at the top (the US
+   * storefront's navy brand bar). The status bar must flip to light ink over
+   * it, otherwise it vanishes on that surface in light mode.
    */
   alwaysDark?: boolean;
 }

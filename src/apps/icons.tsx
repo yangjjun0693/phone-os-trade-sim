@@ -676,6 +676,52 @@ export function MapIcon({ size = 24, className }: AppIconProps) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Amason — US storefront parody                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Amason — the smile-arrow mark, redrawn by hand: a lowercase "a" bowl plus a
+ * swoosh with an arrowhead. Same deal as the browsers above — own path data,
+ * a parody name, and no brand file bundled.
+ */
+export function AmasonIcon({ size = 24, className }: AppIconProps) {
+  return (
+    <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="amason-tile" x1="0" y1="0" x2="0.35" y2="1">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#e6edf7" />
+        </linearGradient>
+        <radialGradient id="amason-warm" cx="0.5" cy="0.74" r="0.58">
+          <stop offset="0" stopColor="#ff9900" stopOpacity="0.24" />
+          <stop offset="1" stopColor="#ff9900" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="amason-smile" x1="0" y1="0" x2="1" y2="0.5">
+          <stop offset="0" stopColor="#ff9900" />
+          <stop offset="1" stopColor="#ffb043" />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="url(#amason-tile)" />
+      <rect width="64" height="64" rx="14" fill="url(#amason-warm)" />
+
+      {/* lowercase "a": ring bowl + full-height stem */}
+      <circle cx="27.6" cy="28.4" r="9.6" fill="none" stroke="#232f3e" strokeWidth="5.3" />
+      <rect x="33.4" y="17.4" width="6.4" height="23.2" rx="3.2" fill="#232f3e" />
+
+      {/* smile-arrow: swoosh, with the head riding its right end */}
+      <path
+        d="M15.8 32.4c5.2 10.6 23.2 11.8 28.6 3"
+        fill="none"
+        stroke="url(#amason-smile)"
+        strokeWidth="5.2"
+        strokeLinecap="round"
+      />
+      <path d="M53.9 27.6 46.9 36.8 42.2 31.1Z" fill="#ff9900" />
+    </svg>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* steak — fictional crypto-casino parody                              */
 /* ------------------------------------------------------------------ */
 

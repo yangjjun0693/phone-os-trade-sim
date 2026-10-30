@@ -10,7 +10,7 @@ import type {
 } from '@/types';
 import { DEFAULT_CLOCK_SPEED, type ClockSpeed } from '@/content/time';
 import { useTutorialStore } from './tutorialStore';
-import { DEFAULT_LAYOUT, OS_PERSIST_VERSION } from './defaults';
+import { DEFAULT_LAYOUT, OS_PERSIST_VERSION, withMissingDefaultApps } from './defaults';
 
 const RECENTS_LIMIT = 8;
 
@@ -298,6 +298,12 @@ export const useOSStore = create<OSState>()(
               brightness: controls.brightness === 0.72 ? 1 : controls.brightness,
             },
           } as PersistedOS;
+        }
+        // v11: a new app (Amason) joined the home screen. Append whatever the
+        // default layout has and this save does not, so nobody has to hunt for
+        // it — and leave the order the player arranged untouched.
+        if (version < 11) {
+          return { ...previous, layout: withMissingDefaultApps(previous.layout) } as PersistedOS;
         }
         return previous as PersistedOS;
       },
