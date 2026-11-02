@@ -35,6 +35,19 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Wallpaper art is hosted on i.imgur.com; cache it so the OS still paints
+        // offline and on installed PWAs after the first load.
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/i\.imgur\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'wallpaper-images',
+              expiration: { maxEntries: 4, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
       devOptions: {
         enabled: false,

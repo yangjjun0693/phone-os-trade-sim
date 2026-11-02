@@ -61,18 +61,8 @@
   --ios-card: rgb(255 255 255 / 0.94);
   --ios-card-border: rgb(255 255 255 / 0.7);
 
-  /* ---- wallpaper (light: pastel aurora) ---- */
-  --os-wallpaper:
-    radial-gradient(120% 85% at 8% -8%, #79c6f2 0%, rgb(121 198 242 / 0) 58%),
-    radial-gradient(90% 72% at 102% 2%, #ffbfd0 0%, rgb(255 191 208 / 0) 55%),
-    radial-gradient(115% 82% at 80% 108%, #9d89ef 0%, rgb(157 137 239 / 0) 62%),
-    radial-gradient(78% 58% at 14% 98%, #ffd7b2 0%, rgb(255 215 178 / 0) 55%),
-    linear-gradient(170deg, #b6dcf7 0%, #dcdbf8 46%, #f2dff0 100%);
-  --os-wallpaper-glow: radial-gradient(
-    70% 45% at 50% 22%,
-    rgb(255 255 255 / 0.5) 0%,
-    rgb(255 255 255 / 0) 70%
-  );
+  /* ---- wallpaper (light) — user-supplied image ---- */
+  --os-wallpaper: url('https://i.imgur.com/askx536.png');
   --os-desktop:
     radial-gradient(80% 60% at 20% 0%, rgb(37 99 135 / 0.35) 0%, rgb(37 99 135 / 0) 60%),
     radial-gradient(70% 60% at 85% 15%, rgb(91 33 128 / 0.3) 0%, rgb(91 33 128 / 0) 60%),
@@ -136,16 +126,8 @@
   --ios-card: rgb(38 38 43 / 0.94);
   --ios-card-border: rgb(255 255 255 / 0.12);
 
-  --os-wallpaper:
-    radial-gradient(120% 85% at 5% -10%, #0d5e6b 0%, rgb(13 94 107 / 0) 55%),
-    radial-gradient(90% 72% at 100% 0%, #3a1d70 0%, rgb(58 29 112 / 0) 55%),
-    radial-gradient(100% 85% at 65% 110%, #5c123f 0%, rgb(92 18 63 / 0) 60%),
-    linear-gradient(170deg, #071018 0%, #0a0a14 50%, #12071a 100%);
-  --os-wallpaper-glow: radial-gradient(
-    70% 45% at 50% 20%,
-    rgb(255 255 255 / 0.08) 0%,
-    rgb(255 255 255 / 0) 70%
-  );
+  /* ---- wallpaper (dark) — user-supplied image ---- */
+  --os-wallpaper: url('https://i.imgur.com/bbTUXqF.png');
   --os-desktop:
     radial-gradient(80% 60% at 20% 0%, rgb(39 105 142 / 0.22) 0%, rgb(37 99 135 / 0) 60%),
     radial-gradient(70% 60% at 85% 15%, rgb(91 33 128 / 0.2) 0%, rgb(91 33 128 / 0) 60%),
