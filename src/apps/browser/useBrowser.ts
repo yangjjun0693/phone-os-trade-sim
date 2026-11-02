@@ -4,6 +4,7 @@ import {
   createTab,
   extractTitle,
   marketIdFromUrl,
+  siteIdFromUrl,
   type BrowserTab,
 } from './browserData';
 
@@ -64,6 +65,7 @@ export function useBrowser({
                 loading: true,
                 progress: 0,
                 marketId: marketIdFromUrl(url),
+                siteId: siteIdFromUrl(url),
               }
             : tab,
         ),
@@ -83,6 +85,7 @@ export function useBrowser({
                     progress: 1,
                     title: extractTitle(url),
                     marketId: marketIdFromUrl(url),
+                    siteId: siteIdFromUrl(url),
                   }
                 : tab,
             ),

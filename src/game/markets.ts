@@ -16,24 +16,40 @@ export type AccessResult = { ok: true } | { ok: false; reason: AccessReason };
  * - Shade (Tor) reaches everything, but onion addresses must have been found
  *   first (via the social apps) and invite-only sites need an invite.
  */
+/**
+ * Shared reach rule, so markets and everyday sites behave the same per browser:
+ *
+ * - Chroma (clearnet) cannot route to the onion network at all.
+ * - Sailor (mirror) reaches clearnet and mirrors, but not the onion originals.
+ * - Shade (Tor) reaches everything, but onion addresses must have been found
+ *   first (via the social apps, wiki, etc.) and invite-only ones say so.
+ */
+export function reachAccess(
+  reach: MarketReach,
+  invite: boolean | undefined,
+  id: string,
+  browser: BrowserId,
+  discovered: readonly string[] = [],
+): AccessResult {
+  if (browser === 'chroma') {
+    return reach === 'clearnet' ? { ok: true } : { ok: false, reason: 'blocked-onion' };
+  }
+  if (browser === 'sailor') {
+    return reach === 'onion' ? { ok: false, reason: 'server-not-found' } : { ok: true };
+  }
+  // shade
+  if (reach === 'onion' && !discovered.includes(id)) {
+    return { ok: false, reason: invite ? 'invite-required' : 'server-not-found' };
+  }
+  return { ok: true };
+}
+
 export function browserAccess(
   market: MarketSite,
   browser: BrowserId,
   discovered: readonly string[] = [],
 ): AccessResult {
-  if (browser === 'chroma') {
-    return market.reach === 'clearnet' ? { ok: true } : { ok: false, reason: 'blocked-onion' };
-  }
-  if (browser === 'sailor') {
-    return market.reach === 'onion'
-      ? { ok: false, reason: 'server-not-found' }
-      : { ok: true };
-  }
-  // shade
-  if (market.reach === 'onion' && !discovered.includes(market.id)) {
-    return { ok: false, reason: market.invite ? 'invite-required' : 'server-not-found' };
-  }
-  return { ok: true };
+  return reachAccess(market.reach, market.invite, market.id, browser, discovered);
 }
 
 /** Sites a browser lists on its start page / shortcuts. */

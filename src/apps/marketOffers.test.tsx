@@ -17,7 +17,16 @@ beforeEach(() => {
     status: 'playing',
     statusReason: '',
     purchases: {},
-    stats: { sales: 0, revenue: 0, unitsSold: 0, spent: 0, stings: 0 },
+    stats: {
+      sales: 0,
+      revenue: 0,
+      unitsSold: 0,
+      spent: 0,
+      stings: 0,
+      videosWatched: 0,
+      searchesRun: 0,
+      wikiRead: 0,
+    },
     lastReport: null,
   });
 });

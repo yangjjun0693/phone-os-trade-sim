@@ -3,7 +3,7 @@
 > 이 문서는 **모든 작업 내용을 담은 단일 계획서**입니다. 작업 순서, 수치, 콘텐츠 규칙,
 > 편집 방법이 전부 여기에 있습니다. 내용이 바뀌면 이 파일만 수정하면 됩니다.
 >
-> 최종 갱신: 2026-10-28 · 상태: **Phase 6 완료 · UI/성능/컬러 패스 완료 (Phase 7 대기)**
+> 최종 갱신: 2026-11-01 · 상태: **Phase 6/6b/6c 완료 · Amason 완료 (Phase 7 대기)**
 
 ---
 
@@ -253,6 +253,7 @@ export const REGULAR_CUSTOMER: MessageScript = {
 | `src/content/tutorial.ts` | 튜토리얼 스텝 | 배열 |
 | `src/content/notifications.ts` | 알림 문구 템플릿 | 배열 |
 | `src/content/amason.ts` | Amason 품목(영어, 달러 가격, 이미지 URL) | 배열 |
+| `src/content/sites.ts` | 일상 웹 사이트(영상·검색·중고·위키) | 배열(종류별 판별 유니온) |
 
 - 원칙: **데이터는 `content/` 만**, 로직은 `game/`. 새 콘텐츠는 배열에 push.
 - 각 파일 상단에 `// 편집 방법:` 주석 블록 필수.
@@ -515,6 +516,30 @@ create policy "own saves" on public.saves
   - 배치: 홈 그리드 16번째 칸. 기존 세이브에는 OS 스키마 **v11** 마이그레이션이 기본 앱을
     빠짐없이 채워 넣음(플레이어가 정렬한 순서는 유지)
   - 검증: 카탈로그/스토어/앱 테스트 30개 추가, 스크린샷 `docs/ui-audit/amason-*.png`
+- [x] **Phase 6c — 일상 웹 (everyday web)** (완료)
+  2026-11-01. 마켓만 있던 가짜 브라우저에 **일상 사이트**를 추가한다. Chroma/Sailor/Shade 모두
+  시작 페이지 바로가기에 **"일상" 줄**이 생기고, 주소창에 URL이 아닌 말을 치면 **검색 결과**가 뜬다.
+  - 사이트는 마켓과 별개 모델(`BrowserSite`, `src/content/sites.ts`)이다. `kind` 로 갈라지는
+    판별 유니온(`search` / `video` / `classifieds` / `wiki`)이고, `reach` 는 마켓과 같은
+    (`clearnet`/`mirror`/`onion`) 값을 재사용한다. `MarketSite`(가격·heat)는 건드리지 않는다.
+  - 5개 사이트: **ViewTube**(영상) · **Sleuth**(검색) · **중고마을**(중고) · **OpenPedia**(위키) ·
+    **OpenPedia .onion**(다크넷 위키, Shade 전용·초대 필요). 모두 허구 패러디(§0).
+  - **게임 훅**(이번 패스): ① **시간 보내기** — 영상을 보면 표시된 만큼 게임 시계가 **즉시**
+    앞으로 간다(보상 없음, "대기"용). ② **단서** — 영상·위키·중고 매물이 `learnedClues` 로
+    마켓 단서를 더한다(`suspicionScore` 가 합쳐 읽음). ③ **해금** — 위키 문서가 `.onion`
+    주소를 알려준다(`discoverMarket`). ④ **함정** — 무료 시청·선입금·검색 광고가 돈/heat 를
+    뜯어간다(피싱과 같은 `{cash, heat, note}` 모양 재사용).
+  - **중고마을은 이번 패스에서 browse-only**: 매물·함정·단서만 있고 구매(장비 아이템)는 다음
+    패스로 미룬다(번너폰/창고 확장은 별도 시스템).
+  - **검색(Sleuth)**: 주소창 입력이 URL 처럼 보이지 않으면 검색으로 간다. 결과는 일상 사이트 +
+    **이미 발견한** `.onion` 마켓만(미발견 주소는 절대 노출하지 않음 → 소셜 앱 루프 유지).
+  - **커버 트래픽**(설계만, 구현은 마지막): 일상 사이트 방문이 trace 를 희석. 상한 하루 −4 heat,
+    "브라우징으로 오른 heat 만" 상쇄. 다음 패스.
+  - 구현: `types`(SiteKind/BrowserSite), `content/sites.ts`, `game/sites.ts`(순수: `searchSites`,
+    `videoOutcome`, `listedSites`, `browserSiteAccess`), `browserData.ts`(사이트 주소 레지스트리),
+    `BrowserSite.tsx`(종류별 렌더러), 3개 브라우저 시작 페이지·검색, `gameStore` 스키마 **v10**
+    (`learnedClues`, `stats`에 `videosWatched`/`searchesRun`/`wikiRead`).
+
 - [ ] **Phase 7 — 알림 시스템**
   이벤트 버스, 모델, 트리거, 배지/pill/배너/딥링크, 스팸 규칙
 - [ ] **Phase 8 — 오디오**
@@ -574,3 +599,5 @@ create policy "own saves" on public.saves
 | 2026-10-26 | **OS 홈 제스처 수정**: "홈에서 앱을 열지 못함"의 원인은 홈으로 가는 스와이프가 **화면 맨 아래 24px 안에서 시작해야만** 동작한 것. 하단 제스처 영역을 140px로 넓히고 창(window) 캡처 단계에서 **관찰만** 하도록 바꿔 탭·스크롤을 막지 않게 함. 앱/오버레이 레이어는 비활성일 때 `pointer-events-none`이라 exit 애니메이션이 남아도 홈 탭을 막지 못함. 홈 바(하단 캡슐)를 **실제 버튼**으로 만들어 언제나 탈출 가능(총 204 tests) |
 | 2026-10-25 | **Phase 4b/4c 완료**: 만남 장소 선택(순찰 등급 → 함정 확률·heat·이동 시간), Maps에 "약속" 배지, 메신저 답장도 +5분 등 모든 행동이 시간을 소모 (총 195 tests) |
 | 2026-10-25 | **Phase 4a 완료(물류/수령)**: 매입이 배송이 됨. 수령 주소 3곳(무료·집=heat↑ / 창고=₩30,000·안전 / 드롭=분실 15%), 도착 시 압수·분실 판정, 구팡 "내 주문"에서 수령 → 재고 반영. `content/logistics.ts` + `game/shipments.ts` (총 184 tests) |
+| 2026-11-01 | **Phase 6c 완료(일상 웹)**: 가짜 브라우저에 마켓이 아닌 사이트를 추가. `BrowserSite`(판별 유니온: search/video/classifieds/wiki, `reach` 재사용) + `content/sites.ts` 5종(ViewTube·Sleuth·중고마을·OpenPedia·OpenPedia .onion). 시작 페이지에 "일상" 바로가기 줄, 주소창 검색이 실제 동작(URL이 아니면 Sleuth 결과). 훅: 영상=즉시 시간 보내기 / 영상·위키·매물=단서(`learnedClues` → `suspicionScore`) / 위키=`.onion` 해금(`discoverMarket`) / 무료시청·선입금·검색광고=함정(`{cash,heat,note}`). 중고마을은 browse-only(구매는 다음). 게임 스키마 v10(`learnedClues`+`stats.videosWatched/searchesRun/wikiRead`, 마이그레이션). 커버 트래픽은 설계만(다음 패스) |
+| 2026-11-01 | **배경화면 이미지로 교체**: 사용자 제공 이미지로 변경 — 라이트 `askx536.png` / 다크 `bbTUXqF.png`. `--os-wallpaper` 토큰을 CSS 그라데이션에서 `url(...)`로 교체(두 테마 각각), `Wallpaper`에서 글로우·그레인 레이어 제거(이미지 위 불필요). PWA 오프라인 대비 `vite.config.ts` workbox `runtimeCaching`에 `i.imgur.com` CacheFirst 추가. 검증: typecheck·272 tests·build 통과, 빌드 CSS에 두 URL 포함 |

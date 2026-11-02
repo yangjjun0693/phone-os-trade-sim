@@ -174,6 +174,79 @@ export interface Clue {
   reliable: boolean;
 }
 
+/**
+ * Kinds of *everyday* (non-market) site that can live in the fake browser.
+ * Markets stay on `MarketSite`; these are the "normal internet" pages that make
+ * the browsers feel real — and, in places, carry light game hooks.
+ */
+export type SiteKind = 'search' | 'video' | 'classifieds' | 'wiki';
+
+/** A cost a site can quietly charge the player when they take the bait. */
+export interface SiteTrap {
+  cash?: number;
+  heat?: number;
+  note: string;
+}
+
+interface BrowserSiteBase {
+  id: string;
+  name: string;
+  /** Cosmetic tagline shown on the site and in search results. */
+  tagline: string;
+  kind: SiteKind;
+  /** Network layer, same scale as markets (see {@link MarketReach}). */
+  reach: MarketReach;
+  /** Fake address, e.g. `hxxp://viewtube.kr`. */
+  url: string;
+  /** The site's own colour. */
+  accent: string;
+  /** Onion sites that need an invite before Shade will open them. */
+  invite?: boolean;
+}
+
+/** One clip in a video site. Watching fast-forwards the game clock. */
+export interface VideoItem {
+  id: string;
+  title: string;
+  channel: string;
+  /** Game minutes the clock jumps when the clip is "watched". */
+  lengthMin: number;
+  views: string;
+  description: string;
+  /** A market clue the clip teaches, merged into the clue pool. */
+  clue?: Clue;
+  /** Following the clip's link costs the player. */
+  trap?: SiteTrap;
+}
+
+/** One used-goods listing. Browse-only for now; traps can still bite. */
+export interface ClassifiedsListing {
+  id: string;
+  title: string;
+  price: number;
+  seller: string;
+  blurb: string;
+  clue?: Clue;
+  trap?: SiteTrap;
+}
+
+/** One reference article. Some unlock an onion address. */
+export interface WikiArticle {
+  id: string;
+  title: string;
+  category: string;
+  body: string[];
+  /** Reading the article reveals this address id via `discoverMarket`. */
+  unlockId?: string;
+  clue?: Clue;
+}
+
+export type BrowserSite =
+  | (BrowserSiteBase & { kind: 'search' })
+  | (BrowserSiteBase & { kind: 'video'; videos: VideoItem[] })
+  | (BrowserSiteBase & { kind: 'classifieds'; listings: ClassifiedsListing[] })
+  | (BrowserSiteBase & { kind: 'wiki'; articles: WikiArticle[] });
+
 /** Browser history entry stored in gameStore. */
 export interface BrowserHistoryEntry {
   id: string;

@@ -11,13 +11,21 @@ import {
   X,
 } from 'lucide-react';
 import { markets } from '@/data';
-import { browserAccess, browserReachHint, listedMarkets } from '@/game';
+import {
+  browserAccess,
+  browserReachHint,
+  browserSiteAccess,
+  isLikelyUrl,
+  listedMarkets,
+  listedSites,
+} from '@/game';
+import { BROWSER_SITES } from '@/content/sites';
 import { useGameStore } from '@/store/gameStore';
 import { cn } from '@/utils/cn';
 import { SPRING_SNAPPY, SPRING_SOFT } from '@/utils/motion';
 import { useBrowser } from './useBrowser';
-import { BlockedPage, MarketLinks, SiteView } from './BrowserSite';
-import { START_URLS, displayHost, isBlankTab, marketIdFromUrl } from './browserData';
+import { BlockedPage, MarketLinks, SiteLinks, SiteView } from './BrowserSite';
+import { START_URLS, displayHost, isBlankTab, marketIdFromUrl, searchUrl } from './browserData';
 
 /** Sailor — an iOS-Safari-flavoured browser: slim top bar, bottom toolbar, tab grid. */
 export function SafariBrowser() {
@@ -61,19 +69,25 @@ export function SafariBrowser() {
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     setEditing(false);
-    navigate(address);
+    navigate(isLikelyUrl(address) ? address : searchUrl(address));
   };
 
   const startPage = isBlankTab(activeTab);
   const listed = listedMarkets(markets, 'sailor');
+  const everyday = listedSites(BROWSER_SITES, 'sailor');
   const targetMarket = activeTab?.marketId
     ? markets.find((market) => market.id === activeTab.marketId)
     : null;
+  const targetSite = activeTab?.siteId
+    ? BROWSER_SITES.find((site) => site.id === activeTab.siteId)
+    : null;
   const access = targetMarket
     ? browserAccess(targetMarket, 'sailor')
-    : activeTab && !activeTab.url.includes('.onion')
-      ? ({ ok: true } as const)
-      : ({ ok: false, reason: 'server-not-found' } as const);
+    : targetSite
+      ? browserSiteAccess(targetSite, 'sailor')
+      : activeTab && !activeTab.url.includes('.onion')
+        ? ({ ok: true } as const)
+        : ({ ok: false, reason: 'server-not-found' } as const);
 
   return (
     <div className="relative flex h-full flex-col bg-ios-bg text-ios-text">
@@ -177,9 +191,9 @@ export function SafariBrowser() {
       {/* content */}
       <div className="scroll-area no-scrollbar flex-1">
         {startPage ? (
-          <SafariStartPage onNavigate={navigate} recent={recent} listed={listed} />
+          <SafariStartPage onNavigate={navigate} recent={recent} listed={listed} sites={everyday} />
         ) : !activeTab ? null : access.ok ? (
-          <SiteView tab={activeTab} />
+          <SiteView tab={activeTab} browser="sailor" onNavigate={navigate} />
         ) : (
           <BlockedPage
             browser="sailor"
@@ -333,18 +347,23 @@ function SafariStartPage({
   onNavigate,
   recent,
   listed,
+  sites,
 }: {
   onNavigate: (url: string) => void;
   recent: { id: string; url: string; title: string }[];
   listed: ReturnType<typeof listedMarkets>;
+  sites: ReturnType<typeof listedSites>;
 }) {
   return (
     <div className="px-4 pb-10 pt-5">
       <p className="mb-4 rounded-2xl bg-ios-surface px-4 py-3 text-[12px] leading-relaxed text-ios-muted ring-1 ring-black/5 dark:ring-white/5">
         {browserReachHint('sailor')}
       </p>
-      <h3 className="mb-3 px-1 text-[19px] font-bold">즐겨찾기</h3>
+      <h3 className="mb-3 px-1 text-[19px] font-bold">장터</h3>
       <MarketLinks markets={listed} onNavigate={onNavigate} variant="grid" />
+
+      <h3 className="mb-3 mt-8 px-1 text-[19px] font-bold">일상 사이트</h3>
+      <SiteLinks sites={sites} onNavigate={onNavigate} />
 
       <h3 className="mb-3 mt-8 px-1 text-[19px] font-bold">자주 방문한 사이트</h3>
       {recent.length === 0 ? (

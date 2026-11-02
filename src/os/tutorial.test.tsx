@@ -27,7 +27,16 @@ function resetStores() {
     shipments: [],
     discoveredMarkets: ['market-nightbazaar'],
     inbox: [],
-    stats: { sales: 0, revenue: 0, unitsSold: 0, spent: 0, stings: 0 },
+    stats: {
+      sales: 0,
+      revenue: 0,
+      unitsSold: 0,
+      spent: 0,
+      stings: 0,
+      videosWatched: 0,
+      searchesRun: 0,
+      wikiRead: 0,
+    },
     bank: { balance: 8_200_000, transactions: [] },
     day: 1,
   });

@@ -43,6 +43,6 @@ export function withMissingDefaultApps(layout: HomeLayout | undefined): HomeLayo
   return next;
 }
 
-export const PERSIST_VERSION = 9;
+export const PERSIST_VERSION = 10;
 /** Home layout schema version; bumped separately so game saves are not wiped. */
 export const OS_PERSIST_VERSION = 11;

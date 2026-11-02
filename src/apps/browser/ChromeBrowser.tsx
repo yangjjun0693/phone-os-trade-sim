@@ -14,16 +14,25 @@ import {
   X,
 } from 'lucide-react';
 import { markets } from '@/data';
-import { browserAccess, browserReachHint, listedMarkets } from '@/game';
+import { BROWSER_SITES } from '@/content/sites';
+import {
+  browserAccess,
+  browserReachHint,
+  browserSiteAccess,
+  isLikelyUrl,
+  listedMarkets,
+  listedSites,
+} from '@/game';
 import { useGameStore } from '@/store/gameStore';
 import { cn } from '@/utils/cn';
 import { SPRING_SNAPPY } from '@/utils/motion';
 import { useBrowser } from './useBrowser';
-import { BlockedPage, MarketLinks, SiteView } from './BrowserSite';
+import { BlockedPage, MarketLinks, SiteLinks, SiteView } from './BrowserSite';
 import {
   START_URLS,
   displayHost,
   isBlankTab,
+  searchUrl,
   type BrowserTab,
 } from './browserData';
 
@@ -51,21 +60,27 @@ export function ChromeBrowser() {
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     setEditing(false);
-    navigate(address);
+    navigate(isLikelyUrl(address) ? address : searchUrl(address));
   };
 
   const startPage = isBlankTab(activeTab);
   const listed = listedMarkets(markets, 'chroma');
+  const everyday = listedSites(BROWSER_SITES, 'chroma');
 
   // Chroma has no route onto the onion network at all.
   const targetMarket = activeTab?.marketId
     ? markets.find((market) => market.id === activeTab.marketId)
     : null;
+  const targetSite = activeTab?.siteId
+    ? BROWSER_SITES.find((site) => site.id === activeTab.siteId)
+    : null;
   const access = targetMarket
     ? browserAccess(targetMarket, 'chroma')
-    : activeTab && !activeTab.url.includes('.onion')
-      ? ({ ok: true } as const)
-      : ({ ok: false, reason: 'blocked-onion' } as const);
+    : targetSite
+      ? browserSiteAccess(targetSite, 'chroma')
+      : activeTab && !activeTab.url.includes('.onion')
+        ? ({ ok: true } as const)
+        : ({ ok: false, reason: 'blocked-onion' } as const);
 
   return (
     <div className="flex h-full flex-col bg-[#f1f3f4] text-[#202124] dark:bg-[#202124] dark:text-[#e8eaed]">
@@ -187,9 +202,9 @@ export function ChromeBrowser() {
       {/* content */}
       <div className="scroll-area no-scrollbar flex-1">
         {startPage ? (
-          <ChromeStartPage onNavigate={navigate} recent={recent} listed={listed} />
+          <ChromeStartPage onNavigate={navigate} recent={recent} listed={listed} sites={everyday} />
         ) : !activeTab ? null : access.ok ? (
-          <SiteView tab={activeTab} />
+          <SiteView tab={activeTab} browser="chroma" onNavigate={navigate} />
         ) : (
           <BlockedPage
             browser="chroma"
@@ -275,21 +290,36 @@ function ChromeStartPage({
   onNavigate,
   recent,
   listed,
+  sites,
 }: {
   onNavigate: (url: string) => void;
   recent: { id: string; url: string; title: string }[];
   listed: ReturnType<typeof listedMarkets>;
+  sites: ReturnType<typeof listedSites>;
 }) {
+  const [query, setQuery] = useState('');
   return (
     <div className="px-4 pb-10 pt-6">
       <div className="mb-6 flex flex-col items-center gap-3">
         <span className="flex size-12 items-center justify-center rounded-full bg-white text-[20px] font-bold text-[#1a73e8] shadow-sm dark:bg-[#35363a]">
           C
         </span>
-        <div className="flex h-11 w-full max-w-[320px] items-center gap-2 rounded-full bg-white px-4 shadow-sm ring-1 ring-black/5 dark:bg-[#35363a] dark:ring-white/10">
-          <Search className="size-4 text-[#80868b]" aria-hidden />
-          <span className="text-[14px] text-[#80868b]">암시장 검색 (허구)</span>
-        </div>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (query.trim()) onNavigate(searchUrl(query));
+          }}
+          className="flex h-11 w-full max-w-[320px] items-center gap-2 rounded-full bg-white px-4 shadow-sm ring-1 ring-black/5 dark:bg-[#35363a] dark:ring-white/10"
+        >
+          <Search className="size-4 shrink-0 text-[#80868b]" aria-hidden />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label="검색어"
+            placeholder="암시장 검색 (허구)"
+            className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-[#80868b]"
+          />
+        </form>
       </div>
 
       <p className="mb-3 rounded-xl bg-white px-3 py-2 text-[11px] leading-relaxed text-[#5f6368] ring-1 ring-black/5 dark:bg-[#35363a] dark:text-[#9aa0a6] dark:ring-white/10">
@@ -297,9 +327,14 @@ function ChromeStartPage({
       </p>
 
       <h3 className="mb-3 px-1 text-[12px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">
-        바로가기
+        장터
       </h3>
       <MarketLinks markets={listed} onNavigate={onNavigate} variant="grid" />
+
+      <h3 className="mb-3 mt-8 px-1 text-[12px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">
+        일상 사이트
+      </h3>
+      <SiteLinks sites={sites} onNavigate={onNavigate} />
 
       <h3 className="mb-3 mt-8 flex items-center gap-1.5 px-1 text-[12px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">
         <Clock className="size-3.5" aria-hidden /> 최근 방문

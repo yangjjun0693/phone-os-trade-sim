@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { BROWSER_SITES } from '@/content/sites';
 
 export interface BrowserTab {
   id: string;
@@ -8,6 +9,8 @@ export interface BrowserTab {
   /** 0..1 simulated load progress. */
   progress: number;
   marketId?: string;
+  /** Set when the address resolves to an everyday site (see content/sites.ts). */
+  siteId?: string;
 }
 
 /**
@@ -24,6 +27,10 @@ export const MOCK_SITES: { url: string; title: string; marketId: string | null }
   { url: 'hxxp://shadowgoods.onion', title: 'ShadowGoods', marketId: null },
   { url: 'hxxp://darkweb-mall.onion', title: 'DarkWeb Mall', marketId: null },
 ];
+
+/** The everyday search engine — its address doubles as the search entry point. */
+const SEARCH_SITE = BROWSER_SITES.find((site) => site.kind === 'search');
+export const SEARCH_URL = SEARCH_SITE?.url ?? 'hxxp://sleuth.kr';
 
 /** Where each browser opens when it starts fresh (its own kind of home page). */
 export const START_URLS = {
@@ -49,13 +56,54 @@ export function marketIdFromUrl(url: string): string | undefined {
   return site?.marketId ?? undefined;
 }
 
+function hostnameOf(url: string): string | undefined {
+  try {
+    return new URL(url.replace('hxxp://', 'http://')).hostname;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Resolve an address (including paths/queries like `…/search?q=x`) onto an
+ * everyday site id. Matching is by host, so search URLs still map to Sleuth.
+ */
+export function siteIdFromUrl(url: string): string | undefined {
+  const host = hostnameOf(url);
+  if (!host) return undefined;
+  return BROWSER_SITES.find((site) => hostnameOf(site.url) === host)?.id;
+}
+
+/** Build a Sleuth search address for a free-text query. */
+export function searchUrl(query: string): string {
+  return `${SEARCH_URL}/search?q=${encodeURIComponent(query.trim())}`;
+}
+
+/** Read the query back out of a search address, if present. */
+export function searchQueryFromUrl(url: string): string {
+  const match = /[?&]q=([^&]*)/.exec(url);
+  if (!match) return '';
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
 /** `hxxp://nightbazaar.onion` -> `NightBazaar` (best effort). */
 export function extractTitle(url: string): string {
-  const match = MOCK_SITES.find((site) => site.url === url.trim().toLowerCase());
-  if (match) return match.title;
+  const normalized = url.trim().toLowerCase();
+  const market = MOCK_SITES.find((site) => site.url === normalized);
+  if (market) return market.title;
+
+  const host = hostnameOf(url);
+  const site = BROWSER_SITES.find((entry) => hostnameOf(entry.url) === host);
+  if (site) return site.name;
+
+  if (host) return host.replace('.onion', '').replace(/^www\./, '') || url;
   try {
-    const hostname = new URL(url.replace('hxxp://', 'http://')).hostname;
-    return hostname.replace('.onion', '').replace(/^www\./, '') || url;
+    const fallback = new URL(url.replace('hxxp://', 'http://')).hostname;
+    return fallback.replace('.onion', '').replace(/^www\./, '') || url;
   } catch {
     return url;
   }
@@ -70,6 +118,7 @@ export function createTab(url = 'hxxp://'): BrowserTab {
     loading: false,
     progress: url === 'hxxp://' ? 0 : 1,
     marketId: marketIdFromUrl(url),
+    siteId: siteIdFromUrl(url),
   };
 }
 

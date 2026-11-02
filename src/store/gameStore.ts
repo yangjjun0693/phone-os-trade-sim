@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import type {
+  Clue,
   InventoryItem,
   IdentityState,
   AppIdentityMap,
@@ -121,6 +122,10 @@ export interface GameStats {
   unitsSold: number;
   spent: number;
   stings: number;
+  /** Everyday-web counters (Phase 6c): used by metrics and, later, conditions. */
+  videosWatched: number;
+  searchesRun: number;
+  wikiRead: number;
 }
 
 export interface BuyResult {
@@ -218,6 +223,10 @@ export interface GameState {
   runners: Runner[];
   /** Phishing mails already dealt with (opened or dismissed). */
   handledMails: string[];
+  /** Clues learned from everyday sites (videos, wiki, listings). */
+  learnedClues: Clue[];
+  /** Site traps already triggered, so each one only bites once. */
+  handledTraps: string[];
   stats: GameStats;
   /** The most recent day-end report, shown in the Trade app. */
   lastReport: DayReport | null;
@@ -250,6 +259,12 @@ export interface GameState {
   buyMarketOffer: (offer: MarketOffer, status: MarketStatus, address?: DropAddress) => BuyResult;
   /** Learn an onion address (no-op if it is already known). */
   discoverMarket: (marketId: string) => void;
+  /** Learn a clue from an everyday site (no-op if already known). */
+  learnClue: (clue: Clue) => void;
+  /** Run a site trap once. Returns true if it just fired. */
+  handleTrap: (id: string, effect: { cash?: number; heat?: number }) => boolean;
+  /** Count an everyday-site action (video / search / wiki) in stats. */
+  recordSiteActivity: (kind: 'video' | 'search' | 'wiki') => void;
   /** Roll for new messenger arrivals (safe to call often). */
   tickMessenger: () => void;
   /** Land any parcels that are due (called by the game clock). */
@@ -362,6 +377,8 @@ function createInitialState() {
     shipments: [],
     runners: [] as Runner[],
     handledMails: [] as string[],
+    learnedClues: [] as Clue[],
+    handledTraps: [] as string[],
     deals: [
       {
         id: 'deal-seed-1',
@@ -382,6 +399,9 @@ function createInitialState() {
       unitsSold: 0,
       spent: 0,
       stings: 0,
+      videosWatched: 0,
+      searchesRun: 0,
+      wikiRead: 0,
     } satisfies GameStats,
     lastReport: null as DayReport | null,
   };
@@ -415,6 +435,8 @@ type PersistedGame = Pick<
   | 'shipments'
   | 'runners'
   | 'handledMails'
+  | 'learnedClues'
+  | 'handledTraps'
 >;
 
 export const useGameStore = create<GameState>()(
@@ -930,6 +952,29 @@ export const useGameStore = create<GameState>()(
             s.discoveredMarkets.push(marketId);
           }
         }),
+      learnClue: (clue) =>
+        set((s) => {
+          if (!s.learnedClues.some((entry) => entry.id === clue.id)) {
+            s.learnedClues.push(clue);
+          }
+        }),
+      handleTrap: (id, effect) => {
+        let fired = false;
+        set((s) => {
+          if (s.handledTraps.includes(id)) return;
+          s.handledTraps.push(id);
+          if (effect.cash) s.cash = Math.max(0, s.cash - Math.abs(effect.cash));
+          if (effect.heat) s.heat = Math.min(100, s.heat + Math.abs(effect.heat));
+          fired = true;
+        });
+        return fired;
+      },
+      recordSiteActivity: (kind) =>
+        set((s) => {
+          if (kind === 'video') s.stats.videosWatched += 1;
+          else if (kind === 'search') s.stats.searchesRun += 1;
+          else s.stats.wikiRead += 1;
+        }),
       // Core trading loop
       buyMarketOffer: (offer, marketStatus, address = DEFAULT_ADDRESS) => {
         let result: BuyResult = { ok: false };
@@ -1159,6 +1204,8 @@ export const useGameStore = create<GameState>()(
         shipments: state.shipments,
         runners: state.runners,
         handledMails: state.handledMails,
+        learnedClues: state.learnedClues,
+        handledTraps: state.handledTraps,
       }),
       migrate: (persisted) => {
         const previous = (persisted ?? {}) as Partial<PersistedGame>;
@@ -1183,6 +1230,8 @@ export const useGameStore = create<GameState>()(
           shipments: previous.shipments ?? base.shipments,
           runners: previous.runners ?? base.runners,
           handledMails: previous.handledMails ?? base.handledMails,
+          learnedClues: previous.learnedClues ?? base.learnedClues,
+          handledTraps: previous.handledTraps ?? base.handledTraps,
         };
       },
     },
