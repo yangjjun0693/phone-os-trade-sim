@@ -299,7 +299,18 @@ function createInitialState() {
     heat: 12,
     day: 1,
     gameDateTime: GAME_EPOCH,
-    inventory: [] satisfies InventoryItem[],
+    // A fresh run starts with a small stack to sell, so the Trade app has
+    // something to work with before the first delivery arrives.
+    inventory: [
+      {
+        id: 'item-seed-jelly',
+        productId: 'product-jelly',
+        name: '엑스터시 젤리',
+        qty: 4,
+        unitCost: 6_000,
+        marketPrice: 16_000,
+      },
+    ] satisfies InventoryItem[],
     browserHistory: [],
     identities: {},
     bank: {
@@ -384,7 +395,7 @@ function createInitialState() {
         id: 'deal-seed-1',
         npcId: 'npc-dal',
         productId: 'product-jelly',
-        productName: '녹색 젤리',
+        productName: '엑스터시 젤리',
         qty: 4,
         unitPrice: 16_000,
         createdAt: GAME_EPOCH,

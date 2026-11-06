@@ -13,6 +13,15 @@ beforeEach(() => {
 });
 
 describe('gameStore', () => {
+  it('starts a fresh run with four green jelly in stock', () => {
+    useGameStore.getState().restartGame();
+    const jelly = useGameStore
+      .getState()
+      .inventory.find((item) => item.productId === 'product-jelly');
+    expect(jelly?.qty).toBe(4);
+    expect(jelly?.marketPrice).toBe(16_000);
+  });
+
   it('never lets cash drop below zero', () => {
     useGameStore.getState().addCash(-99_999_999);
     expect(useGameStore.getState().cash).toBe(0);

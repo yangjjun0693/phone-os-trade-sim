@@ -301,8 +301,9 @@ describe('closing the day', () => {
     expect(state.statusReason).toBe('');
     expect(state.day).toBe(1);
     expect(state.cash).toBe(1_500_000);
-    // A fresh run starts with no stock on hand — everything is bought.
-    expect(state.inventory).toHaveLength(0);
+    // A fresh run starts with a small seed of green jelly to sell.
+    const jelly = state.inventory.find((item) => item.productId === 'product-jelly');
+    expect(jelly?.qty).toBe(4);
     expect(state.shipments).toHaveLength(0);
     expect(state.stats.sales).toBe(0);
   });
