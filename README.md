@@ -6,19 +6,19 @@
 
 ## 현재 구현 범위
 
-이번 마일스톤은 **게임 로직이 아니라 "뼈대 + iOS 스타일 폰 OS + 앱 열고 닫기"**까지입니다.
+폰 OS 껍데기부터 **거래 하루 루프 전체**까지 구현되어 있습니다. 자세한 진행 상황과 설계는 [`phase.md`](./phase.md) 참고.
 
-- iPhone 비율 프레임(데스크톱) / 전체 화면(모바일, `100dvh` + safe-area)
-- 상태바(게임 내 시계, 신호·와이파이·배터리), 다이나믹 아일랜드, 홈 인디케이터
-- 잠금 화면(큰 시계·날짜, 알림 카드, 손전등/카메라 버튼, 스와이프 업 해제)
-- 홈 화면: 위젯 2개, 4열 아이콘 그리드, 페이지 스와이프 + 도트, 블러 독
-- 아이콘 편집 모드(지글 애니메이션) + 드래그 정렬, 배치 영구 저장
-- 앱 열기/닫기 iOS식 줌 전환(`layoutId` 공유 요소 + 스프링)
-- 앱 전환기(최근 앱 카드), 알림센터, 컨트롤센터
-- 앱 껍데기 9종: 거래 · 메시지 · 브라우저 · 지갑 · 메모 · 설정 · 메일 · 포럼 · 연락처
-- 상태 저장(Zustand + persist + 버전/마이그레이션), Supabase 클라이언트 자리, PWA
+- **폰 OS**: iPhone 비율 프레임(데스크톱) / 전체 화면(모바일, `100dvh` + safe-area), 상태바(게임 시계·신호·배터리), 다이나믹 아일랜드, 홈 인디케이터, 잠금 화면, 홈 화면(위젯·4열 그리드·블러 독), 아이콘 편집(지글·드래그 정렬), 앱 열기/닫기 줌 전환, 앱 전환기, 알림센터, 컨트롤센터
+- **앱 20종**: 거래 · 메시지/통화 · Chroma · Sailor · Shade · 지갑 · 메모 · 설정 · Gmall · Protean · Telegraph · Ex · 포럼 · 연락처 · 초콜렛뱅크 · 초선일보 · 구팡 · Maps · Amason · steak
+- **거래 하루 루프**: 매입 → 배송 → 수령(주소별 heat·압수·분실) → 메신저 응대 → 약속(예약 판매) → 만남/판매 → 자금 정리(은행·steak) → 하루 마감. 모든 행동이 게임 시간을 소모합니다.
+- **게임 시스템**: 품목 11종 + 스페셜 3종, NPC 24명, 채널 2종 메신저, 신뢰, 시세 변동, heat(현금·방문·이동), 보관 용량/압수, 러너(자동 판매), 피싱 메일, 단서로 마켓 판별(허니팟/사기)
+- **브라우저 3종 차별화**: 망 계층(`clearnet` / `mirror` / `onion`) — Chroma는 `.onion` 차단, Sailor는 미러까지(+heat), Shade는 발견한 `.onion`(+초대·시간 소모)
+- **일상 웹**: 마켓 외에 **ViewTube(영상) · Sleuth(검색) · 중고마을 · OpenPedia(위키) · OpenPedia .onion**. 영상으로 시간 보내기, 위키로 주소 해금, 함정(무료 시청·선입금·검색 광고)
+- **Amason**: 영어 전용 미국 쇼핑 앱(달러 + 원화 병기). 거래 루프와 분리된 생활 콘텐츠
+- **튜토리얼**: 손글씨 `hello` 인트로 → 초기 설정 → 홈 전용 플레이 가이드(스포트라이트·자동 완료·건너뛰기)
+- **상태 저장**: Zustand `persist` + 버전/마이그레이션, 세이브 내보내기/불러오기, PWA(오프라인 캐시 + 홈 화면 설치)
 
-게임 로직(가격·고객·heat·이벤트·마켓)은 UI와 분리된 `src/game/` 순수 함수와 `src/data/*.json` 자리로만 준비되어 있습니다.
+게임 로직은 UI와 분리된 `src/game/` **순수 함수**로, 편집 가능한 콘텐츠는 `src/content/*.ts` 로 모여 있습니다.
 
 ## 기술 스택
 
@@ -32,7 +32,7 @@
 | 드래그 정렬 | dnd-kit (core / sortable / utilities / modifiers) |
 | 아이콘 | lucide-react, react-icons |
 | 날짜 | date-fns (게임 내 가상 날짜) |
-| 사운드 | howler (API만 준비, 오디오 에셋 미포함) |
+| 사운드 | howler (Phase 8 예정 — 아직 에셋·합성 톤 미포함) |
 | 유틸 | immer, nanoid, zod, clsx, tailwind-merge |
 | 백엔드(예정) | @supabase/supabase-js (클라이언트 초기화만) |
 | 품질 | ESLint, Prettier, Vitest + Testing Library |
@@ -93,18 +93,40 @@ npm run dev        # http://localhost:5173
 
 ```
 src/
-  os/        폰 프레임, 상태바, 다이나믹 아일랜드, 잠금화면, 홈, 독, 위젯,
-             알림센터, 컨트롤센터, 앱 전환기, 앱 창, 셸 제스처
-  apps/      앱 9종 + registry.ts (앱 등록)
-  game/      순수 로직: pricing, heat, customers, events, markets
-  data/      markets / npcs / clues JSON 자리
-  store/     osStore.ts, gameStore.ts (persist + version/migrate)
-  lib/       supabase.ts, saveService.ts, sound.ts
-  styles/    tokens.css (CSS 변수), globals.css
-  hooks/     useResolvedTheme, useGameClock, useMediaQuery, useNow, useLongPress
-  utils/     cn, format, haptics, motion
-  types/     공용 타입
+  os/         폰 프레임, 상태바, 다이나믹 아일랜드, 잠금화면, 홈, 독, 위젯,
+              알림센터, 컨트롤센터, 앱 전환기, 앱 창, 셸 제스처, 온보딩·가이드
+  apps/       앱 20종 + registry.ts (앱 등록) + 공용 AppShell/EmptyState
+  game/       순수 로직: pricing, heat, exposure, markets, trade, customers,
+              events, messenger, deals, shipments, bank, patrol, steak, news,
+              tutorial, sites, economy
+  content/    편집용 콘텐츠: economy, sites, messages, vendors, logistics,
+              forum, phishing, runners, amason, tutorial …
+  data/       markets / npcs / clues / products / places (JSON·TS)
+  store/      gameStore, osStore, tutorialStore, amasonStore (persist + version/migrate)
+  lib/        supabase.ts, saveService.ts, sound.ts
+  components/ 공용 UI (Pill 등)
+  styles/     tokens.css (CSS 변수), globals.css, fonts.css
+  hooks/      useResolvedTheme, useGameClock, useMediaQuery, useNow, useLongPress …
+  utils/      cn, format, haptics, motion, color
+  assets/     인트로 손글씨 폰트(OFL) 등
+  types/      공용 타입
 ```
+
+## 콘텐츠 편집 (코드 수정 없이)
+
+밸런스 수치와 문구는 `src/content/*.ts` 배열/상수만 고치면 됩니다. 각 파일 상단에 `// 편집 방법:` 주석이 있습니다. 로직은 `src/game/`, 콘텐츠는 `src/content/` 원칙입니다.
+
+| 파일 | 내용 |
+| --- | --- |
+| `content/economy.ts` | 모든 밸런스 수치(시작 자금, 목표, 지출, heat 기준 등) |
+| `content/sites.ts` | 일상 웹 사이트(영상·검색·중고·위키) |
+| `content/messages.ts` | 메신저 대사/선택지 |
+| `content/vendors.ts` | 공급자·스페셜 품목 |
+| `content/logistics.ts` | 수령 주소 3곳과 비용/리스크 |
+| `content/phishing.ts` | 피싱 메일 |
+| `content/runners.ts` | 러너 |
+| `content/amason.ts` | Amason 품목(영어, 달러, 이미지 URL) |
+| `content/tutorial.ts` | 인트로 문구·스텝 |
 
 ## 새 앱 추가하는 방법
 
@@ -118,22 +140,29 @@ export const APP_REGISTRY = {
     id: 'myapp',
     name: '내 앱',
     icon: Sparkles,
+    accent: '#a855f7',
     gradient: ['#a855f7', '#6366f1'],
-    Component: MyApp,
+    ...lazyApp(() => import('./myapp/MyApp'), 'MyApp'),
   },
 };
 ```
 
 3. 홈 배치에 넣으려면 `src/store/defaults.ts` 의 `DEFAULT_PAGES` / `DEFAULT_DOCK` 에 id를 추가합니다.
 
-홈 화면·독·앱 전환기는 모두 레지스트리를 읽으므로 다른 파일은 수정할 필요가 없습니다.
+홈 화면·독·앱 전환기는 모두 레지스트리를 읽으므로 다른 파일은 수정할 필요가 없습니다. 앱 구현은 `lazyApp()` 으로 청크가 분리되고, 아이콘 press/hover에서 `preload()` 됩니다.
 
 ## 상태 저장
 
-- `osStore` — 열린 앱/최근 앱, 잠금 상태, 테마, 상태바 값, 컨트롤센터 값, 홈 배치, 알림 (`phone-os:os`)
-- `gameStore` — 현금, heat, 게임 날짜/시계, 재고 (더미) (`phone-os:game`)
-- 두 스토어 모두 `persist` + `version` 필드를 사용해 **마이그레이션 가능**하게 저장합니다. UI 상태(열린 앱 등)는 저장하지 않습니다.
+- `gameStore` — 현금, heat, 날짜/시계, 재고, 배송, 약속, 은행/steak, 신원, 통계, 학습한 단서 (`phone-os:game`, 스키마 **v10**)
+- `osStore` — 열린 앱/최근 앱, 잠금, 테마, 상태바, 컨트롤센터, 홈 배치, 알림 (`phone-os:os`, 스키마 **v11**)
+- `tutorialStore` — 인트로/설정/가이드 상태 (게임 세이브와 분리, `phone-os:tutorial`)
+- `amasonStore` — Amason 장바구니/주문 (`phone-os:amason`)
+- 모두 `persist` + `version` + `migrate` 로 **기존 세이브를 버리지 않고** 이전합니다. UI 상태(열린 앱 등)는 저장하지 않습니다.
 - 설정 앱에서 **세이브 내보내기/불러오기**(JSON)를 지원합니다.
+
+## 로드맵
+
+Phase 0–6c + Amason까지 완료입니다. 다음은 **Phase 7(알림 시스템)** → Phase 8(오디오) → Phase 9(DB) → Phase 10(콘텐츠 이관·문서). 상세 계획·수치·변경 이력은 [`phase.md`](./phase.md).
 
 ## Supabase (연결은 아직 하지 않음)
 
