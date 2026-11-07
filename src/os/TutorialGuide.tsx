@@ -265,7 +265,7 @@ export function TutorialGuide() {
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-ios-muted">
-                  플레이 가이드
+                  튜토리얼
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="text-[12px] font-semibold tabular-nums text-ios-muted">
@@ -333,7 +333,7 @@ export function TutorialGuide() {
                       }}
                       className="flex h-10 flex-1 items-center justify-center rounded-xl bg-app text-[14px] font-semibold text-white active:opacity-80"
                     >
-                      처음부터 다시
+                      처음부터
                     </button>
                     <button
                       type="button"
@@ -344,7 +344,7 @@ export function TutorialGuide() {
                       }}
                       className="flex h-10 flex-1 items-center justify-center rounded-xl bg-ios-separator/15 text-[14px] font-semibold text-ios-text"
                     >
-                      닫기
+                      Close
                     </button>
                   </div>
                 </div>
@@ -426,7 +426,6 @@ export function TutorialGuide() {
                     className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-1.5 text-[12px] font-medium text-ios-muted"
                   >
                     <X className="size-3.5" aria-hidden />
-                    그만 보기 (설정에서 다시 켤 수 있음)
                   </button>
                 </div>
               ) : null}
