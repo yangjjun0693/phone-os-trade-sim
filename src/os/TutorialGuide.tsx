@@ -418,6 +418,7 @@ export function TutorialGuide() {
 
                   <button
                     type="button"
+                    aria-label="그만 보기 (설정에서 다시 켤 수 있음)"
                     onClick={() => {
                       haptic(4);
                       stopGuide();

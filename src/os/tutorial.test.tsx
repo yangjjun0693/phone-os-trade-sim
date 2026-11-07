@@ -185,7 +185,7 @@ describe('tutorial guide', () => {
     await userEvent.click(screen.getByRole('button', { name: '가이드 펼치기' }));
     expect(screen.getByRole('dialog')).toHaveTextContent('가이드 완료');
 
-    await userEvent.click(screen.getByRole('button', { name: '처음부터 다시' }));
+    await userEvent.click(screen.getByRole('button', { name: '처음부터' }));
 
     const state = useTutorialStore.getState();
     expect(state.done).toEqual([]);
@@ -195,7 +195,7 @@ describe('tutorial guide', () => {
 
   it('hides itself when the player quits the guide', async () => {
     render(<TutorialGuide />);
-    await userEvent.click(screen.getByText(/그만 보기/));
+    await userEvent.click(screen.getByRole('button', { name: /그만 보기/ }));
 
     expect(useTutorialStore.getState().active).toBe(false);
     await waitFor(() => {
