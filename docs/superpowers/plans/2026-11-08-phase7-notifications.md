@@ -479,11 +479,11 @@ describe('NotificationCenter', () => {
     expect(useOSStore.getState().notifications.map((n) => n.id)).toEqual(['b']);
   });
 
-  it('taps a notification with no app/action without crashing', async () => {
+  it('marks read on tap even when there is no app/action (no crash)', async () => {
     const user = userEvent.setup();
     render(<NotificationCenter />);
     await user.click(screen.getByText('구팡'));
-    expect(useOSStore.getState().notifications).toBeTruthy();
+    expect(useOSStore.getState().notifications.find((n) => n.id === 'b')?.read).toBe(true);
   });
 });
 ```
@@ -495,7 +495,7 @@ Expected: FAIL — delete button not found.
 
 - [ ] **Step 3: Implement** the centre
 
-Render `groupNotifications(visibleNotifications(list, now))`. Each group: latest card (icon initial, title, body, unread dot when `unread>0`, count badge when `items.length>1`). Tap card → `markNotificationRead(latest.id)`; if `latest.action` → `getApp(action.appId)?.preload?.(); openApp(action.appId); setOverlay('none')`. Add a per-card swipe-left delete using `useDrag` (movement.x < -60 → `removeNotification`) and an accessible `aria-label={`${title} 삭제`}` delete button on each card (keeps it testable without gestures). Keep the existing "모두 지우기" button and background-tap dismiss.
+Render `groupNotifications(visibleNotifications(list, now))`. Each group: latest card (icon initial, title, body, unread dot when `unread>0`, count badge when `items.length>1`). Tap card → **always** `markNotificationRead(latest.id)`; **then, only if** `latest.action` → `getApp(action.appId)?.preload?.(); openApp(action.appId); setOverlay('none')`. Add a per-card swipe-left delete using `useDrag` (movement.x < -60 → `removeNotification`) and an accessible `aria-label={`${title} 삭제`}` delete button on each card (keeps it testable without gestures). Keep the existing "모두 지우기" button and background-tap dismiss.
 
 - [ ] **Step 4: Run to verify pass**
 
