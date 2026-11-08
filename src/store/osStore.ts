@@ -9,10 +9,33 @@ import type {
   ThemeMode,
 } from '@/types';
 import { DEFAULT_CLOCK_SPEED, type ClockSpeed } from '@/content/time';
+import {
+  eventGroupKey,
+  notificationsForEvent,
+  shouldDeliver,
+  type GameEvent,
+} from '@/game/notifications';
+import { useGameStore } from './gameStore';
 import { useTutorialStore } from './tutorialStore';
 import { DEFAULT_LAYOUT, OS_PERSIST_VERSION, withMissingDefaultApps } from './defaults';
 
 const RECENTS_LIMIT = 8;
+/** How many notifications the shade keeps before the oldest roll off. */
+const NOTIFICATION_LIMIT = 20;
+
+/** Spam-guard bookkeeping carried across reloads. */
+export interface NotificationMeta {
+  /** In-game day the counters below belong to. */
+  day: number;
+  /** Notifications delivered today, reset lazily when the day rolls over. */
+  todayCount: number;
+  /** Group key -> ISO game time of the last delivery, for the cooldown. */
+  lastByKey: Record<string, string>;
+}
+
+export function defaultNotificationMeta(): NotificationMeta {
+  return { day: 1, todayCount: 0, lastByKey: {} };
+}
 
 export interface OSControls {
   brightness: number;
@@ -44,7 +67,14 @@ export interface OSState {
   appSession: number;
   recents: string[];
   overlay: OverlayKind;
+  /** The notification shade's contents, newest first. Persisted. */
   notifications: GameNotification[];
+  /** Spam-guard bookkeeping: which day we are on, today's tally, last send per group. */
+  notificationMeta: NotificationMeta;
+  /** Id of the notification currently raised as a transient pill (never persisted). */
+  pillId: string | null;
+  /** Bumped whenever a fresh pill is raised, so the pill can re-animate (never persisted). */
+  pillSeq: number;
 
   lock: () => void;
   unlock: () => void;
@@ -62,7 +92,17 @@ export interface OSState {
   goHome: () => void;
   removeRecent: (appId: string) => void;
   setOverlay: (overlay: OverlayKind) => void;
-  pushNotification: (notification: GameNotification) => void;
+  /**
+   * Turn a domain event into notifications and store whichever survive the
+   * spam guard. Returns the ones actually delivered so the caller can fire
+   * haptics / sound.
+   */
+  notify: (event: GameEvent) => GameNotification[];
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  removeNotification: (id: string) => void;
+  /** Legacy direct push. Returns the stored notification, or null when consent is off. */
+  pushNotification: (notification: GameNotification) => GameNotification | null;
   clearNotifications: () => void;
 }
 
@@ -107,8 +147,81 @@ function insertAt(layout: HomeLayout, ref: ContainerRef, id: string): void {
 
 type PersistedOS = Pick<
   OSState,
-  'theme' | 'clockSpeed' | 'status' | 'controls' | 'layout' | 'recents'
+  | 'theme'
+  | 'clockSpeed'
+  | 'status'
+  | 'controls'
+  | 'layout'
+  | 'recents'
+  | 'notifications'
+  | 'notificationMeta'
 >;
+
+/**
+ * Add the notification fields a pre-v12 save lacks, without disturbing what it
+ * already has. Applied on every migration path so v11 and older all land here.
+ */
+function withNotificationFields(previous: Partial<PersistedOS>): Partial<PersistedOS> {
+  return {
+    ...previous,
+    notifications: previous.notifications ?? [],
+    notificationMeta: previous.notificationMeta ?? defaultNotificationMeta(),
+  };
+}
+
+/**
+ * Persist migration. Exported so the version bump can be tested directly
+ * (the persisted state shape is otherwise awkward to reach).
+ */
+export const migrateOS = (persisted: unknown, version: number): PersistedOS => {
+  const previous = (persisted ?? {}) as Partial<PersistedOS>;
+  if (version < 1) {
+    return withNotificationFields({ ...previous, layout: DEFAULT_LAYOUT }) as PersistedOS;
+  }
+  if (version < 7) {
+    return withNotificationFields({ ...previous, layout: DEFAULT_LAYOUT }) as PersistedOS;
+  }
+  if (version < 8) {
+    return withNotificationFields({ ...previous, clockSpeed: DEFAULT_CLOCK_SPEED }) as PersistedOS;
+  }
+  // v9: the home screen became a single page holding every app.
+  if (version < 9) {
+    return withNotificationFields({
+      ...previous,
+      clockSpeed: previous.clockSpeed ?? DEFAULT_CLOCK_SPEED,
+      layout: DEFAULT_LAYOUT,
+    }) as PersistedOS;
+  }
+  // v10: the old default brightness (0.72) greyed out every screen.
+  // Only bump saves that still carry that exact default.
+  if (version < 10) {
+    const controls = previous.controls ?? {
+      brightness: 1,
+      volume: 0.45,
+      airplane: false,
+      bluetooth: true,
+      flashlight: false,
+    };
+    return withNotificationFields({
+      ...previous,
+      controls: {
+        ...controls,
+        brightness: controls.brightness === 0.72 ? 1 : controls.brightness,
+      },
+    }) as PersistedOS;
+  }
+  // v11: a new app (Amason) joined the home screen. Append whatever the
+  // default layout has and this save does not, so nobody has to hunt for
+  // it — and leave the order the player arranged untouched.
+  if (version < 11) {
+    return withNotificationFields({
+      ...previous,
+      layout: withMissingDefaultApps(previous.layout),
+    }) as PersistedOS;
+  }
+  // v12: notifications moved into the save, along with the spam-guard meta.
+  return withNotificationFields(previous) as PersistedOS;
+};
 
 export const useOSStore = create<OSState>()(
   persist(
@@ -132,26 +245,10 @@ export const useOSStore = create<OSState>()(
       appSession: 0,
       recents: [],
       overlay: 'none',
-      notifications: [
-        {
-          id: 'seed-1',
-          appId: 'messages',
-          priority: 'normal',
-          title: '메시지',
-          body: '"그 물건 아직 있냐? 오늘 밤에 볼 수 있어."',
-          createdAt: '2026-03-14T21:12:00.000Z',
-          read: false,
-        },
-        {
-          id: 'seed-2',
-          appId: 'browser',
-          priority: 'normal',
-          title: '브라우저',
-          body: '새 마켓 1곳이 온라인 상태가 되었습니다.',
-          createdAt: '2026-03-14T20:40:00.000Z',
-          read: false,
-        },
-      ],
+      notifications: [],
+      notificationMeta: defaultNotificationMeta(),
+      pillId: null,
+      pillSeq: 0,
 
       lock: () =>
         set((s) => {
@@ -247,16 +344,75 @@ export const useOSStore = create<OSState>()(
           // switcher then raced its exit animation — which could leave an
           // invisible, unresponsive window on top of the new one.
         }),
-      pushNotification: (notification) =>
+      notify: (event) => {
+        const { gameDateTime: now, day } = useGameStore.getState();
+        const built = notificationsForEvent(event);
+        const delivered: GameNotification[] = [];
+        set((s) => {
+          // Roll the daily counter lazily, even while alerts are switched off:
+          // the tally has to be correct the moment they are switched back on.
+          if (s.notificationMeta.day !== day) {
+            s.notificationMeta.day = day;
+            s.notificationMeta.todayCount = 0;
+          }
+          // Consent is a real preference — apps still work, but nothing lands.
+          if (!useTutorialStore.getState().notifications) return;
+          for (const notif of built) {
+            const allowed = shouldDeliver({
+              notification: notif,
+              existing: s.notifications,
+              now,
+              lastByKey: s.notificationMeta.lastByKey,
+              todayCount: s.notificationMeta.todayCount,
+            });
+            if (!allowed) continue;
+            s.notifications = [notif, ...s.notifications].slice(0, NOTIFICATION_LIMIT);
+            s.notificationMeta.todayCount += 1;
+            s.notificationMeta.lastByKey[eventGroupKey(event)] = now;
+            delivered.push(notif);
+            if (notif.priority === 'high' || notif.priority === 'urgent') {
+              s.pillId = notif.id;
+              s.pillSeq += 1;
+            }
+          }
+        });
+        return delivered;
+      },
+      markNotificationRead: (id) =>
+        set((s) => {
+          const notif = s.notifications.find((entry) => entry.id === id);
+          if (notif) notif.read = true;
+        }),
+      markAllNotificationsRead: () =>
+        set((s) => {
+          for (const notif of s.notifications) notif.read = true;
+        }),
+      removeNotification: (id) =>
+        set((s) => {
+          s.notifications = s.notifications.filter((entry) => entry.id !== id);
+        }),
+      pushNotification: (notification) => {
+        // Normalise the optional-at-runtime fields legacy callers omit.
+        const stored: GameNotification = {
+          ...notification,
+          priority: notification.priority ?? 'normal',
+          createdAt: notification.createdAt ?? useGameStore.getState().gameDateTime,
+          read: notification.read ?? false,
+        };
+        let added = false;
         set((s) => {
           // The onboarding consent is a real preference: with notifications
           // off, apps still work but nothing lands in the shade.
           if (!useTutorialStore.getState().notifications) return;
-          s.notifications = [notification, ...s.notifications].slice(0, 20);
-        }),
+          s.notifications = [stored, ...s.notifications].slice(0, NOTIFICATION_LIMIT);
+          added = true;
+        });
+        return added ? stored : null;
+      },
       clearNotifications: () =>
         set((s) => {
           s.notifications = [];
+          s.pillId = null;
         }),
     })),
     {
@@ -271,46 +427,10 @@ export const useOSStore = create<OSState>()(
         controls: state.controls,
         layout: state.layout,
         recents: state.recents,
+        notifications: state.notifications,
+        notificationMeta: state.notificationMeta,
       }),
-      migrate: (persisted, version) => {
-        const previous = (persisted ?? {}) as Partial<PersistedOS>;
-        if (version < 1) return { ...previous, layout: DEFAULT_LAYOUT } as PersistedOS;
-        if (version < 7) return { ...previous, layout: DEFAULT_LAYOUT } as PersistedOS;
-        if (version < 8) return { ...previous, clockSpeed: DEFAULT_CLOCK_SPEED } as PersistedOS;
-        // v9: the home screen became a single page holding every app.
-        if (version < 9) {
-          return {
-            ...previous,
-            clockSpeed: previous.clockSpeed ?? DEFAULT_CLOCK_SPEED,
-            layout: DEFAULT_LAYOUT,
-          } as PersistedOS;
-        }
-        // v10: the old default brightness (0.72) greyed out every screen.
-        // Only bump saves that still carry that exact default.
-        if (version < 10) {
-          const controls = previous.controls ?? {
-            brightness: 1,
-            volume: 0.45,
-            airplane: false,
-            bluetooth: true,
-            flashlight: false,
-          };
-          return {
-            ...previous,
-            controls: {
-              ...controls,
-              brightness: controls.brightness === 0.72 ? 1 : controls.brightness,
-            },
-          } as PersistedOS;
-        }
-        // v11: a new app (Amason) joined the home screen. Append whatever the
-        // default layout has and this save does not, so nobody has to hunt for
-        // it — and leave the order the player arranged untouched.
-        if (version < 11) {
-          return { ...previous, layout: withMissingDefaultApps(previous.layout) } as PersistedOS;
-        }
-        return previous as PersistedOS;
-      },
+      migrate: migrateOS,
     },
   ),
 );

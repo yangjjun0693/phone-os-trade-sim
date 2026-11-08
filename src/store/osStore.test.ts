@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_LAYOUT } from './defaults';
-import { useOSStore } from './osStore';
+import { GAME_EPOCH, useGameStore } from './gameStore';
+import { migrateOS, useOSStore } from './osStore';
+import { useTutorialStore } from './tutorialStore';
 
 function resetStore() {
   useOSStore.setState({
@@ -119,5 +121,82 @@ describe('osStore / home layout', () => {
 
     expect(useOSStore.getState().layout.pages).toEqual(DEFAULT_LAYOUT.pages);
     expect(useOSStore.getState().layout.pages[0]).not.toBe(DEFAULT_LAYOUT.pages[0]);
+  });
+});
+
+function resetNotifications() {
+  useOSStore.setState({
+    notifications: [],
+    notificationMeta: { day: 1, todayCount: 0, lastByKey: {} },
+    pillId: null,
+    pillSeq: 0,
+  });
+  useGameStore.setState({ gameDateTime: GAME_EPOCH, day: 1 });
+}
+
+describe('osStore.notify', () => {
+  beforeEach(resetNotifications);
+
+  it('stores a delivered notification and returns it', () => {
+    const out = useOSStore.getState().notify({
+      type: 'bank.deposit',
+      at: GAME_EPOCH,
+      amount: 2_000_000,
+      large: true,
+      flagged: true,
+    });
+    expect(out).toHaveLength(1);
+    expect(useOSStore.getState().notifications[0].priority).toBe('high');
+  });
+
+  it('applies the cooldown to repeats in the same group', () => {
+    const ev = {
+      type: 'shipment.landed' as const,
+      at: GAME_EPOCH,
+      shipmentId: 's1',
+      status: 'arrived' as const,
+      productName: '젤리',
+      qty: 1,
+    };
+    expect(useOSStore.getState().notify(ev)).toHaveLength(1);
+    expect(useOSStore.getState().notify({ ...ev, shipmentId: 's2' })).toHaveLength(0);
+  });
+
+  it('honours the notification consent switch', () => {
+    useTutorialStore.setState({ notifications: false });
+    expect(
+      useOSStore
+        .getState()
+        .notify({
+          type: 'messenger.arrival',
+          at: GAME_EPOCH,
+          npcId: 'npc-dal',
+          npcName: '달',
+          channel: 'telegraph',
+        }),
+    ).toHaveLength(0);
+    useTutorialStore.setState({ notifications: true });
+  });
+
+  it('marks read and removes', () => {
+    const [a] = useOSStore.getState().notify({
+      type: 'bank.deposit',
+      at: GAME_EPOCH,
+      amount: 2_000_000,
+      large: true,
+      flagged: true,
+    });
+    useOSStore.getState().markNotificationRead(a.id);
+    expect(useOSStore.getState().notifications[0].read).toBe(true);
+    useOSStore.getState().removeNotification(a.id);
+    expect(useOSStore.getState().notifications).toHaveLength(0);
+  });
+});
+
+describe('osStore migration', () => {
+  it('adds notifications + meta to a v11 save', () => {
+    const migrated = migrateOS({ theme: 'dark', layout: DEFAULT_LAYOUT } as never, 11);
+    expect(migrated.notifications).toEqual([]);
+    expect(migrated.notificationMeta).toEqual({ day: 1, todayCount: 0, lastByKey: {} });
   });
 });

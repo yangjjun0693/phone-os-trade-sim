@@ -45,4 +45,4 @@ export function withMissingDefaultApps(layout: HomeLayout | undefined): HomeLayo
 
 export const PERSIST_VERSION = 10;
 /** Home layout schema version; bumped separately so game saves are not wiped. */
-export const OS_PERSIST_VERSION = 11;
+export const OS_PERSIST_VERSION = 12;
