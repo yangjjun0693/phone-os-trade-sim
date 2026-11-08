@@ -67,47 +67,55 @@ export const AppIcon = memo(function AppIcon({
       className={cn('flex w-[70px] flex-col items-center gap-1.5', editable && 'animate-jiggle')}
       style={editable ? { animationDelay: `${jiggleDelay}ms` } : undefined}
     >
-      <motion.button
-        type="button"
-        aria-label={app.name}
-        // Stable hook for the play guide's spotlight, which needs the icon's
-        // on-screen box (grid and dock icons share one entry per app id).
-        data-app-id={app.id}
-        whileTap={{ scale: 0.88 }}
-        transition={{ type: 'spring', stiffness: 520, damping: 34 }}
-        onPointerEnter={() => app.preload?.()}
-        onFocus={() => app.preload?.()}
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size * ICON_RADIUS_RATIO,
-        }}
-        className="relative flex items-center justify-center overflow-hidden shadow-[0_8px_18px_-6px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/25 dark:ring-white/20"
-        {...handlers}
-      >
-        <Icon size={size} className="block" aria-hidden />
-        <span
-          className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-b from-white/30 via-transparent to-black/10"
-          aria-hidden
-        />
+      {/*
+        Non-clipping wrapper: the badge is a sibling of the tile button, not a
+        child, so the tile's `overflow-hidden` (which clips the gradient to the
+        rounded corners) can't shave the pill or its ring. The wrapper is sized
+        to the icon and overhangs by the badge's negative offsets.
+      */}
+      <div className="relative" style={{ width: size, height: size }}>
+        <motion.button
+          type="button"
+          aria-label={app.name}
+          // Stable hook for the play guide's spotlight, which needs the icon's
+          // on-screen box (grid and dock icons share one entry per app id).
+          data-app-id={app.id}
+          whileTap={{ scale: 0.88 }}
+          transition={{ type: 'spring', stiffness: 520, damping: 34 }}
+          onPointerEnter={() => app.preload?.()}
+          onFocus={() => app.preload?.()}
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size * ICON_RADIUS_RATIO,
+          }}
+          className="relative flex items-center justify-center overflow-hidden shadow-[0_8px_18px_-6px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/25 dark:ring-white/20"
+          {...handlers}
+        >
+          <Icon size={size} className="block" aria-hidden />
+          <span
+            className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-b from-white/30 via-transparent to-black/10"
+            aria-hidden
+          />
+          {highlighted ? (
+            <motion.span
+              aria-hidden
+              data-tutorial-highlight
+              className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[0_0_0_2px_rgb(var(--ios-accent))] ring-2 ring-inset ring-white"
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 1.9, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          ) : null}
+        </motion.button>
         {badge > 0 ? (
           <span
             aria-label={`${app.name} 알림 ${badge}`}
-            className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold leading-none text-white shadow-md ring-2 ring-white dark:ring-black/50"
+            className="pointer-events-none absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold leading-none text-white shadow-md ring-2 ring-white dark:ring-black/50"
           >
             {badge > 9 ? '9+' : badge}
           </span>
         ) : null}
-        {highlighted ? (
-          <motion.span
-            aria-hidden
-            data-tutorial-highlight
-            className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[0_0_0_2px_rgb(var(--ios-accent))] ring-2 ring-inset ring-white"
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 1.9, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        ) : null}
-      </motion.button>
+      </div>
       {showLabel && (
         <span className="wallpaper-ink max-w-full truncate text-[11px] font-semibold leading-tight">
           {app.name}
