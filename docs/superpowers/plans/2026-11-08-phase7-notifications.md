@@ -34,6 +34,8 @@
 
 **Files:**
 - Modify: `src/types/index.ts` (`GameNotification` 교체 + `NotificationPriority`, `NotificationAction`)
+- Modify: `src/store/osStore.ts` (시드 알림 2개를 새 모양으로 — `date` → `createdAt` + `priority`/`read`)
+- Modify: `src/apps/bank/BankApp.tsx` (push 페이로드를 새 모양으로)
 - Create: `src/game/notifications.ts`
 - Test: `src/game/notifications.test.ts`
 
@@ -115,6 +117,8 @@ Run: `npx vitest run src/game/notifications.test.ts`
 Expected: FAIL — cannot resolve `./notifications`.
 
 - [ ] **Step 3: Implement** `src/types/index.ts` (replace `GameNotification`) and `src/game/notifications.ts`
+
+Also update the three existing constructors so typecheck stays green: the two seed notifications in `src/store/osStore.ts` and the `pushNotification({...})` payload in `src/apps/bank/BankApp.tsx` gain `priority: 'normal'`, `read: false`, and rename `date` → `createdAt` (T3/T4 rework these further).
 
 `channelsFor` returns the §8.5 mapping above (`center` always true; `banner` = ≥normal; `pill`/`haptic` = ≥high; `sound` = urgent). `isExpired(n, now)` = `!!n.expiresAt && n.expiresAt <= now`. `visibleNotifications` filters `!isExpired` then sorts by priority rank (urgent=3…low=0) desc, then `createdAt` desc. `groupNotifications` keys on `groupKey ?? appId ?? id`, `latest` = first after the same sort, `unread` = items with `!read`. `badgeCounts` counts unread per `appId`. `pillNotification` = first of `visibleNotifications(...)` whose priority is high/urgent, else null.
 
