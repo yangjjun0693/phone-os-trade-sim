@@ -1,8 +1,10 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
 import type { AppMeta } from '@/types';
+import { badgeCounts } from '@/game/notifications';
 import { useLongPress } from '@/hooks/useLongPress';
 import { useTutorialTargetApp } from '@/hooks/useTutorialTarget';
+import { useOSStore } from '@/store/osStore';
 import { cn } from '@/utils/cn';
 import { haptic } from '@/utils/haptics';
 import { APP_ICON_SIZE, ICON_RADIUS_RATIO } from './metrics';
@@ -35,6 +37,7 @@ export const AppIcon = memo(function AppIcon({
   const Icon = app.icon;
   const targetApp = useTutorialTargetApp();
   const highlighted = !editable && targetApp === app.id;
+  const badge = useOSStore((s) => badgeCounts(s.notifications)[app.id] ?? 0);
 
   const longPress = useLongPress({
     delay: 450,
@@ -87,6 +90,14 @@ export const AppIcon = memo(function AppIcon({
           className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-b from-white/30 via-transparent to-black/10"
           aria-hidden
         />
+        {badge > 0 ? (
+          <span
+            aria-label={`${app.name} 알림 ${badge}`}
+            className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold leading-none text-white shadow-md ring-2 ring-white dark:ring-black/50"
+          >
+            {badge > 9 ? '9+' : badge}
+          </span>
+        ) : null}
         {highlighted ? (
           <motion.span
             aria-hidden

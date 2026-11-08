@@ -2,9 +2,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
 import { Camera, Flashlight, Lock } from 'lucide-react';
 import { getApp } from '@/apps/registry';
+import { groupNotifications } from '@/game/notifications';
 import { useGameClock } from '@/hooks/useGameClock';
 import { useOSStore } from '@/store/osStore';
 import { useTutorialStore } from '@/store/tutorialStore';
+import { cn } from '@/utils/cn';
 import { haptic } from '@/utils/haptics';
 import { EASE_IOS, SPRING_BOUNCY, SPRING_SOFT } from '@/utils/motion';
 import { Wallpaper } from './Wallpaper';
@@ -34,6 +36,7 @@ export function LockScreen() {
   const notifications = useOSStore((s) => s.notifications);
   const notificationsOn = useTutorialStore((s) => s.notifications);
   const openApp = useOSStore((s) => s.openApp);
+  const markNotificationRead = useOSStore((s) => s.markNotificationRead);
   const { time, date } = useGameClock();
 
   const bind = useDrag(
@@ -88,32 +91,49 @@ export function LockScreen() {
             transition={{ ...SPRING_SOFT, delay: 0.05 }}
             className="mt-8 flex flex-col gap-2 overflow-hidden"
           >
-            {(notificationsOn ? notifications : []).slice(0, 4).map((item, index) => (
-              <motion.button
-                key={item.id}
-                type="button"
-                initial={{ opacity: 0, y: 18, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ ...SPRING_SOFT, delay: 0.08 + index * 0.05 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  if (item.appId) {
-                    getApp(item.appId)?.preload?.();
-                    unlock();
-                    openApp(item.appId);
-                  }
-                }}
-                className="glass-strong flex items-start gap-2.5 rounded-2xl p-3 text-left text-ios-text shadow-lg ring-1 ring-inset ring-white/40 dark:ring-white/10"
-              >
-                <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-white/20 text-[11px]">
-                  {getApp(item.appId)?.name.slice(0, 1) ?? '!'}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[13px] font-semibold">{item.title}</span>
-                  <span className="mt-0.5 block truncate text-[13px] opacity-80">{item.body}</span>
-                </span>
-              </motion.button>
-            ))}
+            {(notificationsOn ? groupNotifications(notifications) : []).slice(0, 4).map((group, index) => {
+              const latest = group.latest;
+              const extra = group.items.length - 1;
+              return (
+                <motion.button
+                  key={group.key}
+                  type="button"
+                  initial={{ opacity: 0, y: 18, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ ...SPRING_SOFT, delay: 0.08 + index * 0.05 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    markNotificationRead(latest.id);
+                    if (latest.appId) {
+                      getApp(latest.appId)?.preload?.();
+                      unlock();
+                      openApp(latest.appId);
+                    } else {
+                      unlock();
+                    }
+                  }}
+                  className="glass-strong flex items-start gap-2.5 rounded-2xl p-3 text-left text-ios-text shadow-lg ring-1 ring-inset ring-white/40 dark:ring-white/10"
+                >
+                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-white/20 text-[11px]">
+                    {getApp(latest.appId)?.name.slice(0, 1) ?? '!'}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={cn(
+                        'block text-[13px]',
+                        group.unread > 0 ? 'font-bold' : 'font-semibold',
+                      )}
+                    >
+                      {latest.title}
+                    </span>
+                    <span className="mt-0.5 flex items-center gap-1 text-[13px] opacity-80">
+                      <span className="truncate">{latest.body}</span>
+                      {extra > 0 ? <span className="shrink-0 font-semibold">+{extra}</span> : null}
+                    </span>
+                  </span>
+                </motion.button>
+              );
+            })}
           </motion.div>
         </div>
 
