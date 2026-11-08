@@ -53,9 +53,11 @@ export function BankApp() {
       pushNotification({
         id: `bank-${Date.now()}`,
         appId: 'bank',
+        priority: 'normal',
         title: '초콜렛뱅크',
         body: '고객님 계좌의 최근 입금 내역에 대한 확인 안내가 도착했습니다.',
-        date: gameDateTime,
+        createdAt: gameDateTime,
+        read: false,
       });
     } else {
       setMessage({ tone: 'ok', text: kind === 'deposit' ? '입금이 완료되었습니다.' : '출금이 완료되었습니다.' });

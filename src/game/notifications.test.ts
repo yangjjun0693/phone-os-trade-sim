@@ -1,0 +1,53 @@
+import { describe, expect, it } from 'vitest';
+import type { GameNotification } from '@/types';
+import { badgeCounts, channelsFor, groupNotifications, isExpired, pillNotification, visibleNotifications } from './notifications';
+
+function n(over: Partial<GameNotification> = {}): GameNotification {
+  return { id: 'x', appId: 'bank', priority: 'normal', title: 't', body: 'b', createdAt: '2026-03-14T10:00:00.000Z', read: false, ...over };
+}
+
+describe('channelsFor', () => {
+  it('always logs to the centre and adds surfaces by priority', () => {
+    expect(channelsFor('low')).toEqual({ center: true, banner: false, pill: false, sound: false, haptic: false });
+    expect(channelsFor('normal')).toEqual({ center: true, banner: true, pill: false, sound: false, haptic: false });
+    expect(channelsFor('high')).toEqual({ center: true, banner: true, pill: true, sound: false, haptic: true });
+    expect(channelsFor('urgent')).toEqual({ center: true, banner: true, pill: true, sound: true, haptic: true });
+  });
+});
+
+describe('expiry + ordering', () => {
+  it('drops expired and sorts by priority then time', () => {
+    const list = [
+      n({ id: 'a', priority: 'low', createdAt: '2026-03-14T12:00:00.000Z' }),
+      n({ id: 'b', priority: 'urgent', createdAt: '2026-03-14T09:00:00.000Z' }),
+      n({ id: 'c', priority: 'high', createdAt: '2026-03-14T11:00:00.000Z' }),
+      n({ id: 'd', createdAt: '2026-03-14T08:00:00.000Z', expiresAt: '2026-03-14T09:00:00.000Z' }),
+    ];
+    expect(isExpired(list[3], '2026-03-14T10:00:00.000Z')).toBe(true);
+    expect(visibleNotifications(list, '2026-03-14T10:00:00.000Z').map((x) => x.id)).toEqual(['b', 'c', 'a']);
+  });
+});
+
+describe('groups + badges + pill', () => {
+  it('groups by groupKey (fallback appId) and counts unread', () => {
+    const list = [
+      n({ id: '1', groupKey: 'msg-dal', appId: 'telegraph', read: false }),
+      n({ id: '2', groupKey: 'msg-dal', appId: 'telegraph', read: true }),
+      n({ id: '3', appId: 'bank', read: false }),
+    ];
+    const groups = groupNotifications(list);
+    const dal = groups.find((g) => g.key === 'msg-dal')!;
+    expect(dal.items).toHaveLength(2);
+    expect(dal.unread).toBe(1);
+  });
+
+  it('counts unread per app', () => {
+    expect(badgeCounts([n({ appId: 'bank' }), n({ appId: 'bank', read: true }), n({ appId: 'delivery' })])).toEqual({ bank: 1, delivery: 1 });
+  });
+
+  it('picks the newest non-expired high/urgent for the pill', () => {
+    const list = [n({ id: 'a', priority: 'normal' }), n({ id: 'b', priority: 'high', createdAt: '2026-03-14T09:00:00.000Z' }), n({ id: 'c', priority: 'urgent', createdAt: '2026-03-14T08:00:00.000Z' })];
+    expect(pillNotification(list, '2026-03-14T10:00:00.000Z')?.id).toBe('b');
+    expect(pillNotification([n({ priority: 'normal' })], '2026-03-14T10:00:00.000Z')).toBeNull();
+  });
+});

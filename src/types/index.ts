@@ -122,13 +122,26 @@ export interface Product {
   tier?: 'standard' | 'special';
 }
 
+export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export interface NotificationAction {
+  type: 'openApp';
+  appId: string;
+  targetId?: string;
+}
+
 export interface GameNotification {
   id: string;
   appId?: string;
+  priority: NotificationPriority;
   title: string;
   body: string;
+  action?: NotificationAction;
   /** ISO string in game time. */
-  date: string;
+  createdAt: string;
+  read: boolean;
+  groupKey?: string;
+  expiresAt?: string;
 }
 
 export interface MarketSite {

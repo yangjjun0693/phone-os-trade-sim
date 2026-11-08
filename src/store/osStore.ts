@@ -136,16 +136,20 @@ export const useOSStore = create<OSState>()(
         {
           id: 'seed-1',
           appId: 'messages',
+          priority: 'normal',
           title: '메시지',
           body: '"그 물건 아직 있냐? 오늘 밤에 볼 수 있어."',
-          date: '2026-03-14T21:12:00.000Z',
+          createdAt: '2026-03-14T21:12:00.000Z',
+          read: false,
         },
         {
           id: 'seed-2',
           appId: 'browser',
+          priority: 'normal',
           title: '브라우저',
           body: '새 마켓 1곳이 온라인 상태가 되었습니다.',
-          date: '2026-03-14T20:40:00.000Z',
+          createdAt: '2026-03-14T20:40:00.000Z',
+          read: false,
         },
       ],
 
