@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { useRef } from 'react';
 import { useDrag } from '@use-gesture/react';
 import { BellOff, X } from 'lucide-react';
 import { getApp } from '@/apps/registry';
@@ -25,15 +26,32 @@ function NotificationCard({
 }) {
   const { latest } = group;
 
+  // @use-gesture's `filterTaps` is deliberately off: it installs a capture-phase
+  // `click` handler that `preventDefault()`+`stopPropagation()`s any click that
+  // is not a detected tap, which swallows the card's tap-to-open click. Without
+  // it the browser still fires a `click` after a real drag, so record the drag
+  // and let the tap handler ignore that trailing click instead.
+  const draggedRef = useRef(false);
+
   const bind = useDrag(
     ({ last, tap, movement: [mx] }) => {
       if (!last || tap) return;
+      draggedRef.current = true;
+      window.setTimeout(() => {
+        draggedRef.current = false;
+      }, 0);
       if (mx < -SWIPE_DELETE_DISTANCE) onDelete(latest.id);
     },
-    // No `filterTaps`: it calls preventDefault on pointer-down, which swallows
-    // the card's tap-to-open click. The handler's own `tap` guard is enough.
     { axis: 'x', touchAction: 'pan-y' },
   );
+
+  const open = () => {
+    if (draggedRef.current) {
+      draggedRef.current = false;
+      return;
+    }
+    onOpen(group);
+  };
 
   return (
     <motion.div
@@ -48,7 +66,7 @@ function NotificationCard({
       >
         <button
           type="button"
-          onClick={() => onOpen(group)}
+          onClick={open}
           className="flex min-w-0 flex-1 items-start gap-2.5 p-3 text-left"
         >
           <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-white/20 text-[11px]">
@@ -61,7 +79,6 @@ function NotificationCard({
                 <span
                   aria-hidden
                   className="size-1.5 shrink-0 rounded-full bg-ios-blue"
-                  data-testid="unread-dot"
                 />
               )}
               {group.items.length > 1 && (
@@ -102,16 +119,30 @@ export function NotificationCenter() {
 
   const { time, date } = useGameClock();
 
+  // As in the card gesture, `filterTaps` is off (its click suppressor would
+  // swallow the background button's dismiss). Record a completed dismiss drag
+  // so the background button can ignore the trailing click the browser fires.
+  const draggedRef = useRef(false);
+
   const bind = useDrag(
     ({ last, tap, movement: [, my], direction: [, dy], velocity: [, vy] }) => {
       if (!last || tap) return;
+      draggedRef.current = true;
+      window.setTimeout(() => {
+        draggedRef.current = false;
+      }, 0);
       if (my < -40 || (vy > 0.4 && dy < 0)) setOverlay('none');
     },
-    // `filterTaps` is deliberately off: it calls preventDefault on pointer-down
-    // and would swallow the cards' (and the background button's) click. The
-    // `tap` guard above already keeps a tap from counting as a dismiss swipe.
     { axis: 'y', touchAction: 'none' },
   );
+
+  const dismiss = () => {
+    if (draggedRef.current) {
+      draggedRef.current = false;
+      return;
+    }
+    setOverlay('none');
+  };
 
   /** A tap always marks the notification read; only an action deep-links. */
   const openGroup = (group: NotificationGroup) => {
@@ -140,7 +171,7 @@ export function NotificationCenter() {
         <button
           type="button"
           aria-label="알림 닫기"
-          onClick={() => setOverlay('none')}
+          onClick={dismiss}
           className="absolute inset-0 z-0"
         />
         <div className="relative z-10 flex items-start justify-between px-6 pt-[calc(var(--ios-statusbar-h)+10px)]">
