@@ -22,11 +22,13 @@ import { npcs, places, products } from '@/data';
 import { PHISHING_MAILS } from '@/content/phishing';
 import { findRunner } from '@/content/runners';
 import {
+  LARGE_DEPOSIT,
   RUNNER_CAUGHT_TRUST,
   START_BANK,
   START_CASH,
   START_CHIPS,
 } from '@/content/economy';
+import { emitGameEvent } from '@/lib/notificationBus';
 import { DEFAULT_ADDRESS, type DropAddress } from '@/content/logistics';
 import {
   advanceShipments,
@@ -544,6 +546,7 @@ export const useGameStore = create<GameState>()(
       // Bank
       bankDeposit: (amount) => {
         let result: BankResult = { ok: false };
+        const at = useGameStore.getState().gameDateTime;
         set((s) => {
           const error = validateAmount(amount, s.cash);
           if (error) {
@@ -569,6 +572,15 @@ export const useGameStore = create<GameState>()(
           }
           result = { ok: true, flagged: assessment.flagged, reason: assessment.reason };
         });
+        if (result.ok && result.flagged) {
+          emitGameEvent({
+            type: 'bank.deposit',
+            at,
+            amount,
+            large: amount >= LARGE_DEPOSIT,
+            flagged: true,
+          });
+        }
         return result;
       },
       bankWithdraw: (amount) => {
@@ -662,7 +674,8 @@ export const useGameStore = create<GameState>()(
         });
         return result;
       },
-      tickMessenger: () =>
+      tickMessenger: () => {
+        const arrivals: InboxMessage[] = [];
         set((s) => {
           if (s.status !== 'playing') return;
 
@@ -685,13 +698,28 @@ export const useGameStore = create<GameState>()(
             npcs,
           });
           s.inbox = arrival ? [arrival, ...expired].slice(0, 40) : expired;
-          if (arrival) s.messengerLastAt = s.gameDateTime;
-        }),
-      tickShipments: () =>
+          if (arrival) {
+            s.messengerLastAt = s.gameDateTime;
+            arrivals.push(arrival);
+          }
+        });
+        for (const arrival of arrivals) {
+          emitGameEvent({
+            type: 'messenger.arrival',
+            at: arrival.arrivedAt,
+            npcId: arrival.npcId,
+            npcName: npcs.find((npc) => npc.id === arrival.npcId)?.name ?? '알 수 없음',
+            channel: arrival.channel,
+          });
+        }
+      },
+      tickShipments: () => {
+        let landedOut: Shipment[] = [];
         set((s) => {
           if (s.status !== 'playing') return;
           const { shipments, landed } = advanceShipments(s.shipments, s.gameDateTime);
           s.shipments = shipments;
+          landedOut = landed;
           if (landed.length === 0) return;
 
           // A parcel landing at your own door is exactly what neighbours notice.
@@ -701,7 +729,24 @@ export const useGameStore = create<GameState>()(
             s.status = 'busted';
             s.statusReason = '집 앞에서 물건이 잡혔다. 더는 버틸 수 없다.';
           }
-        }),
+        });
+        for (const shipment of landedOut) {
+          if (
+            shipment.status === 'arrived' ||
+            shipment.status === 'seized' ||
+            shipment.status === 'lost'
+          ) {
+            emitGameEvent({
+              type: 'shipment.landed',
+              at: shipment.etaAt,
+              shipmentId: shipment.id,
+              status: shipment.status,
+              productName: shipment.productName,
+              qty: shipment.qty,
+            });
+          }
+        }
+      },
       hireRunner: (npcId) => {
         let result: ShipmentActionResult = { ok: false };
         set((s) => {

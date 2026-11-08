@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { MotionConfig } from 'framer-motion';
 import { MINUTES_PER_TICK, tickMs } from '@/content/time';
+import { useNotificationBridge } from '@/hooks/useNotificationBridge';
 import { useResolvedTheme } from '@/hooks/useResolvedTheme';
 import { OSShell } from '@/os/OSShell';
 import { PhoneFrame } from '@/os/PhoneFrame';
@@ -15,6 +16,7 @@ import { useOSStore } from '@/store/osStore';
  */
 export function App() {
   useResolvedTheme();
+  useNotificationBridge();
   const clockSpeed = useOSStore((s) => s.clockSpeed);
 
   useEffect(() => {

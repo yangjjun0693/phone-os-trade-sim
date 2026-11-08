@@ -4,7 +4,6 @@ import { ArrowDownToLine, ArrowUpFromLine, ShieldAlert } from 'lucide-react';
 import { AnimatedNumber, Pill } from '@/components';
 import { BANK_QUICK_AMOUNTS } from '@/content/economy';
 import { useGameStore } from '@/store/gameStore';
-import { useOSStore } from '@/store/osStore';
 import type { BankTransaction } from '@/game/bank';
 import { SPRING_SNAPPY, prefersReducedMotion } from '@/utils/motion';
 import { formatCash } from '@/utils/format';
@@ -25,10 +24,8 @@ export function BankApp() {
   const playerName = useGameStore((s) => s.playerName);
   const cash = useGameStore((s) => s.cash);
   const bank = useGameStore((s) => s.bank);
-  const gameDateTime = useGameStore((s) => s.gameDateTime);
   const deposit = useGameStore((s) => s.bankDeposit);
   const withdraw = useGameStore((s) => s.bankWithdraw);
-  const pushNotification = useOSStore((s) => s.pushNotification);
 
   const [amountText, setAmountText] = useState('');
   const [message, setMessage] = useState<{ tone: 'ok' | 'error' | 'alert'; text: string } | null>(null);
@@ -49,15 +46,6 @@ export function BankApp() {
       setMessage({
         tone: 'alert',
         text: `이상거래 탐지 시스템이 이 입금을 확인 중입니다. (${result.reason})`,
-      });
-      pushNotification({
-        id: `bank-${Date.now()}`,
-        appId: 'bank',
-        priority: 'normal',
-        title: '초콜렛뱅크',
-        body: '고객님 계좌의 최근 입금 내역에 대한 확인 안내가 도착했습니다.',
-        createdAt: gameDateTime,
-        read: false,
       });
     } else {
       setMessage({ tone: 'ok', text: kind === 'deposit' ? '입금이 완료되었습니다.' : '출금이 완료되었습니다.' });

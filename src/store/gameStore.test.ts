@@ -1,5 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GAME_EPOCH, useGameStore } from './gameStore';
+import { onGameEvent } from '@/lib/notificationBus';
+import type { GameEvent } from '@/game/notifications';
+import type { Shipment } from '@/game/shipments';
 
 beforeEach(() => {
   useGameStore.setState({
@@ -10,6 +13,10 @@ beforeEach(() => {
     inventory: [],
     bank: { balance: 8_200_000, transactions: [] },
   });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('gameStore', () => {
@@ -63,5 +70,82 @@ describe('gameStore', () => {
     expect(result.flagged).toBe(true);
     expect(useGameStore.getState().heat).toBeGreaterThan(12);
     expect(useGameStore.getState().bank.transactions[0].flagged).toBe(true);
+  });
+
+  it('emits bank.deposit when a deposit is flagged', () => {
+    const seen: string[] = [];
+    const off = onGameEvent((e) => seen.push(e.type));
+    useGameStore.setState({ cash: 1_500_000, bank: { balance: 0, transactions: [] }, gameDateTime: GAME_EPOCH, status: 'playing' });
+    useGameStore.getState().bankDeposit(1_200_000);
+    off();
+    expect(seen).toContain('bank.deposit');
+  });
+
+  it('does not emit bank.deposit for an ordinary deposit', () => {
+    const seen: string[] = [];
+    const off = onGameEvent((e) => seen.push(e.type));
+    useGameStore.setState({ cash: 1_500_000, bank: { balance: 0, transactions: [] }, gameDateTime: GAME_EPOCH, status: 'playing' });
+    const result = useGameStore.getState().bankDeposit(200_000);
+    off();
+    expect(result.flagged).toBe(false);
+    expect(seen).not.toContain('bank.deposit');
+  });
+
+  it('emits messenger.arrival when someone writes in', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const seen: GameEvent[] = [];
+    const off = onGameEvent((e) => seen.push(e));
+    useGameStore.setState({
+      status: 'playing',
+      heat: 12,
+      gameDateTime: '2026-03-15T21:47:00.000Z',
+      messengerLastAt: GAME_EPOCH,
+      inbox: [],
+      deals: [],
+      trust: 20,
+    });
+    useGameStore.getState().tickMessenger();
+    off();
+    const arrival = seen.find((e) => e.type === 'messenger.arrival');
+    expect(arrival).toBeDefined();
+    if (arrival?.type !== 'messenger.arrival') throw new Error('no arrival');
+    expect(arrival.npcId).toBeTruthy();
+    expect(arrival.npcName).toBeTruthy();
+    expect(['telegraph', 'phone']).toContain(arrival.channel);
+  });
+
+  it('emits shipment.landed for a parcel that lands', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    const seen: GameEvent[] = [];
+    const off = onGameEvent((e) => seen.push(e));
+    const shipment: Shipment = {
+      id: 'ship-test',
+      marketId: 'market-nightbazaar',
+      productId: 'product-jelly',
+      productName: '엑스터시 젤리',
+      qty: 4,
+      unitCost: 6_000,
+      marketPrice: 16_000,
+      address: 'storage',
+      fee: 30_000,
+      orderedAt: GAME_EPOCH,
+      etaAt: GAME_EPOCH,
+      status: 'in_transit',
+    };
+    useGameStore.setState({
+      status: 'playing',
+      heat: 12,
+      gameDateTime: '2026-03-20T00:00:00.000Z',
+      shipments: [shipment],
+    });
+    useGameStore.getState().tickShipments();
+    off();
+    const landed = seen.find((e) => e.type === 'shipment.landed');
+    expect(landed).toBeDefined();
+    if (landed?.type !== 'shipment.landed') throw new Error('no shipment event');
+    expect(landed.shipmentId).toBe('ship-test');
+    expect(landed.status).toBe('arrived');
+    expect(landed.productName).toBe('엑스터시 젤리');
+    expect(landed.qty).toBe(4);
   });
 });
