@@ -2,20 +2,103 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
 import { BellOff, X } from 'lucide-react';
 import { getApp } from '@/apps/registry';
+import { groupNotifications, visibleNotifications, type NotificationGroup } from '@/game/notifications';
 import { useGameClock } from '@/hooks/useGameClock';
+import { useGameStore } from '@/store/gameStore';
 import { useOSStore } from '@/store/osStore';
 import { useTutorialStore } from '@/store/tutorialStore';
 import { SPRING_BOUNCY, SPRING_SOFT, listItem, staggerContainer } from '@/utils/motion';
 import { Wallpaper } from './Wallpaper';
 
-/** Pull-down shade: game clock plus the notification feed. */
+/** How far left a card must be dragged before the swipe deletes it. */
+const SWIPE_DELETE_DISTANCE = 60;
+
+/** One grouped notification row: tap to open, swipe (or the ✕) to delete. */
+function NotificationCard({
+  group,
+  onOpen,
+  onDelete,
+}: {
+  group: NotificationGroup;
+  onOpen: (group: NotificationGroup) => void;
+  onDelete: (id: string) => void;
+}) {
+  const { latest } = group;
+
+  const bind = useDrag(
+    ({ last, tap, movement: [mx] }) => {
+      if (!last || tap) return;
+      if (mx < -SWIPE_DELETE_DISTANCE) onDelete(latest.id);
+    },
+    // No `filterTaps`: it calls preventDefault on pointer-down, which swallows
+    // the card's tap-to-open click. The handler's own `tap` guard is enough.
+    { axis: 'x', touchAction: 'pan-y' },
+  );
+
+  return (
+    <motion.div
+      layout
+      variants={listItem}
+      exit={{ opacity: 0, x: 40, transition: { duration: 0.16 } }}
+      className="relative"
+    >
+      <div
+        {...bind()}
+        className="glass-strong flex items-stretch overflow-hidden rounded-2xl text-ios-text shadow-lg ring-1 ring-inset ring-white/15"
+      >
+        <button
+          type="button"
+          onClick={() => onOpen(group)}
+          className="flex min-w-0 flex-1 items-start gap-2.5 p-3 text-left"
+        >
+          <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-white/20 text-[11px]">
+            {getApp(latest.appId)?.name.slice(0, 1) ?? '!'}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5">
+              <span className="truncate text-[13px] font-semibold">{latest.title}</span>
+              {group.unread > 0 && (
+                <span
+                  aria-hidden
+                  className="size-1.5 shrink-0 rounded-full bg-ios-blue"
+                  data-testid="unread-dot"
+                />
+              )}
+              {group.items.length > 1 && (
+                <span className="shrink-0 rounded-full bg-white/20 px-1.5 text-[11px] tabular-nums">
+                  {group.items.length}
+                </span>
+              )}
+            </span>
+            <span className="mt-0.5 block truncate text-[13px] opacity-80">{latest.body}</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          aria-label={`${latest.title} 삭제`}
+          onClick={() => onDelete(latest.id)}
+          className="flex w-8 shrink-0 items-center justify-center text-ios-muted active:bg-black/10"
+        >
+          <X className="size-4" aria-hidden />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+/** Pull-down shade: game clock plus the grouped notification feed. */
 export function NotificationCenter() {
   const notifications = useOSStore((s) => s.notifications);
   const notificationsOn = useTutorialStore((s) => s.notifications);
   const clearNotifications = useOSStore((s) => s.clearNotifications);
+  const markNotificationRead = useOSStore((s) => s.markNotificationRead);
+  const removeNotification = useOSStore((s) => s.removeNotification);
   const setOverlay = useOSStore((s) => s.setOverlay);
+  const openApp = useOSStore((s) => s.openApp);
+  const now = useGameStore((s) => s.gameDateTime);
 
   const list = notificationsOn ? notifications : [];
+  const groups = groupNotifications(visibleNotifications(list, now));
 
   const { time, date } = useGameClock();
 
@@ -24,8 +107,21 @@ export function NotificationCenter() {
       if (!last || tap) return;
       if (my < -40 || (vy > 0.4 && dy < 0)) setOverlay('none');
     },
-    { axis: 'y', filterTaps: true, touchAction: 'none' },
+    // `filterTaps` is deliberately off: it calls preventDefault on pointer-down
+    // and would swallow the cards' (and the background button's) click. The
+    // `tap` guard above already keeps a tap from counting as a dismiss swipe.
+    { axis: 'y', touchAction: 'none' },
   );
+
+  /** A tap always marks the notification read; only an action deep-links. */
+  const openGroup = (group: NotificationGroup) => {
+    const { latest } = group;
+    markNotificationRead(latest.id);
+    if (!latest.action) return;
+    getApp(latest.action.appId)?.preload?.();
+    openApp(latest.action.appId);
+    setOverlay('none');
+  };
 
   return (
     <motion.div
@@ -65,7 +161,7 @@ export function NotificationCenter() {
         </div>
 
         <div className="scroll-area no-scrollbar relative z-10 mt-5 flex-1 px-4 pb-10">
-          {list.length === 0 ? (
+          {groups.length === 0 ? (
             <div className="flex flex-col items-center gap-2 pt-16 text-ios-muted">
               <BellOff className="size-6" aria-hidden />
               <p className="text-[14px]">알림이 없습니다</p>
@@ -78,22 +174,13 @@ export function NotificationCenter() {
               className="flex flex-col gap-2"
             >
               <AnimatePresence initial={false}>
-                {list.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    layout
-                    variants={listItem}
-                    exit={{ opacity: 0, x: 40, transition: { duration: 0.16 } }}
-                    className="glass-strong flex items-start gap-2.5 rounded-2xl p-3 text-ios-text shadow-lg ring-1 ring-inset ring-white/15"
-                  >
-                    <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-white/20 text-[11px]">
-                      {getApp(item.appId)?.name.slice(0, 1) ?? '!'}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-semibold">{item.title}</p>
-                      <p className="mt-0.5 text-[13px] opacity-80">{item.body}</p>
-                    </div>
-                  </motion.div>
+                {groups.map((group) => (
+                  <NotificationCard
+                    key={group.key}
+                    group={group}
+                    onOpen={openGroup}
+                    onDelete={removeNotification}
+                  />
                 ))}
               </AnimatePresence>
             </motion.div>
