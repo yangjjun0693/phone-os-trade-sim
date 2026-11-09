@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Backpack,
+  Car,
   Coffee,
   Headphones,
   Keyboard,
@@ -20,10 +21,12 @@ import { cn } from '@/utils/cn';
 const CATEGORY_ART: Record<AmasonProduct['category'], { icon: LucideIcon; from: string; to: string }> = {
   Electronics: { icon: Headphones, from: '#dbeafe', to: '#c3dafe' },
   'Home & Kitchen': { icon: Coffee, from: '#ffedd5', to: '#fed7aa' },
-  Outdoors: { icon: Backpack, from: '#dcfce7', to: '#b9f0c8' },
+  'Sports & Outdoors': { icon: Backpack, from: '#dcfce7', to: '#b9f0c8' },
+  'Toys & Games': { icon: Package, from: '#fef3c7', to: '#fde68a' },
   Office: { icon: Keyboard, from: '#e0e7ff', to: '#c7d2fe' },
   Apparel: { icon: Shirt, from: '#fce7f3', to: '#fbcfe8' },
   Beauty: { icon: Sparkles, from: '#f3e8ff', to: '#e9d5ff' },
+  Autos: { icon: Car, from: '#e2e8f0', to: '#cbd5e1' },
 };
 
 export function ProductThumb({
