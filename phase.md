@@ -550,7 +550,7 @@ create policy "own saves" on public.saves
     가 앱 루트에서 햅틱·사운드 채널까지 함께 발화
   - **알림 모델**: `priority`(low/normal/high/urgent) · `action`(딥링크) · `groupKey` ·
     `expiresAt` · `read`. 우선순위별 표면은 `channelsFor` 한 곳에서 결정 — 센터=항상,
-    배너≥normal, pill≥high, 사운드=urgent, 햅틱≥high
+    배너≥normal(채널은 계산되지만 표면은 다음 패스로 연기), pill≥high, 사운드=urgent, 햅틱≥high
   - **스팸 규칙**(`shouldDeliver`, 순수): 트리거 그룹별 **10분 쿨다운**, 하루 **40건 상한**,
     **야간(00~06시)은 low 만** 통과
   - **4개 표면**: ① 알림센터(그룹·읽음·스와이프 삭제·딥링크) ② 잠금 화면(앱별 그룹)

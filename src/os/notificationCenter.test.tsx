@@ -57,6 +57,34 @@ describe('NotificationCenter', () => {
     expect(useOSStore.getState().notifications.find((n) => n.id === 'b')?.read).toBe(true);
   });
 
+  it('expands a group to reveal and act on the rest', async () => {
+    const user = userEvent.setup();
+    useOSStore.setState({
+      notifications: [
+        { id: 'g1', appId: 'telegraph', priority: 'normal', title: '새 메시지', body: '첫 번째 메시지', createdAt: GAME_EPOCH, read: false, groupKey: 'msg-dal', action: { type: 'openApp', appId: 'telegraph' } },
+        { id: 'g0', appId: 'telegraph', priority: 'normal', title: '새 메시지', body: '두 번째 메시지', createdAt: GAME_EPOCH, read: false, groupKey: 'msg-dal' },
+      ],
+    });
+    render(<NotificationCenter />);
+
+    // Collapsed: the header is the latest item; the rest stays hidden.
+    expect(screen.getByText('첫 번째 메시지')).toBeInTheDocument();
+    expect(screen.queryByText('두 번째 메시지')).not.toBeInTheDocument();
+
+    // The count chip spills the group.
+    await user.click(screen.getByRole('button', { name: /그룹 펼치기/ }));
+    expect(screen.getByText('두 번째 메시지')).toBeInTheDocument();
+
+    // A row tap marks that item read.
+    await user.click(screen.getByText('두 번째 메시지'));
+    expect(useOSStore.getState().notifications.find((n) => n.id === 'g0')?.read).toBe(true);
+
+    // The expanded row carries its own delete. Header delete comes first in DOM.
+    const deletes = screen.getAllByRole('button', { name: '새 메시지 삭제' });
+    await user.click(deletes[1]);
+    expect(useOSStore.getState().notifications.map((n) => n.id)).not.toContain('g0');
+  });
+
   it('ignores the click that follows a card drag (no spurious open)', () => {
     render(<NotificationCenter />);
     const card = screen.getByText('초콜렛뱅크').closest('button');

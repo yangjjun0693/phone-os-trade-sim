@@ -21,6 +21,7 @@ export function GameStatusOverlay() {
   const stats = useGameStore((s) => s.stats);
   const restartGame = useGameStore((s) => s.restartGame);
   const goHome = useOSStore((s) => s.goHome);
+  const clearNotificationState = useOSStore((s) => s.clearNotificationState);
 
   if (status === 'playing') return null;
 
@@ -29,6 +30,10 @@ export function GameStatusOverlay() {
 
   const restart = () => {
     restartGame();
+    // The clock has jumped back to day 1: wipe the notification shade and the
+    // spam-guard meta so stale alerts and future `lastByKey` stamps don't
+    // outlive the run. (Kept out of `restartGame` to avoid a store cycle.)
+    clearNotificationState();
     goHome();
   };
 

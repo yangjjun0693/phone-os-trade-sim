@@ -11,6 +11,7 @@ import type {
 import { DEFAULT_CLOCK_SPEED, type ClockSpeed } from '@/content/time';
 import {
   eventGroupKey,
+  isExpired,
   notificationsForEvent,
   shouldDeliver,
   type GameEvent,
@@ -104,6 +105,14 @@ export interface OSState {
   /** Legacy direct push. Returns the stored notification, or null when consent is off. */
   pushNotification: (notification: GameNotification) => GameNotification | null;
   clearNotifications: () => void;
+  /**
+   * Drop notifications already past their `expiresAt` as of `now`. Runs on the
+   * game clock so the shade, lock screen and app badges all read the same
+   * active set instead of each filtering on its own.
+   */
+  pruneExpired: (now: string) => void;
+  /** Reset every notification field. Called when a run restarts. */
+  clearNotificationState: () => void;
 }
 
 type ContainerRef = { kind: 'page'; page: number; index: number } | { kind: 'dock'; index: number };
@@ -413,6 +422,17 @@ export const useOSStore = create<OSState>()(
         set((s) => {
           s.notifications = [];
           s.pillId = null;
+        }),
+      pruneExpired: (now) =>
+        set((s) => {
+          s.notifications = s.notifications.filter((notif) => !isExpired(notif, now));
+        }),
+      clearNotificationState: () =>
+        set((s) => {
+          s.notifications = [];
+          s.notificationMeta = defaultNotificationMeta();
+          s.pillId = null;
+          s.pillSeq = 0;
         }),
     })),
     {

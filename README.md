@@ -163,7 +163,7 @@ export const APP_REGISTRY = {
 
 ## 로드맵
 
-Phase 0–6c + Amason까지 완료입니다. 다음은 **Phase 7(알림 시스템)** → Phase 8(오디오) → Phase 9(DB) → Phase 10(콘텐츠 이관·문서). 상세 계획·수치·변경 이력은 [`phase.md`](./phase.md).
+Phase 0–7까지 완료입니다(Phase 7 알림 시스템은 슬라이스 — 트리거 3종·4개 표면까지). 다음은 **Phase 8(오디오)** → Phase 9(DB) → Phase 10(콘텐츠 이관·문서). 상세 계획·수치·변경 이력은 [`phase.md`](./phase.md).
 
 ## Supabase (연결은 아직 하지 않음)
 

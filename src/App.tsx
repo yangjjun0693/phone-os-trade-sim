@@ -26,6 +26,9 @@ export function App() {
       // The clock drives everything that happens over time.
       store.tickMessenger();
       store.tickShipments();
+      // Expiry belongs to the clock too: pruned once here, the shade, lock
+      // screen and app badges all agree on the same active set.
+      useOSStore.getState().pruneExpired(useGameStore.getState().gameDateTime);
     }, tickMs(clockSpeed));
     return () => window.clearInterval(id);
   }, [clockSpeed]);

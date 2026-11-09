@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useDrag } from '@use-gesture/react';
 import { BellOff, X } from 'lucide-react';
+import type { GameNotification } from '@/types';
 import { getApp } from '@/apps/registry';
 import { groupNotifications, visibleNotifications, type NotificationGroup } from '@/game/notifications';
 import { useGameClock } from '@/hooks/useGameClock';
@@ -18,13 +19,19 @@ const SWIPE_DELETE_DISTANCE = 60;
 function NotificationCard({
   group,
   onOpen,
+  onOpenItem,
   onDelete,
 }: {
   group: NotificationGroup;
   onOpen: (group: NotificationGroup) => void;
+  onOpenItem: (item: GameNotification) => void;
   onDelete: (id: string) => void;
 }) {
   const { latest } = group;
+  // Spec §5.6 "그룹 펼치기": the card shows the latest; the count chip spills
+  // the rest of the group underneath it.
+  const [expanded, setExpanded] = useState(false);
+  const rest = group.items.slice(1);
 
   // @use-gesture's `filterTaps` is deliberately off: it installs a capture-phase
   // `click` handler that `preventDefault()`+`stopPropagation()`s any click that
@@ -81,8 +88,26 @@ function NotificationCard({
                   className="size-1.5 shrink-0 rounded-full bg-ios-blue"
                 />
               )}
-              {group.items.length > 1 && (
-                <span className="shrink-0 rounded-full bg-white/20 px-1.5 text-[11px] tabular-nums">
+              {rest.length > 0 && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={expanded}
+                  aria-label={expanded ? '그룹 접기' : `그룹 펼치기 (${group.items.length})`}
+                  onClick={(event) => {
+                    // The chip sits inside the card's tap-to-open button; keep
+                    // the toggle from also opening/deep-linking the group.
+                    event.stopPropagation();
+                    setExpanded((value) => !value);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setExpanded((value) => !value);
+                  }}
+                  className="shrink-0 rounded-full bg-white/20 px-1.5 text-[11px] tabular-nums"
+                >
                   {group.items.length}
                 </span>
               )}
@@ -99,6 +124,33 @@ function NotificationCard({
           <X className="size-4" aria-hidden />
         </button>
       </div>
+      {expanded && rest.length > 0 ? (
+        <ul className="mt-1.5 flex flex-col gap-1.5 pl-3">
+          {rest.map((item) => (
+            <li
+              key={item.id}
+              className="glass-strong flex items-stretch overflow-hidden rounded-xl text-ios-text ring-1 ring-inset ring-white/10"
+            >
+              <button
+                type="button"
+                onClick={() => onOpenItem(item)}
+                className="flex min-w-0 flex-1 flex-col p-2.5 text-left"
+              >
+                <span className="truncate text-[13px] font-semibold">{item.title}</span>
+                <span className="mt-0.5 truncate text-[13px] opacity-80">{item.body}</span>
+              </button>
+              <button
+                type="button"
+                aria-label={`${item.title} 삭제`}
+                onClick={() => onDelete(item.id)}
+                className="flex w-8 shrink-0 items-center justify-center text-ios-muted active:bg-black/10"
+              >
+                <X className="size-4" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </motion.div>
   );
 }
@@ -145,14 +197,15 @@ export function NotificationCenter() {
   };
 
   /** A tap always marks the notification read; only an action deep-links. */
-  const openGroup = (group: NotificationGroup) => {
-    const { latest } = group;
-    markNotificationRead(latest.id);
-    if (!latest.action) return;
-    getApp(latest.action.appId)?.preload?.();
-    openApp(latest.action.appId);
+  const openItem = (item: GameNotification) => {
+    markNotificationRead(item.id);
+    if (!item.action) return;
+    getApp(item.action.appId)?.preload?.();
+    openApp(item.action.appId);
     setOverlay('none');
   };
+
+  const openGroup = (group: NotificationGroup) => openItem(group.latest);
 
   return (
     <motion.div
@@ -210,6 +263,7 @@ export function NotificationCenter() {
                     key={group.key}
                     group={group}
                     onOpen={openGroup}
+                    onOpenItem={openItem}
                     onDelete={removeNotification}
                   />
                 ))}

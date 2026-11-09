@@ -162,6 +162,24 @@ describe('osStore.notify', () => {
     expect(useOSStore.getState().notify({ ...ev, shipmentId: 's2' })).toHaveLength(0);
   });
 
+  it('delivers after a backwards clock instead of wedging the cooldown', () => {
+    // A fresh run resets game time, but the persisted `lastByKey` can still sit
+    // in the future; the guard must treat that as "cooldown already passed".
+    useOSStore.setState({
+      notifications: [],
+      notificationMeta: { day: 1, todayCount: 1, lastByKey: { shipment: '2027-01-01T00:00:00.000Z' } },
+    });
+    const out = useOSStore.getState().notify({
+      type: 'shipment.landed',
+      at: GAME_EPOCH,
+      shipmentId: 's9',
+      status: 'arrived',
+      productName: '젤리',
+      qty: 1,
+    });
+    expect(out).toHaveLength(1);
+  });
+
   it('honours the notification consent switch', () => {
     useTutorialStore.setState({ notifications: false });
     expect(
@@ -190,6 +208,41 @@ describe('osStore.notify', () => {
     expect(useOSStore.getState().notifications[0].read).toBe(true);
     useOSStore.getState().removeNotification(a.id);
     expect(useOSStore.getState().notifications).toHaveLength(0);
+  });
+});
+
+describe('osStore.pruneExpired', () => {
+  beforeEach(resetNotifications);
+
+  it('drops expired notifications and keeps live / permanent ones', () => {
+    useOSStore.setState({
+      notifications: [
+        { id: 'old', appId: 'bank', priority: 'normal', title: 't', body: 'b', createdAt: GAME_EPOCH, read: false, expiresAt: '2026-03-14T22:00:00.000Z' },
+        { id: 'live', appId: 'bank', priority: 'normal', title: 't', body: 'b', createdAt: GAME_EPOCH, read: false, expiresAt: '2026-03-15T02:00:00.000Z' },
+        { id: 'forever', appId: 'delivery', priority: 'normal', title: 't', body: 'b', createdAt: GAME_EPOCH, read: false },
+      ],
+    });
+    useOSStore.getState().pruneExpired('2026-03-15T00:00:00.000Z');
+    expect(useOSStore.getState().notifications.map((n) => n.id)).toEqual(['live', 'forever']);
+  });
+});
+
+describe('osStore.clearNotificationState', () => {
+  it('wipes notifications, spam meta and the pill (restart path)', () => {
+    useOSStore.setState({
+      notifications: [
+        { id: 'a', appId: 'bank', priority: 'high', title: 't', body: 'b', createdAt: GAME_EPOCH, read: false },
+      ],
+      notificationMeta: { day: 3, todayCount: 7, lastByKey: { g: '2026-03-14T10:00:00.000Z' } },
+      pillId: 'a',
+      pillSeq: 4,
+    });
+    useOSStore.getState().clearNotificationState();
+    const state = useOSStore.getState();
+    expect(state.notifications).toEqual([]);
+    expect(state.notificationMeta).toEqual({ day: 1, todayCount: 0, lastByKey: {} });
+    expect(state.pillId).toBeNull();
+    expect(state.pillSeq).toBe(0);
   });
 });
 

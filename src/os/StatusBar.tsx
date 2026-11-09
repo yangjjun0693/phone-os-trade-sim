@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Wifi } from 'lucide-react';
 import { useGameClock } from '@/hooks/useGameClock';
 import { getApp } from '@/apps/registry';
-import { pillNotification } from '@/game/notifications';
+import { isExpired } from '@/game/notifications';
 import { useGameStore } from '@/store/gameStore';
 import { useOSStore } from '@/store/osStore';
 import { cn } from '@/utils/cn';
@@ -101,9 +101,11 @@ export function StatusBar({
   }, [pillSeq, pillId]);
 
   // Only the notification that raised the pill shows — and never behind an
-  // open overlay (shade, control centre, app switcher).
-  const raised = overlay === 'none' ? pillNotification(notifications, now) : null;
-  const active = raised && raised.id === pillId ? raised : null;
+  // open overlay (shade, control centre, app switcher). Resolve it by id: a
+  // backdated shipment alert (`at = etaAt`) must not lose its pill to a newer
+  // `createdAt` the way a "newest wins" lookup would.
+  const raised = pillId ? notifications.find((n) => n.id === pillId) ?? null : null;
+  const active = overlay === 'none' && raised && !isExpired(raised, now) ? raised : null;
   const pill = active && pillVisible ? { title: active.title, appId: active.appId } : undefined;
 
   const onPillTap = () => {

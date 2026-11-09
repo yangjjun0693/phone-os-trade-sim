@@ -85,6 +85,9 @@ describe('shouldDeliver', () => {
   it('blocks within the cooldown', () => {
     expect(shouldDeliver({ ...base, notification: n({ groupKey: 'g' }), lastByKey: { g: '2026-03-14T11:55:00.000Z' } })).toBe(false);
   });
+  it('treats a backwards clock (last in the future) as a passed cooldown', () => {
+    expect(shouldDeliver({ ...base, notification: n({ groupKey: 'g' }), lastByKey: { g: '2026-03-14T13:00:00.000Z' } })).toBe(true);
+  });
   it('blocks at the daily cap', () => {
     expect(shouldDeliver({ ...base, notification: n({ groupKey: 'g' }), todayCount: 40 })).toBe(false);
   });

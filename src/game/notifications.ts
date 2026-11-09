@@ -56,7 +56,8 @@ function byUrgencyThenRecency(a: GameNotification, b: GameNotification): number 
 
 /** Non-expired notifications, loudest and newest first. */
 export function visibleNotifications(list: GameNotification[], now: string): GameNotification[] {
-  return list.filter((n) => !isExpired(n, now)).slice().sort(byUrgencyThenRecency);
+  // `filter` already hands back a fresh array, so it can be sorted in place.
+  return list.filter((n) => !isExpired(n, now)).sort(byUrgencyThenRecency);
 }
 
 /** Falls back from groupKey to appId to the notification's own id. */
@@ -257,7 +258,10 @@ export function shouldDeliver(input: SpamInput): boolean {
   const last = lastByKey[key];
   if (last) {
     const elapsed = new Date(now).getTime() - new Date(last).getTime();
-    if (elapsed < cooldownMinutes * 60 * 1000) return false;
+    // A backwards clock (a fresh run resets game time while the persisted
+    // `lastByKey` survives) must never wedge the guard: a `last` that sits in
+    // the future counts as a cooldown that has already passed.
+    if (elapsed >= 0 && elapsed < cooldownMinutes * 60 * 1000) return false;
   }
 
   if (todayCount >= dailyCap) return false;

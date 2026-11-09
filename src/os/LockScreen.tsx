@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
 import { Camera, Flashlight, Lock } from 'lucide-react';
 import { getApp } from '@/apps/registry';
-import { groupNotifications } from '@/game/notifications';
+import { groupNotifications, visibleNotifications } from '@/game/notifications';
 import { useGameClock } from '@/hooks/useGameClock';
 import { useOSStore } from '@/store/osStore';
 import { useTutorialStore } from '@/store/tutorialStore';
@@ -37,7 +37,7 @@ export function LockScreen() {
   const notificationsOn = useTutorialStore((s) => s.notifications);
   const openApp = useOSStore((s) => s.openApp);
   const markNotificationRead = useOSStore((s) => s.markNotificationRead);
-  const { time, date } = useGameClock();
+  const { time, date, iso } = useGameClock();
 
   const bind = useDrag(
     ({ last, tap, movement: [, my], direction: [, dy], velocity: [, vy] }) => {
@@ -91,7 +91,10 @@ export function LockScreen() {
             transition={{ ...SPRING_SOFT, delay: 0.05 }}
             className="mt-8 flex flex-col gap-2 overflow-hidden"
           >
-            {(notificationsOn ? groupNotifications(notifications) : []).slice(0, 4).map((group, index) => {
+            {(notificationsOn
+              ? groupNotifications(visibleNotifications(notifications, iso))
+              : []
+            ).slice(0, 4).map((group, index) => {
               const latest = group.latest;
               const extra = group.items.length - 1;
               return (
