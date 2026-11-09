@@ -3,7 +3,7 @@
 > 이 문서는 **모든 작업 내용을 담은 단일 계획서**입니다. 작업 순서, 수치, 콘텐츠 규칙,
 > 편집 방법이 전부 여기에 있습니다. 내용이 바뀌면 이 파일만 수정하면 됩니다.
 >
-> 최종 갱신: 2026-11-01 · 상태: **Phase 6/6b/6c 완료 · Amason 완료 (Phase 7 대기)**
+> 최종 갱신: 2026-11-09 · 상태: **Phase 6/6b/6c 완료 · Amason 완료 · Phase 7 슬라이스 완료 (알림 시스템)**
 
 ---
 
@@ -319,9 +319,11 @@ export const REGULAR_CUSTOMER: MessageScript = {
 
 ## 8. 알림 시스템 (Phase 7)
 
-### 8.1 현재 상태 (문제)
-- 부팅 시 시드 알림 2개가 전부, 은행 1곳만 push
-- 배지/사운드/진동/딥링크/우선순위/그룹핑 없음 → 사실상 죽어 있음
+### 8.1 현재 상태 (해결됨, 2026-11-09)
+- (기존 문제) 부팅 시 시드 알림 2개가 전부, 은행 1곳만 push / 배지·사운드·진동·딥링크·
+  우선순위·그룹핑 없음 → 사실상 죽어 있음
+- Phase 7 슬라이스에서 **이벤트 버스 + 알림 모델 + 순수 스팸 규칙 + 4개 표면 + 트리거 3종**을
+  붙여 해결(저장 스키마 **v12**). 나머지 트리거·인앱 배너·사운드는 다음 패스 — 자세한 범위는 §11
 
 ### 8.2 구조
 - **이벤트 버스**: 게임 로직은 `emit(event)` 만 호출 (순수 로직 유지)
@@ -540,8 +542,25 @@ create policy "own saves" on public.saves
     `BrowserSite.tsx`(종류별 렌더러), 3개 브라우저 시작 페이지·검색, `gameStore` 스키마 **v10**
     (`learnedClues`, `stats`에 `videosWatched`/`searchesRun`/`wikiRead`).
 
-- [ ] **Phase 7 — 알림 시스템**
-  이벤트 버스, 모델, 트리거, 배지/pill/배너/딥링크, 스팸 규칙
+- [x] **Phase 7 — 알림 시스템 (슬라이스 완료, 2026-11-09)**
+  이번 패스는 **세로로 자른 한 조각**(scope B)이다. 이벤트 버스 → 알림 모델·순수 규칙 →
+  `osStore` 저장(스키마 **v12**) → 브리지 + 트리거 3종 → 4개 표면까지 관통한다.
+  - **이벤트 버스**: 게임 로직은 `emit(event)` 만 호출(순수 유지). `game/notifications.ts` 가
+    이벤트를 알림으로 바꾸고, `lib/notificationBus.ts` 가 전달, `hooks/useNotificationBridge.ts`
+    가 앱 루트에서 햅틱·사운드 채널까지 함께 발화
+  - **알림 모델**: `priority`(low/normal/high/urgent) · `action`(딥링크) · `groupKey` ·
+    `expiresAt` · `read`. 우선순위별 표면은 `channelsFor` 한 곳에서 결정 — 센터=항상,
+    배너≥normal, pill≥high, 사운드=urgent, 햅틱≥high
+  - **스팸 규칙**(`shouldDeliver`, 순수): 트리거 그룹별 **10분 쿨다운**, 하루 **40건 상한**,
+    **야간(00~06시)은 low 만** 통과
+  - **4개 표면**: ① 알림센터(그룹·읽음·스와이프 삭제·딥링크) ② 잠금 화면(앱별 그룹)
+    ③ 홈 아이콘 배지(앱별 안읽음 수) ④ 다이나믹 아일랜드 pill(최신 high/urgent 한 건)
+  - **트리거 3종**: 은행 고액/이상 입금(`bank.deposit`, flagged 일 때만) · 메신저 도착
+    (`messenger.arrival`, 채널별 앱으로) · 배송 도착/분실/압수(`shipment.landed`, 압수=urgent)
+  - **게임 저장 스키마 v12**: 알림 배열 + 스팸 메타(`lastByKey`/`todayCount`/`day`)를 세이브로
+    옮김. v11 이하에서 마이그레이션하며, 세이브 내보내기/불러오기도 그대로 호환
+  - **다음으로 미룸**: 나머지 트리거(브라우저 재입고·뉴스 속보·순찰 경보·거래 마감·러너 보고·
+    steak 승패·약속 5분 전/노쇼) · 인앱 배너 · 사운드(Phase 8). **커버 트래픽은 Phase 6c 후속**으로 별도
 - [ ] **Phase 8 — 오디오**
   합성 톤 세트, 볼륨 연동, 무음 토글
 - [ ] **Phase 9 — DB**
@@ -602,3 +621,4 @@ create policy "own saves" on public.saves
 | 2026-11-06 | **시작 재고**: 새 판이 기본 재고로 **녹색 젤리(`product-jelly`) 4개**를 들고 시작합니다(도매 ₩6,000/시세 ₩16,000). `createInitialState`의 `inventory`에 시드 항목 추가 — 첫 실행·재시작 모두 해당, 기존 세이브는 마이그레이션에서 그대로 유지(필드가 이미 있어 스키마 버전은 그대로) |
 | 2026-11-01 | **Phase 6c 완료(일상 웹)**: 가짜 브라우저에 마켓이 아닌 사이트를 추가. `BrowserSite`(판별 유니온: search/video/classifieds/wiki, `reach` 재사용) + `content/sites.ts` 5종(ViewTube·Sleuth·중고마을·OpenPedia·OpenPedia .onion). 시작 페이지에 "일상" 바로가기 줄, 주소창 검색이 실제 동작(URL이 아니면 Sleuth 결과). 훅: 영상=즉시 시간 보내기 / 영상·위키·매물=단서(`learnedClues` → `suspicionScore`) / 위키=`.onion` 해금(`discoverMarket`) / 무료시청·선입금·검색광고=함정(`{cash,heat,note}`). 중고마을은 browse-only(구매는 다음). 게임 스키마 v10(`learnedClues`+`stats.videosWatched/searchesRun/wikiRead`, 마이그레이션). 커버 트래픽은 설계만(다음 패스) |
 | 2026-11-01 | **배경화면 이미지로 교체**: 사용자 제공 이미지로 변경 — 라이트 `askx536.png` / 다크 `bbTUXqF.png`. `--os-wallpaper` 토큰을 CSS 그라데이션에서 `url(...)`로 교체(두 테마 각각), `Wallpaper`에서 글로우·그레인 레이어 제거(이미지 위 불필요). PWA 오프라인 대비 `vite.config.ts` workbox `runtimeCaching`에 `i.imgur.com` CacheFirst 추가. 검증: typecheck·272 tests·build 통과, 빌드 CSS에 두 URL 포함 |
+| 2026-11-09 | **Phase 7 슬라이스 완료(알림 시스템, scope B)**: 이벤트 버스(`emit`) + 알림 모델(priority/action/groupKey/expiresAt/read) + 순수 스팸 규칙(그룹별 10분 쿨다운·하루 40건 상한·야간 00~06시 low 만) + 브리지(`useNotificationBridge`) + 트리거 3종(은행 고액/이상 입금, 메신저 도착, 배송 도착/분실/압수) + 4개 표면(알림센터 그룹·읽음·스와이프 삭제·딥링크 / 잠금 화면 앱별 그룹 / 홈 아이콘 배지 / 다이나믹 아일랜드 pill). 알림을 세이브로 옮기며 OS 저장 스키마 **v12**(마이그레이션 포함). 미룸: 나머지 트리거, 인앱 배너, 사운드(Phase 8); 커버 트래픽은 Phase 6c 후속 |
