@@ -1,10 +1,17 @@
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Wifi } from 'lucide-react';
 import { useGameClock } from '@/hooks/useGameClock';
+import { getApp } from '@/apps/registry';
+import { pillNotification } from '@/game/notifications';
+import { useGameStore } from '@/store/gameStore';
 import { useOSStore } from '@/store/osStore';
 import { cn } from '@/utils/cn';
 import { SPRING_SNAPPY } from '@/utils/motion';
 import { DynamicIsland } from './DynamicIsland';
+
+/** How long a raised pill stays expanded before folding back to a capsule. */
+const PILL_VISIBLE_MS = 4000;
 
 function SignalBars({ level }: { level: number }) {
   return (
@@ -72,6 +79,40 @@ export function StatusBar({
   const status = useOSStore((s) => s.status);
   const airplane = useOSStore((s) => s.controls.airplane);
   const setOverlay = useOSStore((s) => s.setOverlay);
+  const openApp = useOSStore((s) => s.openApp);
+  const overlay = useOSStore((s) => s.overlay);
+  const notifications = useOSStore((s) => s.notifications);
+  const pillId = useOSStore((s) => s.pillId);
+  const pillSeq = useOSStore((s) => s.pillSeq);
+  const now = useGameStore((s) => s.gameDateTime);
+
+  // Transient visibility: a fresh pill (new `pillSeq`) shows for a beat, then
+  // folds back. The timer is cleared/rearmed on every raise so a rapid burst
+  // never leaves the capsule stuck open.
+  const [pillVisible, setPillVisible] = useState(false);
+  useEffect(() => {
+    if (!pillId) {
+      setPillVisible(false);
+      return;
+    }
+    setPillVisible(true);
+    const timer = window.setTimeout(() => setPillVisible(false), PILL_VISIBLE_MS);
+    return () => window.clearTimeout(timer);
+  }, [pillSeq, pillId]);
+
+  // Only the notification that raised the pill shows — and never behind an
+  // open overlay (shade, control centre, app switcher).
+  const raised = overlay === 'none' ? pillNotification(notifications, now) : null;
+  const active = raised && raised.id === pillId ? raised : null;
+  const pill = active && pillVisible ? { title: active.title, appId: active.appId } : undefined;
+
+  const onPillTap = () => {
+    const appId = active?.action?.appId;
+    if (!appId) return;
+    getApp(appId)?.preload?.();
+    openApp(appId);
+    setOverlay('none');
+  };
 
   return (
     <div
@@ -82,6 +123,8 @@ export function StatusBar({
     >
       <DynamicIsland
         onClick={() => setOverlay('notification')}
+        pill={pill}
+        onPillTap={onPillTap}
         className="absolute left-1/2 top-[var(--ios-island-top)] z-10 -translate-x-1/2"
       />
 

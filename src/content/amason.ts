@@ -31,10 +31,12 @@ export const AMASON_CATEGORIES = [
   'All',
   'Electronics',
   'Home & Kitchen',
-  'Outdoors',
+  'Sports & Outdoors',
+  'Toys & Games',
   'Office',
   'Apparel',
   'Beauty',
+  'Autos',
 ] as const;
 
 export type AmasonCategory = (typeof AMASON_CATEGORIES)[number];
@@ -138,7 +140,7 @@ export const AMASON_PRODUCTS: AmasonProduct[] = [
     title: '40 L Waterproof Hiking Backpack',
     brand: 'Ridgeline',
     price: 46.8,
-    category: 'Outdoors',
+    category: 'Sports & Outdoors',
     rating: 4.6,
     reviews: 14_902,
     bullets: ['Rain cover included', 'Padded 15" laptop sleeve'],
@@ -149,7 +151,7 @@ export const AMASON_PRODUCTS: AmasonProduct[] = [
     brand: 'Ridgeline',
     price: 68.0,
     listPrice: 89.0,
-    category: 'Outdoors',
+    category: 'Sports & Outdoors',
     rating: 4.2,
     reviews: 6_388,
     bullets: ['2-minute setup', 'Taped seams, 3000 mm'],
@@ -159,7 +161,7 @@ export const AMASON_PRODUCTS: AmasonProduct[] = [
     title: 'Insulated Water Bottle, 32 oz (2-Pack)',
     brand: 'Northbrew',
     price: 21.99,
-    category: 'Outdoors',
+    category: 'Sports & Outdoors',
     rating: 4.7,
     reviews: 55_013,
     badge: 'Best Seller',
@@ -205,6 +207,42 @@ export const AMASON_PRODUCTS: AmasonProduct[] = [
     rating: 4.6,
     reviews: 19_338,
     bullets: ['15% L-ascorbic acid', 'Fragrance-free'],
+    image: 'https://m.media-amazon.com/images/W/BW_MEDIAX_AVIF_MEASUREMENT_1306696-T4/images/I/619U9EKFBpL._SL1500_.jpg'
+  },
+  {
+    id: 'aventador-svj',
+    title: '2021 Aventador LP 770-4 SVJ',
+    brand: 'Lamborghini',
+    price: 734600.00,
+    category: 'Autos',
+    bullets: ['Green'],
+    image: 'https://res.cloudinary.com/motortrak/d_fallback.png,w_640/ims2/vehicle-media/lamborghini/Aventador-LP-770-4-SVJ/2021/ZHWEM6ZD7MLA10302/ynxcwsdkvdew9duqbnab.webp',
+    rating: 4.5,
+    reviews: 2
+  },
+    {
+    id: 'baker-board',
+    title: 'Baker Skateboards Factory Assembled Complete Logo Skateboard ',
+    brand: 'Baker',
+    price: 118.88,
+    category: 'Sports & Outdoors',
+    rating: 4.6,
+    badge: "Amason's choice",
+    reviews: 174,
+    bullets: ['7.75"', 'Abec 5'],
+    image: 'https://m.media-amazon.com/images/W/BW_MEDIAX_AVIF_MEASUREMENT_1306696-T4/images/I/516ocVtZBwL._AC_SL1200_.jpg'
+  },
+    {
+    id: 'pokemon-tcg',
+    title: 'Pokémon TCG: Mega Evolution—Pitch Black Booster Bundle ',
+    brand: 'Pokémon',
+    price: 48.30,
+    listPrice: 69.99,
+    category: 'Toys & Games',
+    rating: 4.4,
+    reviews: 1120,
+    bullets: ['TCG', 'Pokémon Cards'],
+    image: 'https://m.media-amazon.com/images/W/BW_MEDIAX_AVIF_MEASUREMENT_1306696-T4/images/I/81FN42dY0bL._AC_SL1500_.jpg'
   },
 ];
 
