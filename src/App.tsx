@@ -3,6 +3,7 @@ import { MotionConfig } from 'framer-motion';
 import { MINUTES_PER_TICK, tickMs } from '@/content/time';
 import { useNotificationBridge } from '@/hooks/useNotificationBridge';
 import { useResolvedTheme } from '@/hooks/useResolvedTheme';
+import { useSoundPrefs } from '@/hooks/useSoundPrefs';
 import { OSShell } from '@/os/OSShell';
 import { PhoneFrame } from '@/os/PhoneFrame';
 import { useGameStore } from '@/store/gameStore';
@@ -17,6 +18,7 @@ import { useOSStore } from '@/store/osStore';
 export function App() {
   useResolvedTheme();
   useNotificationBridge();
+  useSoundPrefs();
   const clockSpeed = useOSStore((s) => s.clockSpeed);
 
   useEffect(() => {

@@ -33,7 +33,7 @@
 | 드래그 정렬 | dnd-kit (core / sortable / utilities / modifiers) |
 | 아이콘 | lucide-react, react-icons |
 | 날짜 | date-fns (게임 내 가상 날짜) |
-| 사운드 | howler (Phase 8 예정 — 아직 에셋·합성 톤 미포함) |
+| 사운드 | **Web Audio 합성 톤** (에셋 없음) — `tap`/`open`/`close`/`notify`/`error`, 볼륨·무음 연동 |
 | 유틸 | immer, nanoid, zod, clsx, tailwind-merge |
 | 백엔드(예정) | @supabase/supabase-js (클라이언트 초기화만) |
 | 품질 | ESLint, Prettier, Vitest + Testing Library |
@@ -163,7 +163,7 @@ export const APP_REGISTRY = {
 
 ## 로드맵
 
-Phase 0–7까지 완료입니다(Phase 7 알림 시스템은 슬라이스 — 트리거 3종·4개 표면까지). 다음은 **Phase 8(오디오)** → Phase 9(DB) → Phase 10(콘텐츠 이관·문서). 상세 계획·수치·변경 이력은 [`phase.md`](./phase.md).
+Phase 0–7까지 완료입니다(Phase 7 알림 시스템은 슬라이스 — 트리거 3종·4개 표면까지). Phase 8(오디오)은 **1차(합성 톤·볼륨·무음 연동)** 완료 — 나머지 큐와 호출부 연결이 남아 있습니다. 다음은 Phase 8 마무리 → Phase 9(DB) → Phase 10(콘텐츠 이관·문서). 상세 계획·수치·변경 이력은 [`phase.md`](./phase.md).
 
 ## Supabase (연결은 아직 하지 않음)
 

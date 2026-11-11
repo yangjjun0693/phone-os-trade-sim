@@ -3,7 +3,7 @@
 > 이 문서는 **모든 작업 내용을 담은 단일 계획서**입니다. 작업 순서, 수치, 콘텐츠 규칙,
 > 편집 방법이 전부 여기에 있습니다. 내용이 바뀌면 이 파일만 수정하면 됩니다.
 >
-> 최종 갱신: 2026-11-09 · 상태: **Phase 6/6b/6c 완료 · Amason 완료 · Phase 7 슬라이스 완료 (알림 시스템)**
+> 최종 갱신: 2026-11-11 · 상태: **Phase 6/6b/6c 완료 · Amason 완료 · Phase 7 슬라이스 완료 · Phase 8 1차(합성 톤)**
 
 ---
 
@@ -563,6 +563,13 @@ create policy "own saves" on public.saves
     steak 승패·약속 5분 전/노쇼) · 인앱 배너 · 사운드(Phase 8). **커버 트래픽은 Phase 6c 후속**으로 별도
 - [ ] **Phase 8 — 오디오**
   합성 톤 세트, 볼륨 연동, 무음 토글
+  - [x] **1차 (합성 톤 + 연동)** — `src/lib/sound.ts` 가 Howler 스텁 대신 **Web Audio 합성 톤**을
+    냅니다(에셋 없음). 큐 5종(`tap`/`open`/`close`/`notify`/`error`), 같은 소리 100ms 1회 제한(§9),
+    AudioContext 없는 환경(SSR/jsdom)에서는 안전한 no-op. `useSoundPrefs` 훅이 온보딩/설정의
+    **소리 동의**를 무음 스위치로, 컨트롤센터 볼륨을 마스터 볼륨으로 연결(App에 1회 마운트).
+    알림 브리지가 `notify` 큐를 재생. 테스트 5종.
+  - 남은 것: 나머지 큐(`success`/`cash`/`coin`/`lose`/`message`/`alarm`/`levelup` 등), 탭·앱 열기/닫기
+    등 **호출부 연결**, 설정 앱의 효과음 볼륨 세부, `prefers-reduced-motion`과 별개의 소리 끄기 토글 UI
 - [ ] **Phase 9 — DB**
   Supabase 인증/스키마/슬롯/마이그레이션/충돌 해결
 - [ ] **Phase 10 — 콘텐츠 이관 + 문서**
@@ -622,3 +629,5 @@ create policy "own saves" on public.saves
 | 2026-11-01 | **Phase 6c 완료(일상 웹)**: 가짜 브라우저에 마켓이 아닌 사이트를 추가. `BrowserSite`(판별 유니온: search/video/classifieds/wiki, `reach` 재사용) + `content/sites.ts` 5종(ViewTube·Sleuth·중고마을·OpenPedia·OpenPedia .onion). 시작 페이지에 "일상" 바로가기 줄, 주소창 검색이 실제 동작(URL이 아니면 Sleuth 결과). 훅: 영상=즉시 시간 보내기 / 영상·위키·매물=단서(`learnedClues` → `suspicionScore`) / 위키=`.onion` 해금(`discoverMarket`) / 무료시청·선입금·검색광고=함정(`{cash,heat,note}`). 중고마을은 browse-only(구매는 다음). 게임 스키마 v10(`learnedClues`+`stats.videosWatched/searchesRun/wikiRead`, 마이그레이션). 커버 트래픽은 설계만(다음 패스) |
 | 2026-11-01 | **배경화면 이미지로 교체**: 사용자 제공 이미지로 변경 — 라이트 `askx536.png` / 다크 `bbTUXqF.png`. `--os-wallpaper` 토큰을 CSS 그라데이션에서 `url(...)`로 교체(두 테마 각각), `Wallpaper`에서 글로우·그레인 레이어 제거(이미지 위 불필요). PWA 오프라인 대비 `vite.config.ts` workbox `runtimeCaching`에 `i.imgur.com` CacheFirst 추가. 검증: typecheck·272 tests·build 통과, 빌드 CSS에 두 URL 포함 |
 | 2026-11-09 | **Phase 7 슬라이스 완료(알림 시스템, scope B)**: 이벤트 버스(`emit`) + 알림 모델(priority/action/groupKey/expiresAt/read) + 순수 스팸 규칙(그룹별 10분 쿨다운·하루 40건 상한·야간 00~06시 low 만) + 브리지(`useNotificationBridge`) + 트리거 3종(은행 고액/이상 입금, 메신저 도착, 배송 도착/분실/압수) + 4개 표면(알림센터 그룹·읽음·스와이프 삭제·딥링크 / 잠금 화면 앱별 그룹 / 홈 아이콘 배지 / 다이나믹 아일랜드 pill). 알림을 세이브로 옮기며 OS 저장 스키마 **v12**(마이그레이션 포함). 미룸: 나머지 트리거, 인앱 배너, 사운드(Phase 8); 커버 트래픽은 Phase 6c 후속 |
+| 2026-11-11 | **Phase 7 마감 수정**: 최종 전수 리뷰에서 나온 4건을 한 번에 고침 — ①만료가 알림센터에만 적용되던 것을 시계마다 `pruneExpired`로 통일(잠금화면·배지도 같은 활성 집합), ②spec §5.6의 **그룹 펼치기** 구현, ③`restartGame` 뒤 거꾸로 간 게임 시계가 스팸 가드를 막던 문제(음수 경과 허용 + `clearNotificationState`), ④pill이 백데이트된 압수 알림을 놓치던 문제(id로 직접 해석). 이어 그룹 토글이 카드 `<button>` 안에 중첩되던 접근성 위반(WCAG 4.1.2)을 **형제 버튼**으로 바꾸고, 카드 탭/삭제가 그룹 전체에 적용되게 함 (총 336 tests) |
+| 2026-11-11 | **Phase 8 1차(오디오)**: `src/lib/sound.ts` 를 Howler 스텁에서 **Web Audio 합성 톤**으로 교체(에셋 없음). 큐 5종(tap/open/close/notify/error), 같은 소리 100ms 1회(§9), AudioContext 없으면 안전한 no-op. `useSoundPrefs` 훅이 온보딩/설정 **소리 동의=무음**, 컨트롤센터 볼륨=마스터로 연결(App에 1회). 알림 브리지가 notify 재생. 테스트 5종 (총 336) |
