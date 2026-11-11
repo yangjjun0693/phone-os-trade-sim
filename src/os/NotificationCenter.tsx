@@ -18,14 +18,16 @@ const SWIPE_DELETE_DISTANCE = 60;
 /** One grouped notification row: tap to open, swipe (or the ✕) to delete. */
 function NotificationCard({
   group,
-  onOpen,
+  onOpenGroup,
   onOpenItem,
-  onDelete,
+  onDeleteGroup,
+  onDeleteItem,
 }: {
   group: NotificationGroup;
-  onOpen: (group: NotificationGroup) => void;
+  onOpenGroup: (group: NotificationGroup) => void;
   onOpenItem: (item: GameNotification) => void;
-  onDelete: (id: string) => void;
+  onDeleteGroup: (group: NotificationGroup) => void;
+  onDeleteItem: (id: string) => void;
 }) {
   const { latest } = group;
   // Spec §5.6 "그룹 펼치기": the card shows the latest; the count chip spills
@@ -47,7 +49,7 @@ function NotificationCard({
       window.setTimeout(() => {
         draggedRef.current = false;
       }, 0);
-      if (mx < -SWIPE_DELETE_DISTANCE) onDelete(latest.id);
+      if (mx < -SWIPE_DELETE_DISTANCE) onDeleteGroup(group);
     },
     { axis: 'x', touchAction: 'pan-y' },
   );
@@ -57,7 +59,7 @@ function NotificationCard({
       draggedRef.current = false;
       return;
     }
-    onOpen(group);
+    onOpenGroup(group);
   };
 
   return (
@@ -88,37 +90,32 @@ function NotificationCard({
                   className="size-1.5 shrink-0 rounded-full bg-ios-blue"
                 />
               )}
-              {rest.length > 0 && (
-                <span
-                  role="button"
-                  tabIndex={0}
-                  aria-expanded={expanded}
-                  aria-label={expanded ? '그룹 접기' : `그룹 펼치기 (${group.items.length})`}
-                  onClick={(event) => {
-                    // The chip sits inside the card's tap-to-open button; keep
-                    // the toggle from also opening/deep-linking the group.
-                    event.stopPropagation();
-                    setExpanded((value) => !value);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== 'Enter' && event.key !== ' ') return;
-                    event.preventDefault();
-                    event.stopPropagation();
-                    setExpanded((value) => !value);
-                  }}
-                  className="shrink-0 rounded-full bg-white/20 px-1.5 text-[11px] tabular-nums"
-                >
-                  {group.items.length}
-                </span>
-              )}
             </span>
             <span className="mt-0.5 block truncate text-[13px] opacity-80">{latest.body}</span>
           </span>
         </button>
+        {/*
+          The expand toggle is a SIBLING of the open button, never a child: an
+          interactive control may not be nested inside another button
+          (WCAG 4.1.2 / axe `nested-interactive`).
+        */}
+        {rest.length > 0 ? (
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-label={expanded ? '그룹 접기' : `그룹 펼치기 (${group.items.length})`}
+            onClick={() => setExpanded((value) => !value)}
+            className="flex shrink-0 items-center justify-center px-2 text-ios-muted active:bg-black/10"
+          >
+            <span className="rounded-full bg-white/20 px-1.5 text-[11px] tabular-nums">
+              {group.items.length}
+            </span>
+          </button>
+        ) : null}
         <button
           type="button"
-          aria-label={`${latest.title} 삭제`}
-          onClick={() => onDelete(latest.id)}
+          aria-label={rest.length > 0 ? `${latest.title} 그룹 삭제` : `${latest.title} 삭제`}
+          onClick={() => onDeleteGroup(group)}
           className="flex w-8 shrink-0 items-center justify-center text-ios-muted active:bg-black/10"
         >
           <X className="size-4" aria-hidden />
@@ -142,7 +139,7 @@ function NotificationCard({
               <button
                 type="button"
                 aria-label={`${item.title} 삭제`}
-                onClick={() => onDelete(item.id)}
+                onClick={() => onDeleteItem(item.id)}
                 className="flex w-8 shrink-0 items-center justify-center text-ios-muted active:bg-black/10"
               >
                 <X className="size-4" aria-hidden />
@@ -205,7 +202,20 @@ export function NotificationCenter() {
     setOverlay('none');
   };
 
-  const openGroup = (group: NotificationGroup) => openItem(group.latest);
+  /** Tapping the card reads the whole group; only the latest acts as a link. */
+  const openGroup = (group: NotificationGroup) => {
+    group.items.forEach((item) => markNotificationRead(item.id));
+    const action = group.latest.action;
+    if (!action) return;
+    getApp(action.appId)?.preload?.();
+    openApp(action.appId);
+    setOverlay('none');
+  };
+
+  /** Deleting the card clears the whole group. */
+  const deleteGroup = (group: NotificationGroup) => {
+    group.items.forEach((item) => removeNotification(item.id));
+  };
 
   return (
     <motion.div
@@ -262,9 +272,10 @@ export function NotificationCenter() {
                   <NotificationCard
                     key={group.key}
                     group={group}
-                    onOpen={openGroup}
+                    onOpenGroup={openGroup}
                     onOpenItem={openItem}
-                    onDelete={removeNotification}
+                    onDeleteGroup={deleteGroup}
+                    onDeleteItem={removeNotification}
                   />
                 ))}
               </AnimatePresence>

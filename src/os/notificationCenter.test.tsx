@@ -79,10 +79,41 @@ describe('NotificationCenter', () => {
     await user.click(screen.getByText('두 번째 메시지'));
     expect(useOSStore.getState().notifications.find((n) => n.id === 'g0')?.read).toBe(true);
 
-    // The expanded row carries its own delete. Header delete comes first in DOM.
-    const deletes = screen.getAllByRole('button', { name: '새 메시지 삭제' });
-    await user.click(deletes[1]);
+    // The expanded row carries its own delete; the header delete clears the group.
+    await user.click(screen.getByRole('button', { name: '새 메시지 삭제' }));
     expect(useOSStore.getState().notifications.map((n) => n.id)).not.toContain('g0');
+  });
+
+  it('reads the whole group on tap, and the group delete clears it', async () => {
+    const user = userEvent.setup();
+    useOSStore.setState({
+      notifications: [
+        { id: 'g1', appId: 'telegraph', priority: 'normal', title: '새 메시지', body: '첫 번째', createdAt: GAME_EPOCH, read: false, groupKey: 'msg-dal' },
+        { id: 'g0', appId: 'telegraph', priority: 'normal', title: '새 메시지', body: '두 번째', createdAt: GAME_EPOCH, read: false, groupKey: 'msg-dal' },
+      ],
+    });
+    render(<NotificationCenter />);
+
+    await user.click(screen.getByText('첫 번째'));
+    const read = useOSStore.getState().notifications;
+    expect(read.find((n) => n.id === 'g1')?.read).toBe(true);
+    expect(read.find((n) => n.id === 'g0')?.read).toBe(true);
+
+    await user.click(screen.getByRole('button', { name: '새 메시지 그룹 삭제' }));
+    expect(useOSStore.getState().notifications).toHaveLength(0);
+  });
+
+  it('keeps the expand toggle out of the open button (no nested interactive)', () => {
+    useOSStore.setState({
+      notifications: [
+        { id: 'g1', appId: 'telegraph', priority: 'normal', title: '새 메시지', body: '최신', createdAt: GAME_EPOCH, read: false, groupKey: 'msg-dal' },
+        { id: 'g0', appId: 'telegraph', priority: 'normal', title: '새 메시지', body: '이전', createdAt: GAME_EPOCH, read: false, groupKey: 'msg-dal' },
+      ],
+    });
+    render(<NotificationCenter />);
+    const toggle = screen.getByRole('button', { name: /그룹 펼치기/ });
+    expect(toggle.tagName).toBe('BUTTON');
+    expect(toggle.parentElement?.closest('button')).toBeNull();
   });
 
   it('ignores the click that follows a card drag (no spurious open)', () => {
