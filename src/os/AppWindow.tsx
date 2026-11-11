@@ -1,6 +1,7 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { motion, useIsPresent } from 'framer-motion';
 import { getApp } from '@/apps/registry';
+import { sound } from '@/lib/sound';
 import { hexToRgbTriplet } from '@/utils/color';
 import { EASE_IOS, SPRING_SOFT } from '@/utils/motion';
 
@@ -40,6 +41,13 @@ export function AppWindow({ appId }: { appId: string }) {
   const app = getApp(appId);
   // Hooks must run before the early return below.
   const isPresent = useIsPresent();
+
+  // A soft cue on the way in and out. `sound` is a safe no-op without Web Audio.
+  useEffect(() => {
+    sound.play('open');
+    return () => sound.play('close');
+  }, [appId]);
+
   if (!app) return null;
 
   const Component = app.Component;

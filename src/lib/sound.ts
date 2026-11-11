@@ -8,7 +8,19 @@
  * (SSR, jsdom, or a browser that blocks it).
  */
 
-export type SoundName = 'tap' | 'open' | 'close' | 'notify' | 'error';
+export type SoundName =
+  | 'tap'
+  | 'open'
+  | 'close'
+  | 'notify'
+  | 'error'
+  | 'message'
+  | 'success'
+  | 'cash'
+  | 'coin'
+  | 'lose'
+  | 'alarm'
+  | 'levelup';
 
 interface Tone {
   /** Frequency in Hz. */
@@ -36,7 +48,33 @@ const TONES: Record<SoundName, Tone[]> = {
     { freq: 880, type: 'sine', duration: 0.12, gain: 0.32 },
     { freq: 1180, type: 'sine', duration: 0.16, gain: 0.28, delay: 0.11 },
   ],
+  message: [
+    { freq: 740, type: 'sine', duration: 0.1, gain: 0.28 },
+    { freq: 988, type: 'sine', duration: 0.14, gain: 0.26, delay: 0.09 },
+  ],
   error: [{ freq: 210, type: 'square', duration: 0.18, gain: 0.24, sweepTo: 140 }],
+  success: [
+    { freq: 660, type: 'sine', duration: 0.12, gain: 0.3 },
+    { freq: 990, type: 'sine', duration: 0.18, gain: 0.28, delay: 0.1 },
+  ],
+  cash: [
+    { freq: 1046, type: 'triangle', duration: 0.08, gain: 0.28 },
+    { freq: 1568, type: 'triangle', duration: 0.12, gain: 0.24, delay: 0.06 },
+  ],
+  coin: [{ freq: 1568, type: 'triangle', duration: 0.09, gain: 0.24, sweepTo: 2093 }],
+  lose: [
+    { freq: 392, type: 'sine', duration: 0.18, gain: 0.28 },
+    { freq: 262, type: 'sine', duration: 0.24, gain: 0.26, delay: 0.14 },
+  ],
+  alarm: [
+    { freq: 440, type: 'square', duration: 0.16, gain: 0.26 },
+    { freq: 440, type: 'square', duration: 0.16, gain: 0.26, delay: 0.22 },
+  ],
+  levelup: [
+    { freq: 523, type: 'sine', duration: 0.12, gain: 0.28 },
+    { freq: 659, type: 'sine', duration: 0.12, gain: 0.28, delay: 0.1 },
+    { freq: 784, type: 'sine', duration: 0.2, gain: 0.3, delay: 0.2 },
+  ],
 };
 
 /** No more than one instance of the same cue inside this window (§9). */

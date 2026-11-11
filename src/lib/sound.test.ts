@@ -83,4 +83,9 @@ describe('sound', () => {
     sound.play('notify');
     expect(contexts[0].createOscillator).toHaveBeenCalledTimes(2);
   });
+
+  it('supports the wider cue set (levelup is a three-note arpeggio)', () => {
+    sound.play('levelup');
+    expect(contexts[0].createOscillator).toHaveBeenCalledTimes(3);
+  });
 });

@@ -16,10 +16,11 @@ export function useNotificationBridge(): void {
     () =>
       onGameEvent((event) => {
         const delivered = useOSStore.getState().notify(event);
+        const cue = event.type === 'messenger.arrival' ? 'message' : 'notify';
         for (const item of delivered) {
           const ch = channelsFor(item.priority);
           if (ch.haptic) haptic(12);
-          if (ch.sound) sound.play('notify');
+          if (ch.sound) sound.play(cue);
         }
       }),
     [],

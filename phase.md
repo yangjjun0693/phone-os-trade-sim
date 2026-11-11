@@ -568,8 +568,10 @@ create policy "own saves" on public.saves
     AudioContext 없는 환경(SSR/jsdom)에서는 안전한 no-op. `useSoundPrefs` 훅이 온보딩/설정의
     **소리 동의**를 무음 스위치로, 컨트롤센터 볼륨을 마스터 볼륨으로 연결(App에 1회 마운트).
     알림 브리지가 `notify` 큐를 재생. 테스트 5종.
-  - 남은 것: 나머지 큐(`success`/`cash`/`coin`/`lose`/`message`/`alarm`/`levelup` 등), 탭·앱 열기/닫기
-    등 **호출부 연결**, 설정 앱의 효과음 볼륨 세부, `prefers-reduced-motion`과 별개의 소리 끄기 토글 UI
+  - 큐 세트 **12종**으로 확장(`message`/`success`/`cash`/`coin`/`lose`/`alarm`/`levelup` 추가).
+    **앱 창 열기/닫기** 큐 연결(`AppWindow`), 메신저 도착은 `message` 큐로 재생.
+  - 남은 것: 판매·코인 등 나머지 **호출부 연결**(현재는 notify·open/close만), 설정 앱의 효과음 볼륨
+    세부, `prefers-reduced-motion`과 별개의 소리 끄기 토글 UI
 - [ ] **Phase 9 — DB**
   Supabase 인증/스키마/슬롯/마이그레이션/충돌 해결
 - [ ] **Phase 10 — 콘텐츠 이관 + 문서**
