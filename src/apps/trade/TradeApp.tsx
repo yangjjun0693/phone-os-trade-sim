@@ -1,13 +1,10 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRightLeft,
-  Banknote,
   CalendarClock,
   Flame,
   Package,
-  Target,
-  TrendingUp,
   UserRound,
   X,
 } from 'lucide-react';
@@ -33,16 +30,16 @@ import {
   type CustomerOffer,
   type DayReport,
 } from '@/game/trade';
-import { AnimatedNumber, Burst, Pill } from '@/components';
+import { Burst, Pill } from '@/components';
 import { STORAGE_CAPACITY } from '@/content/economy';
 import { useGameStore } from '@/store/gameStore';
 import { cn } from '@/utils/cn';
 import { formatCash } from '@/utils/format';
 import { haptic } from '@/utils/haptics';
-import { SPRING_BOUNCY, SPRING_SNAPPY, SPRING_SOFT, prefersReducedMotion } from '@/utils/motion';
+import { SPRING_SNAPPY, SPRING_SOFT, prefersReducedMotion } from '@/utils/motion';
 import { AppShell } from '../AppShell';
 import { EmptyState } from '../EmptyState';
-import { Row, Section } from '../SectionList';
+import { Row } from '../SectionList';
 
 const tierColor: Record<ReturnType<typeof heatTier>, string> = {
   calm: 'text-ios-green',
@@ -61,6 +58,55 @@ const tierBar: Record<ReturnType<typeof heatTier>, string> = {
 interface Feedback {
   tone: 'ok' | 'warn' | 'error';
   text: string;
+}
+
+/** One ruled line of the running tally: label left, figure right. */
+function Tally({
+  label,
+  children,
+  strong,
+}: {
+  label: string;
+  children: ReactNode;
+  strong?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b border-ios-separator/10 py-2 last:border-b-0">
+      <span className="text-[13px] text-ios-muted">{label}</span>
+      <span
+        className={cn(
+          'tabular-nums',
+          strong ? 'text-[19px] font-semibold' : 'text-[15px] font-medium',
+        )}
+      >
+        {children}
+      </span>
+    </div>
+  );
+}
+
+/** A ruled group: a small label, a hairline, then rows. No card, no shadow. */
+function Group({
+  label,
+  trailing,
+  children,
+  footer,
+}: {
+  label: string;
+  trailing?: ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
+}) {
+  return (
+    <section className="mt-6 border-t border-ios-separator/15">
+      <div className="flex items-center justify-between px-4 pb-1.5 pt-3">
+        <h2 className="text-[12px] font-semibold text-ios-muted">{label}</h2>
+        {trailing}
+      </div>
+      <div className="border-t border-ios-separator/10">{children}</div>
+      {footer ? <p className="px-4 pt-2 text-[12px] text-ios-muted">{footer}</p> : null}
+    </section>
+  );
 }
 
 export function TradeApp() {
@@ -193,136 +239,100 @@ export function TradeApp() {
         title="거래"
         largeTitle
         trailing={
-          <motion.span
-            key={day}
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={SPRING_BOUNCY}
-            className="rounded-full bg-ios-separator/20 px-2 py-0.5 text-[11px] font-semibold text-ios-muted"
-          >
+          <span className="text-[13px] font-medium tabular-nums text-ios-muted">
             Day {day}
-          </motion.span>
+          </span>
         }
       >
-        <div className="mx-4 mb-6 grid grid-cols-2 gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={SPRING_SOFT}
-            className="rounded-2xl bg-ios-surface p-3.5 shadow-sm ring-1 ring-black/5 dark:ring-white/5"
-          >
-            <p className="text-[12px] font-medium text-ios-muted">현금</p>
-            <AnimatedNumber
-              value={cash}
-              format={formatCash}
-              className="mt-1 block text-[22px] font-bold"
-            />
-            <p className="text-[11px] text-ios-muted">예금 {formatCash(bankBalance)}</p>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...SPRING_SOFT, delay: 0.04 }}
-            className="relative overflow-hidden rounded-2xl bg-ios-surface p-3.5 shadow-sm ring-1 ring-black/5 dark:ring-white/5"
-          >
-            <p className="relative text-[12px] font-medium text-ios-muted">Heat</p>
-            <AnimatedNumber
-              value={heat}
-              className={cn('relative mt-1 block text-[22px] font-bold', tierColor[tier])}
-            />
-            <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-ios-separator/25">
-              <motion.div
-                className={cn('h-full rounded-full', tierBar[tier])}
-                initial={false}
-                animate={{ width: `${Math.min(100, heat)}%` }}
-                transition={SPRING_SOFT}
-              />
-            </div>
-            <p className="relative mt-1 text-[11px] text-ios-muted">{heatLabel(tier)}</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...SPRING_SOFT, delay: 0.08 }}
-            className="col-span-2 rounded-2xl bg-ios-surface p-3.5 shadow-sm ring-1 ring-black/5 dark:ring-white/5"
-          >
-            <div className="flex items-center justify-between">
-              <p className="flex items-center gap-1.5 text-[12px] font-medium text-ios-muted">
-                <Target className="size-3.5" aria-hidden />
-                은퇴 목표
-              </p>
-              <p className="text-[12px] font-semibold tabular-nums">
-                {formatCash(wealth)} / {formatCash(RETIRE_GOAL)}
-              </p>
-            </div>
-            <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-ios-separator/25">
-              <motion.div
-                className="relative h-full rounded-full bg-ios-accent"
-                initial={false}
-                animate={{ width: `${progress * 100}%` }}
-                transition={SPRING_SOFT}
-              />
-            </div>
-            <div className="mt-1.5 flex items-center justify-between text-[11px] text-ios-muted">
-              <span>현금 + 예금</span>
-              <span>
-                Day {Math.min(day, MAX_DAYS)} / {MAX_DAYS}
-              </span>
-            </div>
-          </motion.div>
+        {/* The tally: cash, deposit, total, goal. Ruled lines, money on the right. */}
+        <div className="px-4 pt-1">
+          <Tally label="현금" strong>
+            {formatCash(cash)}
+          </Tally>
+          <Tally label="예금">{formatCash(bankBalance)}</Tally>
+          <Tally label="합계">
+            {formatCash(wealth)} / {formatCash(RETIRE_GOAL)}
+          </Tally>
         </div>
 
-        <Section
-          header="손님"
-          footer="수락하면 바로 판매됩니다. 협상은 +18%를 부르지만 손님이 떠날 수 있습니다."
-          delay={0.05}
+        <div className="px-4 pb-1 pt-3">
+          <div className="h-px w-full bg-ios-separator/25">
+            <motion.div
+              className="h-px bg-ios-text/70"
+              initial={false}
+              animate={{ width: `${progress * 100}%` }}
+              transition={SPRING_SOFT}
+            />
+          </div>
+          <p className="mt-1.5 text-[11px] text-ios-muted">
+            Day {Math.min(day, MAX_DAYS)} / {MAX_DAYS} · 목표의 {Math.round(progress * 100)}%
+          </p>
+        </div>
+
+        {/* Heat as a warning strip, not a card. */}
+        <div className="flex items-center gap-3 border-y border-ios-separator/15 px-4 py-2.5">
+          <span className="text-[13px] text-ios-muted">노출도</span>
+          <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-ios-separator/20">
+            <motion.div
+              className={cn('h-full', tierBar[tier])}
+              initial={false}
+              animate={{ width: `${Math.min(100, heat)}%` }}
+              transition={SPRING_SOFT}
+            />
+          </div>
+          <span
+            className={cn('text-[13px] font-semibold tabular-nums', tierColor[tier])}
+          >
+            {heat}
+          </span>
+          <span className="w-12 text-right text-[11px] text-ios-muted">{heatLabel(tier)}</span>
+        </div>
+
+        <Group
+          label="손님"
+          footer={
+            customer
+              ? '수락하면 바로 판매됩니다. 협상은 +18%를 부르지만 손님이 떠날 수 있습니다.'
+              : '재고에서 한 명이 찾아옵니다. 거절하면 노출도 +1.'
+          }
         >
           {customer ? (
             <motion.div
               key={customer.id}
-              initial={{ opacity: 0, y: 14, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
               transition={SPRING_SOFT}
-              className="relative overflow-hidden p-4"
+              className="relative overflow-hidden px-4 py-3"
             >
               <Burst show={celebration} radius={110} />
-              <div className="flex items-start gap-3">
-                <motion.span
-                  initial={{ scale: 0.6, rotate: -10 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={SPRING_BOUNCY}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ios-accent/10"
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-[16px] font-semibold">{customer.name}</span>
+                <Pill
+                  tone={
+                    customer.kind === 'undercover'
+                      ? 'red'
+                      : customer.kind === 'difficult'
+                        ? 'orange'
+                        : 'green'
+                  }
                 >
-                  <UserRound className="size-5 text-ios-accent" aria-hidden />
-                </motion.span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate text-[16px] font-semibold">{customer.name}</p>
-                    <Pill tone={customer.kind === 'undercover' ? 'red' : customer.kind === 'difficult' ? 'orange' : 'green'}>
-                      인내심 {customer.patience}
-                    </Pill>
-                  </div>
-                  <p className="mt-0.5 text-[12px] text-ios-muted">
-                    {customerKindHint(customer.kind)}
-                  </p>
-                </div>
+                  인내심 {customer.patience}
+                </Pill>
               </div>
+              <p className="mt-0.5 text-[12px] text-ios-muted">{customerKindHint(customer.kind)}</p>
 
-              <div className="mt-3 rounded-xl bg-ios-bg/60 px-3 py-2.5 ring-1 ring-black/5 dark:ring-white/5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[14px]">
-                    {customer.itemName} ×{customer.qty}
-                  </span>
-                  <span className="text-[16px] font-bold tabular-nums">
-                    {formatCash(customer.total)}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-[11px] text-ios-muted">
-                  개당 {formatCash(customer.unitPrice)} · 제안가
-                </p>
+              <div className="mt-2 flex items-baseline justify-between border-t border-ios-separator/10 pt-2">
+                <span className="text-[14px]">
+                  {customer.itemName} ×{customer.qty}
+                </span>
+                <span className="text-[17px] font-semibold tabular-nums">
+                  {formatCash(customer.total)}
+                </span>
               </div>
+              <p className="mt-0.5 text-[11px] text-ios-muted">
+                개당 {formatCash(customer.unitPrice)}
+              </p>
 
               <div className="mt-3 grid grid-cols-3 gap-2">
                 <button
@@ -352,57 +362,53 @@ export function TradeApp() {
           ) : (
             <motion.div
               key="empty"
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={SPRING_SOFT}
-              className="p-4"
+              transition={SPRING_SNAPPY}
+              className="px-4 py-3"
             >
               <button
                 type="button"
                 onClick={callCustomer}
                 disabled={status !== 'playing'}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-ios-accent text-[15px] font-semibold text-white active:opacity-80 disabled:bg-ios-separator/20 disabled:text-ios-muted"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-ios-accent text-[15px] font-semibold text-white active:opacity-80 disabled:bg-ios-separator/20 disabled:text-ios-muted"
               >
                 <UserRound className="size-4" aria-hidden />
                 손님 받기
               </button>
-              <p className="mt-2 text-center text-[12px] text-ios-muted">
-                재고에서 무작위로 한 명이 찾아옵니다. 거절하면 heat +1.
-              </p>
             </motion.div>
           )}
-        </Section>
+        </Group>
 
         <AnimatePresence>
           {feedback ? (
-            <motion.div
+            <motion.p
               key={feedback.text}
-              initial={{ opacity: 0, y: -8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={SPRING_SNAPPY}
-              className={cn(
-                'mx-4 mb-6 rounded-xl px-3 py-2 text-[12px]',
-                feedback.tone === 'ok' && 'bg-ios-green/10 text-ios-green',
-                feedback.tone === 'warn' && 'bg-ios-orange/10 text-ios-orange',
-                feedback.tone === 'error' && 'bg-ios-red/10 text-ios-red',
-              )}
               role="status"
+              className={cn(
+                'mx-4 mt-4 border-l-2 pl-3 py-1 text-[12px]',
+                feedback.tone === 'ok' && 'border-ios-green text-ios-green',
+                feedback.tone === 'warn' && 'border-ios-orange text-ios-orange',
+                feedback.tone === 'error' && 'border-ios-red text-ios-red',
+              )}
             >
               {feedback.text}
-            </motion.div>
+            </motion.p>
           ) : null}
         </AnimatePresence>
 
-        <Section
-          header="약속"
+        <Group
+          label="약속"
           footer={
             booked.length > 0
               ? `잡힌 약속 ${appointmentStats.booked}건 · 완료 ${appointmentStats.done} · 놓침 ${appointmentStats.missed}`
-              : `완료 ${appointmentStats.done} · 놓침 ${appointmentStats.missed} · 약속은 메신저 답장으로 생깁니다.`
+              : `완료 ${appointmentStats.done} · 놓침 ${appointmentStats.missed}. 약속은 메신저 답장으로 생깁니다.`
           }
-          delay={0.08}
         >
           {booked.length === 0 ? (
             <EmptyState
@@ -421,31 +427,33 @@ export function TradeApp() {
               return (
                 <div
                   key={deal.id}
-                  className="border-b border-ios-separator/15 px-4 py-3 last:border-b-0"
+                  className="border-b border-ios-separator/10 px-4 py-3 last:border-b-0"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-baseline justify-between gap-2">
                     <span className="text-[15px] font-semibold">{npc?.name ?? '손님'}</span>
-                    <Pill tone={late ? 'red' : 'blue'}>{formatDealEta(deal, gameDateTime)}</Pill>
-                    <span className="ml-auto text-[15px] font-semibold tabular-nums">
+                    <span className="text-[15px] font-semibold tabular-nums">
                       {formatCash(dealTotal(deal))}
                     </span>
                   </div>
-                  <p className="mt-0.5 text-[12px] text-ios-muted">
-                    {deal.productName} ×{deal.qty} · 개당 {formatCash(deal.unitPrice)} · 보유 {stock}개
-                  </p>
+                  <div className="mt-0.5 flex items-center gap-2 text-[12px] text-ios-muted">
+                    <Pill tone={late ? 'red' : 'blue'}>{formatDealEta(deal, gameDateTime)}</Pill>
+                    <span className="truncate">
+                      {deal.productName} ×{deal.qty} · 보유 {stock}
+                    </span>
+                  </div>
 
                   {/* Where to meet: safety vs. a shorter walk. */}
                   {(() => {
                     const chosen = findMeeting(meetSpots, deal.placeId);
                     return (
-                      <div className="mt-2 rounded-xl bg-ios-bg/60 px-3 py-2 ring-1 ring-black/5 dark:ring-white/5">
+                      <div className="mt-2 border-t border-ios-separator/10 pt-2">
                         <div className="flex items-center justify-between text-[12px]">
-                          <span className="font-medium">
-                            만남 장소 {chosen ? `· ${chosen.name}` : '· 미정'}
+                          <span className="text-ios-muted">
+                            만남 {chosen ? chosen.name : '미정'}
                           </span>
                           {chosen ? (
                             <span className="text-ios-muted">
-                              {patrolLabelOf(chosen.patrol)} · 이동 {chosen.tripMinutes}분
+                              {patrolLabelOf(chosen.patrol)} · {chosen.tripMinutes}분
                             </span>
                           ) : null}
                         </div>
@@ -499,20 +507,24 @@ export function TradeApp() {
               );
             })
           )}
-        </Section>
+        </Group>
 
-        <Section
-          header="재고"
+        <Group
+          label="재고"
+          trailing={
+            <span className="text-[12px] font-medium tabular-nums text-ios-muted">
+              {stockUnits}/{STORAGE_CAPACITY}
+            </span>
+          }
           footer={
             inventory.length
-              ? `재고 원가 ${formatCash(stockValue)} · 보관 ${stockUnits}/${STORAGE_CAPACITY}${
+              ? `원가 ${formatCash(stockValue)}${
                   stockUnits > STORAGE_CAPACITY
                     ? ' · 초과분은 마감 때 heat와 압수 위험이 커집니다'
                     : ''
                 }`
               : '브라우저에서 매입하면 배송을 거쳐 여기로 들어옵니다.'
           }
-          delay={0.1}
         >
           {inventory.length === 0 ? (
             <EmptyState
@@ -521,10 +533,9 @@ export function TradeApp() {
               description="브라우저를 열고 암시장에서 첫 물량을 주문하세요."
             />
           ) : (
-            inventory.map((item, index) => (
+            inventory.map((item) => (
               <Row
                 key={item.id}
-                animateIn={index}
                 icon={<Package className="size-4 text-ios-muted" />}
                 title={item.name}
                 subtitle={`원가 ${formatCash(item.unitCost)}${
@@ -534,58 +545,44 @@ export function TradeApp() {
               />
             ))
           )}
-        </Section>
+        </Group>
 
-        <Section
-          header="하루 마감"
-          footer="마감하면 하루 지출(월세 일할+생활비)이 빠지고, 사건이 하나 일어나며, heat가 크게 식습니다. 현금을 많이 들고 있으면 추가 heat가 붙습니다."
-          delay={0.15}
-        >
-          <div className="p-4">
-            <div className="mb-3 grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-xl bg-ios-bg/60 py-2 ring-1 ring-black/5 dark:ring-white/5">
-                <p className="text-[11px] text-ios-muted">판매</p>
-                <p className="text-[15px] font-semibold tabular-nums">{stats.sales}</p>
-              </div>
-              <div className="rounded-xl bg-ios-bg/60 py-2 ring-1 ring-black/5 dark:ring-white/5">
-                <p className="text-[11px] text-ios-muted">매출</p>
-                <p className="text-[15px] font-semibold tabular-nums">
-                  {formatCash(stats.revenue)}
-                </p>
-              </div>
-              <div className="rounded-xl bg-ios-bg/60 py-2 ring-1 ring-black/5 dark:ring-white/5">
-                <p className="text-[11px] text-ios-muted">잠복</p>
-                <p className="text-[15px] font-semibold tabular-nums">{stats.stings}</p>
-              </div>
+        <Group label="하루 마감">
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between text-[13px] tabular-nums">
+              <span className="text-ios-muted">
+                판매 <span className="font-semibold text-ios-text">{stats.sales}</span>
+              </span>
+              <span className="text-ios-muted">
+                매출 <span className="font-semibold text-ios-text">{formatCash(stats.revenue)}</span>
+              </span>
+              <span className="text-ios-muted">
+                잠복 <span className="font-semibold text-ios-text">{stats.stings}</span>
+              </span>
             </div>
-            <p className="mb-3 text-center text-[11px] text-ios-muted">
-              현금 보관 위험: 마감 시 +{cashRisk} heat · 예금으로 줄일 수 있습니다.
+            <p className="mt-2 text-[11px] text-ios-muted">
+              마감하면 하루 지출이 빠지고 heat가 식습니다. 현금 보관 위험 +{cashRisk}.
             </p>
             <button
               type="button"
               onClick={closeDay}
               disabled={status !== 'playing'}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-ios-surface font-semibold ring-1 ring-black/10 active:bg-ios-separator/10 disabled:opacity-50 dark:ring-white/10"
+              className="mt-3 flex h-11 w-full items-center justify-center rounded-xl border border-ios-separator/30 text-[15px] font-semibold text-ios-text active:bg-ios-separator/10 disabled:opacity-50"
             >
-              <Banknote className="size-4 text-ios-accent" aria-hidden />
               하루 마감하고 다음 날로
             </button>
           </div>
-        </Section>
+        </Group>
 
-        <p className="px-4 pb-8 text-center text-[11px] text-ios-muted">
-          <TrendingUp className="mr-1 inline size-3 align-[-2px]" aria-hidden />
+        <p className="flex items-center justify-center gap-1.5 px-4 pb-8 pt-6 text-[11px] text-ios-muted">
+          <Flame className="size-3" aria-hidden />
           전부 허구의 게임 시스템입니다.
-          <Flame className="ml-1 inline size-3 align-[-2px]" aria-hidden />
         </p>
       </AppShell>
 
       <AnimatePresence>
         {reportOpen && lastReport ? (
-          <DayReportSheet
-            report={lastReport}
-            onClose={() => setReportOpen(false)}
-          />
+          <DayReportSheet report={lastReport} onClose={() => setReportOpen(false)} />
         ) : null}
       </AnimatePresence>
     </div>
@@ -613,7 +610,7 @@ function DayReportSheet({ report, onClose }: { report: DayReport; onClose: () =>
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <p className="text-[12px] font-medium text-ios-muted">Day {report.day} 마감</p>
+            <p className="text-[12px] text-ios-muted">Day {report.day} 마감</p>
             <h2 className="mt-0.5 text-[22px] font-bold">오늘의 정산</h2>
           </div>
           <button
@@ -626,7 +623,7 @@ function DayReportSheet({ report, onClose }: { report: DayReport; onClose: () =>
           </button>
         </div>
 
-        <div className="space-y-2 rounded-2xl bg-ios-surface p-3.5 ring-1 ring-black/5 dark:ring-white/5">
+        <div className="border-t border-ios-separator/15">
           <ReportLine
             label="하루 지출"
             value={`-${formatCash(report.rent)}`}
@@ -675,22 +672,19 @@ function DayReportSheet({ report, onClose }: { report: DayReport; onClose: () =>
         </div>
 
         {report.event ? (
-          <div className="mt-3 rounded-2xl bg-ios-orange/10 p-3.5 text-ios-orange">
-            <p className="text-[13px] font-semibold">{report.event.title}</p>
-            <p className="mt-1 text-[12px] opacity-90">{report.event.description}</p>
-            <p className="mt-1 text-[11px] opacity-80">
+          <div className="mt-4 border-l-2 border-ios-orange pl-3">
+            <p className="text-[13px] font-semibold text-ios-orange">{report.event.title}</p>
+            <p className="mt-1 text-[12px] text-ios-muted">{report.event.description}</p>
+            <p className="mt-1 text-[11px] tabular-nums text-ios-muted">
               heat {report.event.heatDelta >= 0 ? '+' : ''}
               {report.event.heatDelta} · 현금 {report.event.cashDelta >= 0 ? '+' : ''}
               {formatCash(report.event.cashDelta)}
             </p>
           </div>
         ) : (
-          <div className="mt-3 rounded-2xl bg-ios-surface p-3.5 ring-1 ring-black/5 dark:ring-white/5">
-            <p className="text-[13px] font-semibold">조용한 하루</p>
-            <p className="mt-1 text-[12px] text-ios-muted">
-              특별한 사건 없이 밤이 지나갔다. 가끔은 그게 최고다.
-            </p>
-          </div>
+          <p className="mt-4 text-[13px] text-ios-muted">
+            조용한 하루였다. 특별한 사건 없이 밤이 지나갔다.
+          </p>
         )}
 
         {report.unpaidRent > 0 ? (
@@ -727,7 +721,7 @@ function ReportLine({
   tone?: 'good' | 'bad';
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
+    <div className="flex items-baseline justify-between gap-3 border-b border-ios-separator/10 py-2.5 last:border-b-0">
       <div className="min-w-0">
         <p className="text-[14px]">{label}</p>
         {detail ? <p className="text-[11px] text-ios-muted">{detail}</p> : null}

@@ -44,12 +44,12 @@ afterEach(() => {
 });
 
 describe('TradeApp', () => {
-  it('shows the retirement goal and starts a customer shift', async () => {
+  it('shows the tally and starts a customer shift', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const user = userEvent.setup();
     render(<TradeApp />);
 
-    expect(screen.getByText('은퇴 목표')).toBeInTheDocument();
+    expect(screen.getByText('합계')).toBeInTheDocument();
     await user.click(screen.getByText('손님 받기'));
 
     expect(screen.getByText('수락')).toBeInTheDocument();
